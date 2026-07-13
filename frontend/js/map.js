@@ -13,6 +13,7 @@ import {
   nasaTileUrl,
   parseSoilPointsList,
 } from './core/mapUtils.js';
+import { mapPointValidationStatus } from './core/offlineQueue.js';
 import {
   analyzeBboxNdvi,
   initSentinelMapTools,
@@ -225,7 +226,7 @@ async function loadSoilPoints() {
       const coords = [props.lon, props.lat];
       const style = markerStyleForPoint(props);
       const marker = L.circleMarker([coords[1], coords[0]], style);
-      const status = props.validation_status || (props.is_validated ? 'validated' : 'pending');
+      const status = mapPointValidationStatus(props);
       const lon = coords[0];
       const lat = coords[1];
       marker.bindPopup(`

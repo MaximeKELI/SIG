@@ -47,6 +47,12 @@ describe('buildSoilFiltersQuery', () => {
     assert.ok(q.includes('soil_type=limoneux'));
   });
 
+  it('filtre validés uniquement (défaut carte)', () => {
+    const q = buildSoilFiltersQuery({ validated: true });
+    assert.ok(q.includes('is_validated=true'));
+    assert.ok(q.includes('light=1'));
+  });
+
   it('sans light', () => {
     const q = buildSoilFiltersQuery({ light: false });
     assert.ok(!q.includes('light='));

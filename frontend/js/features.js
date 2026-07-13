@@ -3,6 +3,14 @@
  */
 import { toast } from './core/toast.js';
 import { notifyError, notifySuccess, openModal, closeModal } from './core/ui.js';
+import {
+  buildTerrainPointFeature,
+  drainOfflineQueue,
+  enqueueOfflinePoint,
+  readOfflineQueue,
+  writeOfflineQueue,
+} from './core/offlineQueue.js';
+
 
 let clusterGroup = null;
 let heatLayer = null;
@@ -96,24 +104,31 @@ function openAddPointForm(lat, lon) {
 async function submitAddPoint() {
   if (!pendingAddCoords) return;
   const { lat, lon } = pendingAddCoords;
-  const body = {
-    type: 'Feature',
-    geometry: { type: 'Point', coordinates: [lon, lat] },
-    properties: {
-      ph: parseFloat(document.getElementById('ap-ph')?.value || '6.2'),
-      humidity_pct: parseFloat(document.getElementById('ap-humidity')?.value || '35'),
-      soil_type: document.getElementById('ap-soil-type')?.value || 'limoneux',
-      collected_at: new Date().toISOString().slice(0, 10),
-      source: 'terrain',
-    },
-  };
+  const body = buildTerrainPointFeature({
+    lon,
+    lat,
+    ph: parseFloat(document.getElementById('ap-ph')?.value || '6.2'),
+    humidityPct: parseFloat(document.getElementById('ap-humidity')?.value || '35'),
+    soilType: document.getElementById('ap-soil-type')?.value || 'limoneux',
+    collectedAt: new Date().toISOString().slice(0, 10),
+  });
   try {
     if (!navigator.onLine) {
       queueOfflinePoint({ body });
       notifySuccess('Point en file d\'attente (hors ligne).');
     } else {
-      await SigSolsAPI.api('/points/', { method: 'POST', body: JSON.stringify(body) });
-      notifySuccess('Point enregistré (validation en attente).');
+      try {
+        await SigSolsAPI.api('/points/', { method: 'POST', body: JSON.stringify(body) });
+        notifySuccess('Point enregistré (validation en attente).');
+      } catch (e) {
+        // Aligné mobile OfflineSyncService : bascule offline pendant le POST → file
+        if (!navigator.onLine) {
+          queueOfflinePoint({ body });
+          notifySuccess('Point en file d\'attente (hors ligne).');
+        } else {
+          throw e;
+        }
+      }
     }
     closeModal('add-point-modal');
     pendingAddCoords = null;
@@ -292,25 +307,16 @@ export function connectWebSocket() {
 }
 
 export function queueOfflinePoint(payload) {
-  const q = JSON.parse(localStorage.getItem('sig_sols_offline_queue') || '[]');
-  q.push({ ...payload, queued_at: Date.now() });
-  localStorage.setItem('sig_sols_offline_queue', JSON.stringify(q));
+  enqueueOfflinePoint(payload);
 }
 
 export async function syncOfflineQueue() {
-  const q = JSON.parse(localStorage.getItem('sig_sols_offline_queue') || '[]');
+  const q = readOfflineQueue();
   if (!q.length || !navigator.onLine || !SigSolsAPI.isAuthenticated()) return;
-  const remaining = [];
-  let synced = 0;
-  for (const item of q) {
-    try {
-      await SigSolsAPI.api('/points/', { method: 'POST', body: JSON.stringify(item.body) });
-      synced += 1;
-    } catch {
-      remaining.push(item);
-    }
-  }
-  localStorage.setItem('sig_sols_offline_queue', JSON.stringify(remaining));
+  const { remaining, synced } = await drainOfflineQueue(q, (body) => (
+    SigSolsAPI.api('/points/', { method: 'POST', body: JSON.stringify(body) })
+  ));
+  writeOfflineQueue(remaining);
   if (synced) {
     notifySuccess(`${synced} point(s) synchronisé(s).`);
     SigSolsMap.loadSoilPoints();

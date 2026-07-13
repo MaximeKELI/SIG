@@ -66,6 +66,8 @@ class SoilPointListSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'ph', 'humidity_pct', 'soil_type', 'ph_color',
             'fertility_class', 'lat', 'lon', 'ndvi_3m_avg', 'smap_moisture_avg',
+            # Statut validation — requis carte web/mobile (popup + filtres)
+            'is_validated', 'validation_status',
         )
 
     def get_lat(self, obj):

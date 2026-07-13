@@ -56,19 +56,46 @@ def admin_user(db):
 
 
 @pytest.fixture
-def admin_client(api_client, admin_user):
+def admin_client(admin_user):
+    """Client JWT admin isolé (ne partage pas credentials avec auth_client)."""
+    from rest_framework.test import APIClient
     from rest_framework_simplejwt.tokens import RefreshToken
+    client = APIClient()
     token = RefreshToken.for_user(admin_user)
-    api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {token.access_token}')
-    return api_client
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {token.access_token}')
+    return client
 
 
 @pytest.fixture
-def auth_client(api_client, agent_user):
+def auth_client(agent_user):
+    """Client JWT agent isolé."""
+    from rest_framework.test import APIClient
     from rest_framework_simplejwt.tokens import RefreshToken
+    client = APIClient()
     token = RefreshToken.for_user(agent_user)
-    api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {token.access_token}')
-    return api_client
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {token.access_token}')
+    return client
+
+
+@pytest.fixture
+def public_user(db):
+    from accounts.models import User
+    return User.objects.create_user(
+        username='test_public',
+        password='testpass123',
+        role=User.Role.PUBLIC,
+    )
+
+
+@pytest.fixture
+def public_client(public_user):
+    """Client JWT public isolé."""
+    from rest_framework.test import APIClient
+    from rest_framework_simplejwt.tokens import RefreshToken
+    client = APIClient()
+    token = RefreshToken.for_user(public_user)
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {token.access_token}')
+    return client
 
 
 @pytest.fixture

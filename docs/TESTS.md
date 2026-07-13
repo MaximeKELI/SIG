@@ -16,6 +16,7 @@ make test
 | ml_predict | `test_ml.py` | Entraînement, prédiction API |
 | education | `test_education.py` | Quiz, badges |
 | intégration | `apps/tests/test_integration.py` | Parcours complets |
+| **E2E agent** | `apps/tests/test_agent_field_e2e.py` | Création → pending → validate/reject → carte `is_validated` |
 
 ## Frontend (JavaScript)
 
