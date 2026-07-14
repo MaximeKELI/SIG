@@ -476,7 +476,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                   ),
                   IconButton(
                     tooltip: 'Publier',
-                    onPressed: _sending ? null : _sendComment(),
+                    onPressed: _sending ? null : _sendComment,
                     icon:
                         _sending
                             ? const SizedBox.square(

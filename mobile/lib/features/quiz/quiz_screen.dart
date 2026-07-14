@@ -319,14 +319,15 @@ class _QuizScreenState extends State<QuizScreen> {
 
     final opened = await _openPdfExternally(savedPath);
     if (!mounted) return;
+    final shortName = savedPath.split('/').last;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           opened
-              ? 'Certificat ouvert · enregistré : $savedPath'
-              : 'Certificat enregistré : $savedPath',
+              ? 'Certificat d’excellence ouvert ($shortName)'
+              : 'Certificat enregistré : $shortName',
         ),
-        duration: const Duration(seconds: 5),
+        duration: const Duration(seconds: 4),
         action: SnackBarAction(
           label: 'Ouvrir',
           onPressed: () => _openPdfExternally(savedPath!),
