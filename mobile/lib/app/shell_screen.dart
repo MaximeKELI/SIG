@@ -63,43 +63,93 @@ class _ShellScreenState extends State<ShellScreen> {
     });
   }
 
+  /// 0 Carte · 1 Tableau · 2 Médias · 3 Communauté · 4 Plus
   int _indexFromLocation(String loc) {
     if (loc.startsWith('/dashboard')) return 1;
-    if (loc.startsWith('/quiz')) return 2;
-    if (loc.startsWith('/sheets')) return 3;
-    if (loc.startsWith('/videos')) return 4;
-    if (loc.startsWith('/shorts')) return 5;
-    if (loc.startsWith('/community')) return 6;
-    if (loc.startsWith('/assistant')) return 7;
-    if (loc.startsWith('/profile')) return 8;
+    if (loc.startsWith('/videos') || loc.startsWith('/shorts')) return 2;
+    if (loc.startsWith('/community')) return 3;
+    if (loc.startsWith('/quiz') ||
+        loc.startsWith('/sheets') ||
+        loc.startsWith('/assistant') ||
+        loc.startsWith('/profile')) {
+      return 4;
+    }
     return 0;
   }
 
-  void _go(int index) {
-    const routes = [
-      '/',
-      '/dashboard',
-      '/quiz',
-      '/sheets',
-      '/videos',
-      '/shorts',
-      '/community',
-      '/assistant',
-      '/profile',
-    ];
-    const names = [
-      'map',
-      'dashboard',
-      'quiz',
-      'sheets',
-      'videos',
-      'shorts',
-      'community',
-      'assistant',
-      'profile',
-    ];
+  String _titleFor(String loc, LocaleService i18n) {
+    if (loc.startsWith('/dashboard')) return i18n.t('nav.dashboard');
+    if (loc.startsWith('/quiz')) return i18n.t('nav.quiz');
+    if (loc.startsWith('/sheets')) return i18n.t('nav.sheets');
+    if (loc.startsWith('/videos')) return i18n.t('nav.videos');
+    if (loc.startsWith('/shorts')) return i18n.t('nav.shorts');
+    if (loc.startsWith('/community')) return i18n.t('nav.community');
+    if (loc.startsWith('/assistant')) return i18n.t('nav.assistant');
+    if (loc.startsWith('/profile')) return i18n.t('nav.profile');
+    return i18n.t('nav.map');
+  }
+
+  void _goPrimary(int index) {
+    if (index == 4) {
+      _openPlusSheet();
+      return;
+    }
+    const routes = ['/', '/dashboard', '/videos', '/community'];
+    const names = ['map', 'dashboard', 'videos', 'community'];
     context.read<ActivityTracker>().trackNav(names[index]);
     context.go(routes[index]);
+  }
+
+  Future<void> _openPlusSheet() async {
+    final i18n = context.read<LocaleService>();
+    final loggedIn = context.read<AuthService>().isAuthenticated;
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) {
+        Widget tile(IconData icon, String label, String route, String track) {
+          return ListTile(
+            leading: Icon(icon, color: AppTheme.gold400),
+            title: Text(label),
+            onTap: () {
+              Navigator.pop(ctx);
+              context.read<ActivityTracker>().trackNav(track);
+              context.go(route);
+            },
+          );
+        }
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Explorer',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            color: AppTheme.gold300,
+                          ),
+                    ),
+                  ),
+                ),
+                tile(Icons.quiz_outlined, i18n.t('nav.quiz'), '/quiz', 'quiz'),
+                tile(Icons.menu_book_outlined, i18n.t('nav.sheets'), '/sheets', 'sheets'),
+                tile(Icons.bolt_outlined, i18n.t('nav.shorts'), '/shorts', 'shorts'),
+                tile(Icons.smart_toy_outlined, i18n.t('nav.assistant'), '/assistant', 'assistant'),
+                tile(Icons.person_outline, i18n.t('nav.profile'), '/profile', 'profile'),
+                if (loggedIn)
+                  tile(Icons.dashboard_customize_outlined, i18n.t('drawer.myspace'), '/my-dashboard', 'myspace'),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -109,43 +159,30 @@ class _ShellScreenState extends State<ShellScreen> {
     final user = context.watch<AuthService>().user;
     final loggedIn = context.watch<AuthService>().isAuthenticated;
     final i18n = context.watch<LocaleService>();
+    final hideAppBar = loc.startsWith('/shorts');
 
     return Scaffold(
       drawer: Drawer(
         child: ListView(
           children: [
             DrawerHeader(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppTheme.emerald900,
-                    AppTheme.emerald950,
-                    Color(0xFF1A2F24),
-                  ],
-                ),
-              ),
+              decoration: const BoxDecoration(gradient: AppTheme.heroGradient),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
                     i18n.t('app.title'),
-                    style: const TextStyle(
-                      fontFamily: AppTheme.fontDisplay,
-                      color: AppTheme.gold300,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                          color: AppTheme.gold300,
+                        ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     user?.displayName ?? (loggedIn ? '' : 'Visiteur'),
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      fontSize: 14,
-                    ),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
                   ),
                 ],
               ),
@@ -173,7 +210,7 @@ class _ShellScreenState extends State<ShellScreen> {
                 leading: Badge(
                   label: Text('$_unread'),
                   isLabelVisible: _unread > 0,
-                  child: const Icon(Icons.notifications),
+                  child: const Icon(Icons.notifications_outlined),
                 ),
                 title: Text(i18n.t('drawer.notifications')),
                 onTap: () {
@@ -183,16 +220,40 @@ class _ShellScreenState extends State<ShellScreen> {
               ),
             if (loggedIn)
               ListTile(
-                leading: const Icon(Icons.dashboard_customize),
+                leading: const Icon(Icons.dashboard_customize_outlined),
                 title: Text(i18n.t('drawer.myspace')),
                 onTap: () {
                   Navigator.pop(context);
                   context.push('/my-dashboard');
                 },
               ),
+            ListTile(
+              leading: const Icon(Icons.quiz_outlined),
+              title: Text(i18n.t('nav.quiz')),
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/quiz');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.menu_book_outlined),
+              title: Text(i18n.t('nav.sheets')),
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/sheets');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.smart_toy_outlined),
+              title: Text(i18n.t('nav.assistant')),
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/assistant');
+              },
+            ),
             if (user?.isAdmin == true)
               ListTile(
-                leading: const Icon(Icons.admin_panel_settings),
+                leading: const Icon(Icons.admin_panel_settings_outlined),
                 title: Text(i18n.t('drawer.admin')),
                 onTap: () {
                   Navigator.pop(context);
@@ -200,13 +261,14 @@ class _ShellScreenState extends State<ShellScreen> {
                 },
               ),
             ListTile(
-              leading: const Icon(Icons.help),
+              leading: const Icon(Icons.help_outline),
               title: Text(i18n.t('drawer.help')),
               onTap: () {
                 Navigator.pop(context);
                 context.push('/help');
               },
             ),
+            const Divider(),
             Consumer<ThemeService>(
               builder:
                   (_, theme, __) => SwitchListTile(
@@ -214,7 +276,8 @@ class _ShellScreenState extends State<ShellScreen> {
                       theme.isDark ? Icons.dark_mode : Icons.light_mode,
                     ),
                     title: Text(i18n.t('drawer.theme')),
-                    value: !theme.isDark,
+                    subtitle: Text(theme.isDark ? 'Sombre' : 'Clair'),
+                    value: theme.isDark,
                     onChanged: (_) => theme.toggle(),
                   ),
             ),
@@ -230,75 +293,78 @@ class _ShellScreenState extends State<ShellScreen> {
           ],
         ),
       ),
-      appBar: AppBar(
-        title: Text(i18n.t('app.title')),
-        actions: [
-          if (!loggedIn)
-            TextButton(
-              onPressed: () => context.go('/login'),
-              child: const Text('Connexion'),
+      appBar: hideAppBar
+          ? null
+          : AppBar(
+              title: Text(_titleFor(loc, i18n)),
+              actions: [
+                if (!loggedIn)
+                  TextButton(
+                    onPressed: () => context.go('/login'),
+                    child: const Text('Connexion'),
+                  ),
+                if (loggedIn)
+                  IconButton(
+                    icon: Badge(
+                      label: Text('$_unread'),
+                      isLabelVisible: _unread > 0,
+                      child: const Icon(Icons.notifications_outlined),
+                    ),
+                    onPressed: () => context
+                        .push('/notifications')
+                        .then((_) => _loadUnread()),
+                  ),
+                if (loggedIn)
+                  IconButton(
+                    icon: const Icon(Icons.map_outlined),
+                    tooltip: i18n.t('parcel.tooltip'),
+                    onPressed: () => context.push('/parcel'),
+                  ),
+                IconButton(
+                  icon: CircleAvatar(
+                    radius: 14,
+                    backgroundColor: AppTheme.gold500.withValues(alpha: 0.25),
+                    child: Icon(
+                      loggedIn ? Icons.person : Icons.person_outline,
+                      size: 16,
+                      color: AppTheme.gold300,
+                    ),
+                  ),
+                  onPressed: () => context.go('/profile'),
+                ),
+              ],
             ),
-          if (loggedIn)
-            IconButton(
-              icon: Badge(
-                label: Text('$_unread'),
-                isLabelVisible: _unread > 0,
-                child: const Icon(Icons.notifications_outlined),
-              ),
-              onPressed:
-                  () =>
-                      context.push('/notifications').then((_) => _loadUnread()),
-            ),
-          if (loggedIn)
-            IconButton(
-              icon: const Icon(Icons.map_outlined),
-              tooltip: i18n.t('parcel.tooltip'),
-              onPressed: () => context.push('/parcel'),
-            ),
-        ],
-      ),
       body: Column(
         children: [const OfflineBanner(), Expanded(child: widget.child)],
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: index.clamp(0, 8),
-        onDestinationSelected: _go,
+        selectedIndex: index.clamp(0, 4),
+        onDestinationSelected: _goPrimary,
         destinations: [
           NavigationDestination(
-            icon: const Icon(Icons.map),
+            icon: const Icon(Icons.map_outlined),
+            selectedIcon: const Icon(Icons.map),
             label: i18n.t('nav.map'),
           ),
           NavigationDestination(
-            icon: const Icon(Icons.dashboard),
+            icon: const Icon(Icons.dashboard_outlined),
+            selectedIcon: const Icon(Icons.dashboard),
             label: i18n.t('nav.dashboard'),
           ),
           NavigationDestination(
-            icon: const Icon(Icons.quiz),
-            label: i18n.t('nav.quiz'),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.menu_book),
-            label: i18n.t('nav.sheets'),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.video_library),
+            icon: const Icon(Icons.video_library_outlined),
+            selectedIcon: const Icon(Icons.video_library),
             label: i18n.t('nav.videos'),
           ),
           NavigationDestination(
-            icon: const Icon(Icons.play_circle),
-            label: i18n.t('nav.shorts'),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.people),
+            icon: const Icon(Icons.people_outline),
+            selectedIcon: const Icon(Icons.people),
             label: i18n.t('nav.community'),
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.smart_toy),
-            label: i18n.t('nav.assistant'),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.person),
-            label: i18n.t('nav.profile'),
+          const NavigationDestination(
+            icon: Icon(Icons.apps_outlined),
+            selectedIcon: Icon(Icons.apps),
+            label: 'Plus',
           ),
         ],
       ),
@@ -328,9 +394,9 @@ class ShellIndexScreen extends StatelessWidget {
       case '/sheets':
         return const SheetsScreen();
       case '/videos':
-        return const VideosScreen(kind: 'video');
+        return const _MediaShell(kind: 'video');
       case '/shorts':
-        return const VideosScreen(kind: 'short');
+        return const _MediaShell(kind: 'short');
       case '/community':
         return const CommunityScreen();
       case '/assistant':
@@ -340,5 +406,48 @@ class ShellIndexScreen extends StatelessWidget {
       default:
         return MapScreen(focusPointId: focusPointId);
     }
+  }
+}
+
+/// Médias : bascule Vidéos / Shorts + écran contenu.
+class _MediaShell extends StatelessWidget {
+  const _MediaShell({required this.kind});
+
+  final String kind;
+
+  @override
+  Widget build(BuildContext context) {
+    final isShort = kind == 'short';
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          child: SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(
+                value: 'video',
+                label: Text('Vidéos'),
+                icon: Icon(Icons.video_library_outlined, size: 18),
+              ),
+              ButtonSegment(
+                value: 'short',
+                label: Text('Shorts'),
+                icon: Icon(Icons.bolt_outlined, size: 18),
+              ),
+            ],
+            selected: {isShort ? 'short' : 'video'},
+            onSelectionChanged: (s) {
+              final next = s.first;
+              if (next == 'short') {
+                context.go('/shorts');
+              } else {
+                context.go('/videos');
+              }
+            },
+          ),
+        ),
+        Expanded(child: VideosScreen(kind: kind)),
+      ],
+    );
   }
 }

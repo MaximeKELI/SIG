@@ -92,7 +92,7 @@ List<Polyline> trajectoryPolylines(Map trajectory) {
   return [
     Polyline(
       points: points,
-      color: Colors.deepPurpleAccent,
+      color: const Color(0xFFC9A962),
       strokeWidth: 4,
       borderColor: Colors.white.withValues(alpha: 0.8),
       borderStrokeWidth: 1,

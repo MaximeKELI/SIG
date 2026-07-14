@@ -74,7 +74,24 @@ class _SigSolsAppState extends State<SigSolsApp> {
     if (_router == null) {
       return MaterialApp(
         theme: _themeService.theme,
-        home: const Scaffold(body: Center(child: CircularProgressIndicator())),
+        home: Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  'assets/images/logo-dusol.png',
+                  height: 72,
+                  errorBuilder: (_, __, ___) => const Icon(Icons.landscape, size: 72),
+                ),
+                const SizedBox(height: 20),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 12),
+                const Text('SIG Sols Togo'),
+              ],
+            ),
+          ),
+        ),
       );
     }
 

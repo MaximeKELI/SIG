@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/theme/app_theme.dart';
+import '../../shared/widgets/dusol_ui.dart';
+
 class OnboardingSheet extends StatefulWidget {
   const OnboardingSheet({super.key});
 
@@ -25,13 +28,13 @@ class _OnboardingSheetState extends State<OnboardingSheet> {
       icon: Icons.layers_outlined,
       title: 'Analysez sur la carte',
       body:
-          'Chargez la heatmap pH, votre trajectoire et les résultats de proximité directement sur la carte.',
+          'Heatmap pH, trajectoire et proximité — directement sur la carte interactive.',
     ),
     (
       icon: Icons.draw_outlined,
       title: 'Dessinez une parcelle',
       body:
-          'Touchez la carte pour dessiner votre zone puis lancez une analyse Sentinel, météo et fertilité.',
+          'Tracez votre zone puis lancez une analyse Sentinel, météo et fertilité.',
     ),
   ];
 
@@ -55,7 +58,7 @@ class _OnboardingSheetState extends State<OnboardingSheet> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
         child: SizedBox(
-          height: 390,
+          height: 420,
           child: Column(
             children: [
               Align(
@@ -75,18 +78,31 @@ class _OnboardingSheetState extends State<OnboardingSheet> {
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          page.icon,
-                          size: 88,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(height: 24),
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: AppTheme.heroGradient,
+                            border: Border.all(
+                              color: AppTheme.gold500.withValues(alpha: 0.5),
+                              width: 2,
+                            ),
+                          ),
+                          child: Icon(page.icon, size: 48, color: AppTheme.gold300),
+                        ).dusolPop(),
+                        const SizedBox(height: 28),
                         Text(
                           page.title,
-                          style: Theme.of(context).textTheme.headlineSmall,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.displaySmall,
                         ),
                         const SizedBox(height: 12),
-                        Text(page.body, textAlign: TextAlign.center),
+                        Text(
+                          page.body,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
                       ],
                     );
                   },
@@ -96,27 +112,26 @@ class _OnboardingSheetState extends State<OnboardingSheet> {
                 children: [
                   ...List.generate(
                     _pages.length,
-                    (index) => Container(
-                      width: 8,
+                    (index) => AnimatedContainer(
+                      duration: AppMotion.fast,
+                      width: index == _page ? 22 : 8,
                       height: 8,
                       margin: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color:
-                            index == _page
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.grey,
-                        shape: BoxShape.circle,
+                        color: index == _page
+                            ? AppTheme.gold500
+                            : AppTheme.gold500.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ),
                   const Spacer(),
                   FilledButton(
-                    onPressed:
-                        _page == _pages.length - 1
-                            ? _finish
-                            : () => _controller.nextPage(
-                              duration: const Duration(milliseconds: 250),
-                              curve: Curves.easeOut,
+                    onPressed: _page == _pages.length - 1
+                        ? _finish
+                        : () => _controller.nextPage(
+                              duration: AppMotion.normal,
+                              curve: AppMotion.easeOut,
                             ),
                     child: Text(
                       _page == _pages.length - 1 ? 'Commencer' : 'Suivant',

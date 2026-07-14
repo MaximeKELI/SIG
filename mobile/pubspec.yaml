@@ -29,6 +29,8 @@ dependencies:
   share_plus: ^10.1.4
   fl_chart: ^0.70.2
   image_picker: ^1.1.2
+  google_fonts: ^8.1.0
+  flutter_animate: ^4.5.2
 
 dev_dependencies:
   flutter_test:

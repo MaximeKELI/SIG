@@ -9,6 +9,7 @@ import '../../core/auth/auth_service.dart';
 import '../../core/config/env.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/sig_api.dart';
+import '../../shared/widgets/dusol_ui.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
 import 'video_player_screen.dart';
@@ -625,51 +626,13 @@ class _VideosScreenState extends State<VideosScreen> {
         _isShort
             ? 'Format court ≤ 60 s · stories 24 h'
             : 'Reportages sols, NASA & SIG — modération admin';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppTheme.emerald900, AppTheme.emerald950, Color(0xFF1A2F24)],
-        ),
-        border: Border.all(color: AppTheme.gold500.withValues(alpha: 0.35)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontFamily: AppTheme.fontDisplay,
-                    color: AppTheme.gold300,
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              IconButton(
-                onPressed: _load,
-                tooltip: 'Actualiser',
-                icon: const Icon(Icons.refresh, color: AppTheme.gold300),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(sub, style: TextStyle(color: Colors.white.withValues(alpha: 0.78))),
-        ],
+    return DusolHeroHeader(
+      title: title,
+      subtitle: sub,
+      trailing: IconButton(
+        onPressed: _load,
+        tooltip: 'Actualiser',
+        icon: const Icon(Icons.refresh, color: AppTheme.gold300),
       ),
     );
   }

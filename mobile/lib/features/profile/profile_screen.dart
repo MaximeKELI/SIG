@@ -7,7 +7,9 @@ import '../../core/api/api_client.dart';
 import '../../core/auth/auth_service.dart';
 import '../../core/config/env.dart';
 import '../../core/offline/offline_sync_service.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/sig_api.dart';
+import '../../shared/widgets/dusol_ui.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -227,62 +229,130 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final hasPhoto = (user?.profilePhotoUrl ?? '').isNotEmpty;
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
       children: [
-        GestureDetector(
-          onTap: _photoBusy ? null : () => _uploadPhoto(auth),
-          child: _avatar(auth),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextButton(
-              onPressed: _photoBusy ? null : () => _uploadPhoto(auth),
-              child: const Text('Changer la photo'),
-            ),
-            if (hasPhoto)
-              TextButton(
-                onPressed: _photoBusy ? null : () => _deletePhoto(auth),
-                child: const Text('Supprimer'),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.hero,
+            gradient: AppTheme.heroGradient,
+            border: Border.all(color: AppTheme.gold500.withValues(alpha: 0.35)),
+            boxShadow: AppTheme.softShadow,
+          ),
+          child: Column(
+            children: [
+              GestureDetector(
+                onTap: _photoBusy ? null : () => _uploadPhoto(auth),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppTheme.gold500, width: 2),
+                  ),
+                  child: _avatar(auth),
+                ),
               ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(user?.displayName ?? '', style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center),
-        Text('@${user?.username ?? ''} · ${user?.role ?? ''}', textAlign: TextAlign.center),
+              const SizedBox(height: 14),
+              Text(
+                user?.displayName ?? 'Visiteur',
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      color: AppTheme.gold300,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                '@${user?.username ?? '—'} · ${user?.role ?? ''}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white70,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    onPressed: _photoBusy ? null : () => _uploadPhoto(auth),
+                    child: const Text('Photo'),
+                  ),
+                  if (hasPhoto)
+                    TextButton(
+                      onPressed: _photoBusy ? null : () => _deletePhoto(auth),
+                      child: const Text('Retirer'),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ).dusolPop(),
         const SizedBox(height: 12),
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextButton.icon(onPressed: () => _editProfile(auth), icon: const Icon(Icons.edit), label: const Text('Modifier')),
-            TextButton.icon(onPressed: _changePassword, icon: const Icon(Icons.lock), label: const Text('Mot de passe')),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _editProfile(auth),
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Modifier'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _changePassword,
+                icon: const Icon(Icons.lock_outline),
+                label: const Text('Mot de passe'),
+              ),
+            ),
           ],
         ),
-        if (user?.email != null) ListTile(leading: const Icon(Icons.email), title: Text(user!.email!)),
-        if (user?.phone != null) ListTile(leading: const Icon(Icons.phone), title: Text(user!.phone!)),
-        if (user?.region != null) ListTile(leading: const Icon(Icons.place), title: Text(user!.region!)),
+        const DusolSectionTitle('Identité'),
+        if (user?.email != null)
+          Card(child: ListTile(leading: const Icon(Icons.email_outlined), title: Text(user!.email!))),
+        if (user?.phone != null)
+          Card(child: ListTile(leading: const Icon(Icons.phone_outlined), title: Text(user!.phone!))),
+        if (user?.region != null)
+          Card(child: ListTile(leading: const Icon(Icons.place_outlined), title: Text(user!.region!))),
         if (user?.bio != null && user!.bio!.isNotEmpty)
-          ListTile(leading: const Icon(Icons.info), title: Text(user.bio!)),
-        ListTile(
-          leading: const Icon(Icons.timeline),
-          title: const Text('Ma trajectoire'),
-          onTap: _showTrajectory,
-        ),
-        const Divider(),
-        ListTile(leading: const Icon(Icons.api), title: const Text('API backend'), subtitle: Text(Env.apiBaseUrl)),
-        if (sync.pendingCount > 0)
-          ListTile(
-            leading: const Icon(Icons.cloud_upload),
-            title: Text('${sync.pendingCount} point(s) en attente'),
-            trailing: IconButton(icon: const Icon(Icons.sync), onPressed: () => sync.sync()),
+          Card(child: ListTile(leading: const Icon(Icons.info_outline), title: Text(user.bio!))),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.timeline),
+            title: const Text('Ma trajectoire'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _showTrajectory,
           ),
-        ListTile(
-          leading: Icon(_dbStatus == 'ok' ? Icons.check_circle : Icons.storage, color: _dbStatus == 'ok' ? Colors.green : null),
-          title: const Text('Base de données'),
-          subtitle: Text(_dbInfo != null
-              ? '${_dbInfo!['backend']} · ${_dbInfo!['name']} — partagée avec le web'
-              : _dbStatus ?? 'Vérification…'),
+        ),
+        const DusolSectionTitle('Système'),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.api_outlined),
+            title: const Text('API backend'),
+            subtitle: Text(Env.apiBaseUrl),
+          ),
+        ),
+        if (sync.pendingCount > 0)
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.cloud_upload_outlined),
+              title: Text('${sync.pendingCount} point(s) en attente'),
+              trailing: IconButton(
+                icon: const Icon(Icons.sync),
+                onPressed: () => sync.sync(),
+              ),
+            ),
+          ),
+        Card(
+          child: ListTile(
+            leading: Icon(
+              _dbStatus == 'ok' ? Icons.check_circle_outline : Icons.storage_outlined,
+              color: _dbStatus == 'ok' ? AppTheme.emerald400 : AppTheme.gold400,
+            ),
+            title: const Text('Base de données'),
+            subtitle: Text(
+              _dbInfo != null
+                  ? '${_dbInfo!['backend']} · ${_dbInfo!['name']} — partagée avec le web'
+                  : _dbStatus ?? 'Vérification…',
+            ),
+          ),
         ),
         const SizedBox(height: 20),
         FilledButton.icon(

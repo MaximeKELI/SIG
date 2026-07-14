@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../services/sig_api.dart';
+import '../../shared/widgets/dusol_ui.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
 
@@ -178,6 +180,13 @@ class _CommunityScreenState extends State<CommunityScreen>
   Widget build(BuildContext context) {
     return Column(
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: DusolHeroHeader(
+            title: 'Communauté',
+            subtitle: 'Fil · membres · messages',
+          ),
+        ),
         TabBar(
           controller: _tabs,
           isScrollable: true,
@@ -351,33 +360,41 @@ class _CommunityScreenState extends State<CommunityScreen>
   Widget _feedTile(dynamic item) {
     final f = Map<String, dynamic>.from(item as Map);
     final username = f['author_username']?.toString() ?? '';
+    final letter =
+        (f['author_username'] ?? '?').toString().isNotEmpty
+            ? (f['author_username'] ?? '?').toString()[0].toUpperCase()
+            : '?';
     return Card(
       child: ListTile(
         leading: CircleAvatar(
-          child: Text(
-            (f['author_username'] ?? '?').toString()[0].toUpperCase(),
-          ),
+          backgroundColor: AppTheme.emerald800,
+          foregroundColor: AppTheme.gold300,
+          child: Text(letter),
         ),
         title: Text(
           f['title']?.toString() ?? f['kind']?.toString() ?? 'Publication',
+          style: Theme.of(context).textTheme.titleSmall,
         ),
         subtitle: InkWell(
-          onTap:
-              username.isEmpty
-                  ? null
-                  : () => context.push(
+          onTap: username.isEmpty
+              ? null
+              : () => context.push(
                     '/community/profil/${Uri.encodeComponent(username)}',
                   ),
           child: Text(f['author_display']?.toString() ?? '@$username'),
         ),
-        onTap:
-            username.isEmpty
-                ? null
-                : () => context.push(
+        onTap: username.isEmpty
+            ? null
+            : () => context.push(
                   '/community/profil/${Uri.encodeComponent(username)}',
                 ),
-        trailing: Text('❤ ${f['like_count'] ?? 0}'),
+        trailing: Text(
+          '❤ ${f['like_count'] ?? 0}',
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: AppTheme.gold400,
+              ),
+        ),
       ),
-    );
+    ).dusolEnter();
   }
 }

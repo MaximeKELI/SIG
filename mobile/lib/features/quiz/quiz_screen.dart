@@ -6,7 +6,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../services/sig_api.dart';
+import '../../shared/widgets/dusol_ui.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
 
@@ -288,12 +290,14 @@ class _QuizScreenState extends State<QuizScreen> {
         children: [
           Text(
             'Quiz terminé !',
-            style: Theme.of(context).textTheme.headlineSmall,
+            style: Theme.of(context).textTheme.displaySmall,
           ),
           const SizedBox(height: 8),
           Text(
             'Score final : $score',
-            style: Theme.of(context).textTheme.titleMedium,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: AppTheme.gold400,
+                ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -359,18 +363,30 @@ class _QuizScreenState extends State<QuizScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-              LinearProgressIndicator(value: progress),
-              const SizedBox(height: 4),
-              LinearProgressIndicator(
-                value: _timerSeconds <= 0 ? 0 : _timeLeft / _timerSeconds,
-                color: _timeLeft <= 5
-                    ? Colors.redAccent
-                    : Theme.of(context).colorScheme.tertiary,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 8,
+                  backgroundColor: AppTheme.gold500.withValues(alpha: 0.15),
+                  color: AppTheme.gold500,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: _timerSeconds <= 0 ? 0 : _timeLeft / _timerSeconds,
+                  minHeight: 4,
+                  color: _timeLeft <= 5
+                      ? Colors.redAccent
+                      : AppTheme.emerald400,
+                ),
+              ),
+              const SizedBox(height: 16),
               Text(
                 q['text']?.toString() ?? '',
-                style: Theme.of(context).textTheme.titleMedium,
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 16),
               ...choices.asMap().entries.map(
@@ -423,8 +439,12 @@ class _QuizScreenState extends State<QuizScreen> {
     }
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
       children: [
+        DusolHeroHeader(
+          title: 'Quiz sols',
+          subtitle: 'Apprenez · pratiquez · certifiez',
+        ).dusolEnter(),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -443,7 +463,7 @@ class _QuizScreenState extends State<QuizScreen> {
               ],
             ),
           ),
-        ),
+        ).dusolEnter(index: 1),
         if (_weeklyChallenge != null && _weeklyChallenge!.isNotEmpty)
           Card(
             child: Padding(

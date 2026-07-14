@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/config/env.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/sig_api.dart';
+import '../../shared/widgets/dusol_ui.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
 
@@ -83,45 +85,93 @@ class _SheetsScreenState extends State<SheetsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const LoadingView();
+    if (_loading) return const LoadingView(message: 'Chargement des fiches…');
     if (_error != null) return ErrorView(message: _error!, onRetry: _load);
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: _sheets.length,
-      itemBuilder: (_, i) {
-        final s = Map<String, dynamic>.from(_sheets[i] as Map);
-        final id = int.tryParse('${s['id']}') ?? 0;
-        final isFav = _favoriteIds.contains(id);
-        return Card(
-          child: ListTile(
-            title: Text(s['title']?.toString() ?? 'Fiche'),
-            subtitle: Text(s['theme']?.toString() ?? ''),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? Colors.redAccent : null),
-                  onPressed: id > 0 ? () => _toggleFavorite(id) : null,
+    if (_sheets.isEmpty) {
+      return DusolEmptyState(
+        title: 'Aucune fiche',
+        message: 'Les fiches techniques sols apparaîtront ici.',
+        icon: Icons.menu_book_outlined,
+        actionLabel: 'Actualiser',
+        onAction: _load,
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+        itemCount: _sheets.length + 1,
+        itemBuilder: (_, i) {
+          if (i == 0) {
+            return DusolHeroHeader(
+              title: 'Fiches techniques',
+              subtitle: 'Guides sols, culture & fertilité',
+            ).dusolEnter();
+          }
+          final s = Map<String, dynamic>.from(_sheets[i - 1] as Map);
+          final id = int.tryParse('${s['id']}') ?? 0;
+          final isFav = _favoriteIds.contains(id);
+          return Card(
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () async {
+                final url = Env.resolveMediaUrl(s['pdf_url']?.toString());
+                if (url.isEmpty) return;
+                final uri = Uri.parse(url);
+                final ok = await launchUrl(uri, mode: LaunchMode.inAppWebView);
+                if (!ok && mounted) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        gradient: AppTheme.heroGradient,
+                      ),
+                      child: const Icon(
+                        Icons.picture_as_pdf_outlined,
+                        color: AppTheme.gold300,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            s['title']?.toString() ?? 'Fiche',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          if ((s['theme']?.toString() ?? '').isNotEmpty)
+                            Text(
+                              s['theme'].toString(),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        isFav ? Icons.bookmark : Icons.bookmark_border,
+                        color: isFav ? AppTheme.gold500 : null,
+                      ),
+                      onPressed: id > 0 ? () => _toggleFavorite(id) : null,
+                    ),
+                  ],
                 ),
-                if (s['pdf_url'] != null) const Icon(Icons.picture_as_pdf),
-              ],
+              ),
             ),
-            onTap: () async {
-              final url = Env.resolveMediaUrl(s['pdf_url']?.toString());
-              if (url.isEmpty) return;
-              final uri = Uri.parse(url);
-              final ok = await launchUrl(
-                uri,
-                mode: LaunchMode.inAppWebView,
-              );
-              if (!ok && mounted) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              }
-            },
-          ),
-        );
-      },
+          ).dusolEnter(index: i);
+        },
+      ),
     );
   }
 }

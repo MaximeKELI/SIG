@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../services/sig_api.dart';
+import '../../shared/widgets/dusol_ui.dart';
 
 class AssistantScreen extends StatefulWidget {
   const AssistantScreen({super.key});
@@ -16,6 +18,12 @@ class _AssistantScreenState extends State<AssistantScreen> {
   Map<String, dynamic>? _status;
   bool _loading = false;
   bool _ready = false;
+
+  static const _suggestions = [
+    'Comment lire le NDVI sur ma parcelle ?',
+    'pH acide : quelles corrections au Togo ?',
+    'Interpréter une carte de fertilité',
+  ];
 
   @override
   void initState() {
@@ -41,10 +49,10 @@ class _AssistantScreenState extends State<AssistantScreen> {
     }
   }
 
-  Future<void> _send() async {
-    final text = _ctrl.text.trim();
+  Future<void> _send([String? preset]) async {
+    final text = (preset ?? _ctrl.text).trim();
     if (text.isEmpty || _loading || !_ready) return;
-    _ctrl.clear();
+    if (preset == null) _ctrl.clear();
     setState(() {
       _messages.add({'role': 'user', 'content': text});
       _loading = true;
@@ -62,7 +70,8 @@ class _AssistantScreenState extends State<AssistantScreen> {
       setState(() {
         _messages.add({
           'role': 'assistant',
-          'content': res['reply']?.toString() ?? res['message']?.toString() ?? '—',
+          'content':
+              res['reply']?.toString() ?? res['message']?.toString() ?? '—',
         });
       });
     } catch (e) {
@@ -78,61 +87,134 @@ class _AssistantScreenState extends State<AssistantScreen> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        if (_status != null)
-          Material(
-            color: _ready ? Colors.green.withValues(alpha: 0.15) : Colors.orange.withValues(alpha: 0.15),
-            child: ListTile(
-              dense: true,
-              leading: Icon(_ready ? Icons.smart_toy : Icons.warning_amber),
-              title: Text(_ready
-                  ? 'Gemini ${_status!['model'] ?? ''} — via /api/v1/assistant/'
-                  : 'Gemini indisponible: ${_status!['message'] ?? 'clé manquante'}'),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: DusolHeroHeader(
+            title: 'Assistant sols',
+            subtitle: _ready
+                ? 'Gemini ${_status?['model'] ?? ''} · conseils terrain'
+                : 'Service momentanément indisponible',
+          ),
+        ),
+        if (_status != null && !_ready)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Card(
+              child: ListTile(
+                leading: const Icon(Icons.info_outline, color: AppTheme.gold400),
+                title: Text(
+                  _status!['message']?.toString() ?? 'Clé API manquante',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
             ),
           ),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: _messages.length,
-            itemBuilder: (_, i) {
-              final m = _messages[i];
-              final isUser = m['role'] == 'user';
-              return Align(
-                alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  padding: const EdgeInsets.all(12),
-                  constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
-                  decoration: BoxDecoration(
-                    color: isUser
-                        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
-                        : Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(m['content'] ?? ''),
+          child: _messages.isEmpty
+              ? ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Text(
+                      'Suggestions',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    for (var i = 0; i < _suggestions.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: OutlinedButton(
+                          onPressed: _ready ? () => _send(_suggestions[i]) : null,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(_suggestions[i]),
+                          ),
+                        ).dusolEnter(index: i),
+                      ),
+                  ],
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _messages.length,
+                  itemBuilder: (_, i) {
+                    final m = _messages[i];
+                    final isUser = m['role'] == 'user';
+                    return Align(
+                      alignment:
+                          isUser ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.sizeOf(context).width * 0.82,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: isUser
+                              ? const LinearGradient(
+                                  colors: [
+                                    AppTheme.emerald800,
+                                    AppTheme.emerald900,
+                                  ],
+                                )
+                              : null,
+                          color: isUser ? null : AppTheme.card,
+                          borderRadius: BorderRadius.only(
+                            topLeft: const Radius.circular(16),
+                            topRight: const Radius.circular(16),
+                            bottomLeft: Radius.circular(isUser ? 16 : 4),
+                            bottomRight: Radius.circular(isUser ? 4 : 16),
+                          ),
+                          border: Border.all(
+                            color: AppTheme.gold500.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Text(
+                          m['content'] ?? '',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.95),
+                              ),
+                        ),
+                      ).dusolEnter(index: i),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _ctrl,
-                  enabled: _ready,
-                  decoration: const InputDecoration(hintText: 'Question sols, parcelles, NDVI…'),
-                  onSubmitted: (_) => _send(),
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _ctrl,
+                    enabled: _ready,
+                    decoration: const InputDecoration(
+                      hintText: 'Question sols, parcelles, NDVI…',
+                      prefixIcon: Icon(Icons.chat_bubble_outline),
+                    ),
+                    onSubmitted: (_) => _send(),
+                  ),
                 ),
-              ),
-              IconButton(
-                onPressed: _loading || !_ready ? null : _send,
-                icon: _loading
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.send),
-              ),
-            ],
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: _loading || !_ready ? null : () => _send(),
+                  style: FilledButton.styleFrom(
+                    shape: const CircleBorder(),
+                    padding: const EdgeInsets.all(14),
+                  ),
+                  child: _loading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.send_rounded),
+                ),
+              ],
+            ),
           ),
         ),
       ],
