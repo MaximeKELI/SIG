@@ -5,10 +5,14 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:live": "E2E_LIVE=1 playwright test --grep @live"
   },
   "devDependencies": {
+    "@playwright/test": "^1.51.0",
     "jsdom": "^24.0.0",
+    "serve": "^14.2.4",
     "vitest": "^2.1.0"
   }
 }

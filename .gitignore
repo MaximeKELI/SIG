@@ -28,6 +28,8 @@ backend/staticfiles/
 # Environment
 .env
 .env.local
+backups/
+*.dump
 
 # IDE
 .idea/

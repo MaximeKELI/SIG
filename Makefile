@@ -33,10 +33,13 @@ test-nasa-live:
 test-frontend:
 	cd frontend && npm test
 
+test-e2e:
+	cd frontend && npm run test:e2e
+
 test-linkage:
 	./scripts/test-linkage.sh
 
-test-all: test test-frontend test-linkage
+test-all: test test-frontend test-e2e test-linkage
 
 lint:
 	docker compose exec web flake8 apps config --max-line-length=120
