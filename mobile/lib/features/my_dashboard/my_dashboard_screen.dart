@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/sig_api.dart';
@@ -56,7 +57,20 @@ class _MyDashboardScreenState extends State<MyDashboardScreen> {
     final badges = quiz['badges'] is List ? quiz['badges'] as List : const [];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mon espace')),
+      appBar: AppBar(
+        title: const Text('Mon espace'),
+        leading: IconButton(
+          tooltip: 'Retour',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
+      ),
       body:
           _loading
               ? const LoadingView()

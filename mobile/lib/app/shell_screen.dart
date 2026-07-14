@@ -109,13 +109,26 @@ class _ShellScreenState extends State<ShellScreen> {
       showDragHandle: true,
       builder: (ctx) {
         Widget tile(IconData icon, String label, String route, String track) {
+          // Routes hors Shell : push pour garder un retour arrière.
+          const pushRoutes = {
+            '/my-dashboard',
+            '/admin',
+            '/help',
+            '/notifications',
+            '/parcel',
+            '/search',
+          };
           return ListTile(
             leading: Icon(icon, color: AppTheme.gold400),
             title: Text(label),
             onTap: () {
               Navigator.pop(ctx);
               context.read<ActivityTracker>().trackNav(track);
-              context.go(route);
+              if (pushRoutes.contains(route)) {
+                context.push(route);
+              } else {
+                context.go(route);
+              }
             },
           );
         }

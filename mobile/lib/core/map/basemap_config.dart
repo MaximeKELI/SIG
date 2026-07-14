@@ -1,4 +1,4 @@
-/// Fonds de carte — parité avec frontend/js/map.js (3 basemaps).
+/// Fonds de carte — parité avec frontend/js/map.js (L.control.layers).
 enum BasemapType {
   osm,
   satellite,
@@ -6,10 +6,11 @@ enum BasemapType {
 }
 
 extension BasemapTypeExt on BasemapType {
+  /// Libellés web : OpenStreetMap · Satellite · Topographique
   String get label {
     switch (this) {
       case BasemapType.osm:
-        return 'Plan (OSM)';
+        return 'OpenStreetMap';
       case BasemapType.satellite:
         return 'Satellite';
       case BasemapType.topo:
@@ -17,10 +18,21 @@ extension BasemapTypeExt on BasemapType {
     }
   }
 
+  String get shortLabel {
+    switch (this) {
+      case BasemapType.osm:
+        return 'OSM';
+      case BasemapType.satellite:
+        return 'Sat.';
+      case BasemapType.topo:
+        return 'Topo';
+    }
+  }
+
   String get urlTemplate {
     switch (this) {
       case BasemapType.osm:
-        return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+        return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
       case BasemapType.satellite:
         return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
       case BasemapType.topo:
@@ -29,7 +41,12 @@ extension BasemapTypeExt on BasemapType {
   }
 
   List<String>? get subdomains {
-    if (this == BasemapType.topo) return const ['a', 'b', 'c'];
-    return null;
+    switch (this) {
+      case BasemapType.osm:
+      case BasemapType.topo:
+        return const ['a', 'b', 'c'];
+      case BasemapType.satellite:
+        return null;
+    }
   }
 }

@@ -67,6 +67,8 @@ class _MapScreenState extends State<MapScreen> {
   bool _loading = true;
   String? _error;
   LatLng? _myPosition;
+  /// Panneau outils replié par défaut — ne pas masquer la carte.
+  bool _mapChromeExpanded = false;
 
   @override
   void initState() {
@@ -250,7 +252,7 @@ class _MapScreenState extends State<MapScreen> {
     final layers = <Widget>[
       TileLayer(
         urlTemplate: basemap.urlTemplate,
-        subdomains: basemap.subdomains ?? const ['a', 'b', 'c'],
+        subdomains: basemap.subdomains ?? const <String>[],
         userAgentPackageName: 'tg.dusol.sig_sols_mobile',
       ),
       if (_showParcels && _filteredZones.isNotEmpty)
@@ -369,189 +371,70 @@ class _MapScreenState extends State<MapScreen> {
         Positioned(
           top: 8,
           left: 8,
-          right: 8,
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(i18n.t('map.points', vars: {'n': '${_points.length}'})),
-                  Text(
-                    'OW: ${_statusMsg('weather')} · Sentinel: ${_statusMsg('sentinel')} · NASA: ${_statusMsg('nasa')}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  if (_weatherBadge != null)
-                    Chip(
-                      avatar: const Icon(Icons.wb_sunny_outlined, size: 16),
-                      label: Text(_weatherBadge!),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  if (live.peers.isNotEmpty)
-                    Text(
-                      i18n.t(
-                        'map.livePeers',
-                        vars: {'n': '${live.peers.length}'},
+          width: (MediaQuery.sizeOf(context).width - 16).clamp(0, 360),
+          child: Material(
+            elevation: 5,
+            borderRadius: BorderRadius.circular(14),
+            color: Theme.of(
+              context,
+            ).colorScheme.surface.withValues(alpha: 0.94),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap:
+                      () => setState(
+                        () => _mapChromeExpanded = !_mapChromeExpanded,
                       ),
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: Colors.tealAccent),
-                    ),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<BasemapType>(
-                    value: _basemap,
-                    decoration: InputDecoration(
-                      labelText: i18n.t('map.basemap'),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                    ),
-                    items:
-                        BasemapType.values
-                            .map(
-                              (b) => DropdownMenuItem(
-                                value: b,
-                                child: Text(b.label),
-                              ),
-                            )
-                            .toList(),
-                    onChanged: (v) {
-                      if (v != null) setState(() => _basemap = v);
-                    },
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: FilterChip(
-                          label: Text(i18n.t('map.parcels.show')),
-                          selected: _showParcels,
-                          onSelected: (v) => setState(() => _showParcels = v),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (_showParcels && _zones.isNotEmpty) ...[
-                    Wrap(
-                      spacing: 4,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+                    child: Row(
                       children: [
-                        ChoiceChip(
-                          label: Text(i18n.t('map.parcels.all')),
-                          selected: _parcelFilter == 'all',
-                          onSelected:
-                              (_) => setState(() => _parcelFilter = 'all'),
+                        Icon(
+                          Icons.layers_outlined,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 22,
                         ),
-                        ChoiceChip(
-                          label: Text(i18n.t('map.parcels.canton')),
-                          selected: _parcelFilter == 'canton',
-                          onSelected:
-                              (_) => setState(() => _parcelFilter = 'canton'),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                i18n.t(
+                                  'map.points',
+                                  vars: {'n': '${_points.length}'},
+                                ),
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                              Text(
+                                _basemap.label,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
                         ),
-                        ChoiceChip(
-                          label: Text(i18n.t('map.parcels.degraded')),
-                          selected: _parcelFilter == 'degraded',
-                          onSelected:
-                              (_) => setState(() => _parcelFilter = 'degraded'),
+                        Icon(
+                          _mapChromeExpanded
+                              ? Icons.expand_less
+                              : Icons.expand_more,
                         ),
                       ],
                     ),
-                    DropdownButtonFormField<String>(
-                      value:
-                          _filteredZones.any(
-                                (z) => z.code == _selectedParcelCode,
-                              )
-                              ? _selectedParcelCode
-                              : (_filteredZones.isNotEmpty
-                                  ? _filteredZones.first.code
-                                  : null),
-                      decoration: InputDecoration(
-                        labelText: i18n.t('map.parcels'),
-                        isDense: true,
-                      ),
-                      items:
-                          _filteredZones
-                              .map(
-                                (z) => DropdownMenuItem(
-                                  value: z.code,
-                                  child: Text(z.name),
-                                ),
-                              )
-                              .toList(),
-                      onChanged: (code) {
-                        if (code == null) return;
-                        setState(() => _selectedParcelCode = code);
-                        final z = _filteredZones.firstWhere(
-                          (x) => x.code == code,
-                        );
-                        if (z.rings.isNotEmpty) {
-                          _mapController.fitCamera(
-                            CameraFit.coordinates(
-                              coordinates: z.rings.first,
-                              padding: const EdgeInsets.all(40),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 6,
-                    children: [
-                      FilterChip(
-                        label: Text(i18n.t('map.ndviSentinel')),
-                        selected: _showSentinelNdvi,
-                        onSelected:
-                            (v) => setState(() => _showSentinelNdvi = v),
-                      ),
-                      FilterChip(
-                        label: Text(i18n.t('map.ndviNasa')),
-                        selected: _showNasaNdvi,
-                        onSelected: (v) => setState(() => _showNasaNdvi = v),
-                      ),
-                      FilterChip(
-                        label: const Text('Dessiner parcelle'),
-                        selected: _drawParcelMode,
-                        avatar: const Icon(Icons.draw, size: 18),
-                        onSelected:
-                            (v) => setState(() {
-                              _drawParcelMode = v;
-                              if (!v) _drawnParcelPoints = [];
-                            }),
-                      ),
-                      FilterChip(
-                        label: Text(i18n.t('map.addPoint')),
-                        selected: _addPointMode,
-                        avatar: Icon(
-                          _addPointMode
-                              ? Icons.add_location_alt
-                              : Icons.add_location,
-                          size: 18,
-                        ),
-                        onSelected: (v) => setState(() => _addPointMode = v),
-                      ),
-                      FilterChip(
-                        label: Text(
-                          live.isSharing
-                              ? i18n.t('map.liveActive')
-                              : i18n.t('map.liveShare'),
-                        ),
-                        selected: live.isSharing,
-                        avatar: Icon(
-                          live.isSharing
-                              ? Icons.location_on
-                              : Icons.location_searching,
-                          size: 18,
-                          color: live.isSharing ? Colors.greenAccent : null,
-                        ),
-                        onSelected: (_) => live.toggleSharing(),
-                      ),
-                    ],
                   ),
-                ],
-              ),
+                ),
+                if (_mapChromeExpanded)
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.sizeOf(context).height * 0.48,
+                    ),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      child: _buildMapChromeBody(context, i18n, live),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -624,6 +507,185 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMapChromeBody(
+    BuildContext context,
+    LocaleService i18n,
+    LiveLocationService live,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          i18n.t('map.basemap'),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: 6),
+        SegmentedButton<BasemapType>(
+          segments:
+              BasemapType.values
+                  .map(
+                    (b) => ButtonSegment<BasemapType>(
+                      value: b,
+                      label: Text(b.shortLabel),
+                      tooltip: b.label,
+                    ),
+                  )
+                  .toList(),
+          selected: {_basemap},
+          onSelectionChanged: (s) {
+            if (s.isNotEmpty) setState(() => _basemap = s.first);
+          },
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _basemap.label,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'OW: ${_statusMsg('weather')} · Sentinel: ${_statusMsg('sentinel')} · NASA: ${_statusMsg('nasa')}',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        if (_weatherBadge != null) ...[
+          const SizedBox(height: 6),
+          Chip(
+            avatar: const Icon(Icons.wb_sunny_outlined, size: 16),
+            label: Text(_weatherBadge!),
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
+        if (live.peers.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              i18n.t('map.livePeers', vars: {'n': '${live.peers.length}'}),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.tealAccent),
+            ),
+          ),
+        const SizedBox(height: 8),
+        FilterChip(
+          label: Text(i18n.t('map.parcels.show')),
+          selected: _showParcels,
+          onSelected: (v) => setState(() => _showParcels = v),
+        ),
+        if (_showParcels && _zones.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 4,
+            children: [
+              ChoiceChip(
+                label: Text(i18n.t('map.parcels.all')),
+                selected: _parcelFilter == 'all',
+                onSelected: (_) => setState(() => _parcelFilter = 'all'),
+              ),
+              ChoiceChip(
+                label: Text(i18n.t('map.parcels.canton')),
+                selected: _parcelFilter == 'canton',
+                onSelected: (_) => setState(() => _parcelFilter = 'canton'),
+              ),
+              ChoiceChip(
+                label: Text(i18n.t('map.parcels.degraded')),
+                selected: _parcelFilter == 'degraded',
+                onSelected: (_) => setState(() => _parcelFilter = 'degraded'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          DropdownButtonFormField<String>(
+            value:
+                _filteredZones.any((z) => z.code == _selectedParcelCode)
+                    ? _selectedParcelCode
+                    : (_filteredZones.isNotEmpty
+                        ? _filteredZones.first.code
+                        : null),
+            decoration: InputDecoration(
+              labelText: i18n.t('map.parcels'),
+              isDense: true,
+            ),
+            items:
+                _filteredZones
+                    .map(
+                      (z) => DropdownMenuItem(
+                        value: z.code,
+                        child: Text(z.name),
+                      ),
+                    )
+                    .toList(),
+            onChanged: (code) {
+              if (code == null) return;
+              setState(() => _selectedParcelCode = code);
+              final z = _filteredZones.firstWhere((x) => x.code == code);
+              if (z.rings.isNotEmpty) {
+                _mapController.fitCamera(
+                  CameraFit.coordinates(
+                    coordinates: z.rings.first,
+                    padding: const EdgeInsets.all(40),
+                  ),
+                );
+              }
+            },
+          ),
+        ],
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          children: [
+            FilterChip(
+              label: Text(i18n.t('map.ndviSentinel')),
+              selected: _showSentinelNdvi,
+              onSelected: (v) => setState(() => _showSentinelNdvi = v),
+            ),
+            FilterChip(
+              label: Text(i18n.t('map.ndviNasa')),
+              selected: _showNasaNdvi,
+              onSelected: (v) => setState(() => _showNasaNdvi = v),
+            ),
+            FilterChip(
+              label: const Text('Dessiner parcelle'),
+              selected: _drawParcelMode,
+              avatar: const Icon(Icons.draw, size: 18),
+              onSelected:
+                  (v) => setState(() {
+                    _drawParcelMode = v;
+                    if (!v) _drawnParcelPoints = [];
+                  }),
+            ),
+            FilterChip(
+              label: Text(i18n.t('map.addPoint')),
+              selected: _addPointMode,
+              avatar: Icon(
+                _addPointMode
+                    ? Icons.add_location_alt
+                    : Icons.add_location,
+                size: 18,
+              ),
+              onSelected: (v) => setState(() => _addPointMode = v),
+            ),
+            FilterChip(
+              label: Text(
+                live.isSharing
+                    ? i18n.t('map.liveActive')
+                    : i18n.t('map.liveShare'),
+              ),
+              selected: live.isSharing,
+              avatar: Icon(
+                live.isSharing
+                    ? Icons.location_on
+                    : Icons.location_searching,
+                size: 18,
+                color: live.isSharing ? Colors.greenAccent : null,
+              ),
+              onSelected: (_) => live.toggleSharing(),
+            ),
+          ],
         ),
       ],
     );
@@ -821,6 +883,30 @@ class _MapScreenState extends State<MapScreen> {
                           'Couches cartographiques',
                           style: Theme.of(sheetContext).textTheme.titleLarge,
                         ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Fond de carte',
+                          style: Theme.of(sheetContext).textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 6),
+                        ...BasemapType.values.map(
+                          (b) => ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            selected: _basemap == b,
+                            leading: Icon(
+                              _basemap == b
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_off,
+                            ),
+                            title: Text(b.label),
+                            onTap: () {
+                              setState(() => _basemap = b);
+                              setSheetState(() {});
+                            },
+                          ),
+                        ),
+                        const Divider(height: 20),
                         SwitchListTile(
                           contentPadding: EdgeInsets.zero,
                           title: const Text('NASA'),

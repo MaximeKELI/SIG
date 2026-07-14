@@ -38,7 +38,7 @@ class AppStrings {
       'map.liveActive': 'Position partagée',
       'map.livePeers': '{n} agent(s) en ligne',
       'map.basemap': 'Fond de carte',
-      'map.basemap.osm': 'Plan',
+      'map.basemap.osm': 'OpenStreetMap',
       'map.basemap.satellite': 'Satellite',
       'map.basemap.topo': 'Topographique',
       'map.parcels': 'Parcelles',
