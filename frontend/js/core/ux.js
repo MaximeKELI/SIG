@@ -57,11 +57,16 @@ export function setSidebarOpen(open) {
   if (!sidebar) return;
   sidebar.classList.toggle('sidebar-open', open);
   btn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+  btn?.classList.toggle('is-hidden', open);
   if (backdrop) {
     backdrop.hidden = !open;
     backdrop.classList.toggle('visible', open);
   }
   document.body.classList.toggle('sidebar-is-open', open);
+  // La carte récupère toute la largeur : recalcul Leaflet
+  requestAnimationFrame(() => {
+    setTimeout(() => window.SigSolsMap?.getMap?.()?.invalidateSize?.(), open ? 380 : 80);
+  });
 }
 
 export function initSidebarUx() {
@@ -70,6 +75,9 @@ export function initSidebarUx() {
   const backdrop = document.getElementById('sidebar-backdrop');
   const sidebar = document.getElementById('sidebar');
   if (!sidebar) return;
+
+  // Tiroir fermé par défaut — la carte garde 100 % de l’espace
+  setSidebarOpen(false);
 
   btn?.addEventListener('click', () => {
     setSidebarOpen(!sidebar.classList.contains('sidebar-open'));
