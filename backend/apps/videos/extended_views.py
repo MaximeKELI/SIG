@@ -5,6 +5,7 @@ from rest_framework.response import Response
 
 from accounts.models import User
 from .models import StoryPost
+from .moderation import ai_moderation_hint, moderate_publication_text  # noqa: F401
 from .serializers import VideoPostSerializer
 
 
@@ -74,10 +75,17 @@ class StoryViewSet(viewsets.ModelViewSet):
         media = request.FILES.get('media')
         if not media:
             return Response({'detail': 'Fichier média requis.'}, status=400)
+        caption = (request.data.get('caption') or '')[:500]
+        mod = moderate_publication_text(caption=caption)
+        if mod.get('suggested_hide'):
+            return Response(
+                {'detail': mod.get('reason') or 'Contenu refusé par le filtre IA.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         story = StoryPost.objects.create(
             author=request.user,
             media=media,
-            caption=(request.data.get('caption') or '')[:500],
+            caption=caption,
             expires_at=timezone.now() + timezone.timedelta(hours=24),
         )
         return Response(
@@ -93,18 +101,3 @@ class StoryViewSet(viewsets.ModelViewSet):
         if instance.media:
             instance.media.delete(save=False)
         instance.delete()
-
-
-def ai_moderation_hint(text: str) -> dict:
-    """Heuristique simple (sans API externe) pour suggestion modération."""
-    lower = (text or '').lower()
-    flags = []
-    blocked = ['spam', 'arnaque', 'haine', 'insulte']
-    for w in blocked:
-        if w in lower:
-            flags.append(w)
-    return {
-        'suggested_hide': len(flags) > 0,
-        'flags': flags,
-        'confidence': 0.7 if flags else 0.1,
-    }

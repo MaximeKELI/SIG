@@ -56,7 +56,7 @@ class VideoPost(models.Model):
     status = models.CharField(
         max_length=12,
         choices=Status.choices,
-        default=Status.PENDING,
+        default=Status.PUBLISHED,
         db_index=True,
     )
     duration_seconds = models.PositiveIntegerField(

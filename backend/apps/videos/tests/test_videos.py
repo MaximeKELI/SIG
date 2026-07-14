@@ -28,7 +28,7 @@ class VideoPostAPITest(APITestCase):
     def _url(self, name, **kwargs):
         return reverse(name, kwargs=kwargs)
 
-    def test_public_upload_pending(self):
+    def test_public_upload_published(self):
         self.client.force_authenticate(self.public)
         res = self.client.post(
             self._url('video-post-list'),
@@ -41,9 +41,9 @@ class VideoPostAPITest(APITestCase):
             format='multipart',
         )
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(res.data['status'], 'pending')
+        self.assertEqual(res.data['status'], 'published')
 
-    def test_admin_upload_pending(self):
+    def test_admin_upload_published(self):
         self.client.force_authenticate(self.admin)
         res = self.client.post(
             self._url('video-post-list'),
@@ -58,9 +58,9 @@ class VideoPostAPITest(APITestCase):
             format='multipart',
         )
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(res.data['status'], 'pending')
+        self.assertEqual(res.data['status'], 'published')
 
-    def test_agent_upload_pending(self):
+    def test_agent_upload_published(self):
         agent = User.objects.create_user(
             username='vid_agent',
             password='pass12345',
@@ -79,7 +79,24 @@ class VideoPostAPITest(APITestCase):
             format='multipart',
         )
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(res.data['status'], 'pending')
+        self.assertEqual(res.data['status'], 'published')
+
+    def test_ai_filter_rejects_flagged_title(self):
+        self.client.force_authenticate(self.public)
+        res = self.client.post(
+            self._url('video-post-list'),
+            {
+                'kind': 'video',
+                'title': 'Offre arnaque spam',
+                'description': 'insulte gratuit',
+                'file': SimpleUploadedFile(
+                    'bad.mp4', b'x', content_type='video/mp4',
+                ),
+            },
+            format='multipart',
+        )
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(VideoPost.objects.filter(title='Offre arnaque spam').exists())
 
     def test_anon_lists_only_published(self):
         VideoPost.objects.create(

@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api/api_client.dart';
@@ -143,17 +144,101 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _uploadPhoto(AuthService auth) async {
-    final pick = await FilePicker.platform.pickFiles(type: FileType.image);
-    if (pick == null || pick.files.single.path == null || !mounted) return;
-    setState(() => _photoBusy = true);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder:
+          (ctx) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.photo_camera_outlined),
+                  title: const Text('Prendre une photo'),
+                  onTap: () => Navigator.pop(ctx, 'camera'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: const Text('Choisir dans la galerie'),
+                  onTap: () => Navigator.pop(ctx, 'gallery'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.folder_open_outlined),
+                  title: const Text('Fichier'),
+                  onTap: () => Navigator.pop(ctx, 'file'),
+                ),
+              ],
+            ),
+          ),
+    );
+    if (choice == null || !mounted) return;
+
+    String? path;
+    List<int>? bytes;
+    String? name;
+
     try {
-      final data = await context.read<ApiClient>().uploadProfilePhoto(pick.files.single.path!);
-      await auth.refreshFromJson(Map<String, dynamic>.from(data));
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Photo mise à jour')));
+      if (choice == 'camera' || choice == 'gallery') {
+        final picker = ImagePicker();
+        final x = await picker.pickImage(
+          source:
+              choice == 'camera' ? ImageSource.camera : ImageSource.gallery,
+          maxWidth: 1600,
+          maxHeight: 1600,
+          imageQuality: 88,
+        );
+        if (x == null) return;
+        path = x.path.isEmpty ? null : x.path;
+        name = x.name;
+        if (path == null) bytes = await x.readAsBytes();
+      } else {
+        final pick = await FilePicker.platform.pickFiles(
+          type: FileType.image,
+          withData: true,
+        );
+        if (pick == null || pick.files.isEmpty) return;
+        final f = pick.files.single;
+        path = f.path;
+        bytes = f.bytes;
+        name = f.name;
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sélection impossible : $e')),
+        );
+      }
+      return;
+    }
+
+    if (!mounted) return;
+    if ((path == null || path.isEmpty) && bytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fichier inaccessible sur cet appareil.')),
+      );
+      return;
+    }
+
+    setState(() => _photoBusy = true);
+    try {
+      final client = context.read<ApiClient>();
+      final data = await client.uploadProfilePhoto(
+        path,
+        fileBytes: bytes,
+        fileName: name,
+      );
+      await auth.refreshFromJson(Map<String, dynamic>.from(data));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Photo de profil mise à jour')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Échec photo de profil : $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _photoBusy = false);
     }

@@ -304,7 +304,7 @@ class _VideosScreenState extends State<VideosScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Publication envoyée — en attente de validation admin.',
+            'Publication publiée — visible immédiatement.',
           ),
         ),
       );

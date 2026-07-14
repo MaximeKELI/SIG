@@ -63,9 +63,8 @@ class VideoPostViewSet(viewsets.ModelViewSet):
         return annotate_post_engagement(base, user)
 
     def perform_create(self, serializer):
-        post = serializer.save()
-        if post.status == VideoPost.Status.PENDING:
-            self._notify_admins_pending(post)
+        serializer.save()
+        # Plus de file d'attente admin : publication directe (sauf rejet filtre IA).
 
     def perform_destroy(self, instance):
         """Suppression auteur/admin + fichiers média associés."""

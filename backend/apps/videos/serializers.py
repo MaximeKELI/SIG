@@ -131,10 +131,23 @@ class VideoPostCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        from rest_framework.exceptions import ValidationError
+
+        from .moderation import moderate_publication_text
+
         request = self.context['request']
         validated_data['author'] = request.user
-        # Toute publication doit être validée par un administrateur.
-        validated_data['status'] = VideoPost.Status.PENDING
+        # Publication immédiate (plus de validation admin obligatoire).
+        # Pré-filtre IA léger sur titre/description ; rejet HTTP 400 si signalé.
+        mod = moderate_publication_text(
+            title=validated_data.get('title') or '',
+            description=validated_data.get('description') or '',
+        )
+        if mod.get('suggested_hide'):
+            raise ValidationError({
+                'detail': mod.get('reason') or 'Contenu refusé par le filtre IA.',
+            })
+        validated_data['status'] = VideoPost.Status.PUBLISHED
         return super().create(validated_data)
 
 

@@ -567,8 +567,10 @@ function handleUpload(form, kind, msgEl) {
     try {
       const res = await API().upload('/videos/posts/', fd);
       msgEl.textContent = res.status === 'published'
-        ? 'Publié !'
-        : 'Envoyé — en attente de validation par un admin.';
+        ? 'Publié ! Visible immédiatement.'
+        : (res.status === 'rejected'
+          ? (res.rejection_reason || 'Publication refusée par le filtre.')
+          : 'Envoi enregistré.');
       form.reset();
       if (kind === 'video') loadVideos();
       else loadShorts();

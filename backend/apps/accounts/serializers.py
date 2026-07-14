@@ -47,9 +47,35 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ProfilePhotoSerializer(serializers.Serializer):
-    profile_photo = serializers.ImageField()
+    profile_photo = serializers.ImageField(required=False)
+
+    def to_internal_value(self, data):
+        # Compat mobile/web : profile_photo | photo | file | image
+        mutable = {}
+        if hasattr(data, 'items'):
+            mutable = {k: v for k, v in data.items()}
+        else:
+            mutable = dict(data)
+        raw = (
+            mutable.get('profile_photo')
+            or mutable.get('photo')
+            or mutable.get('file')
+            or mutable.get('image')
+        )
+        if raw is not None:
+            mutable['profile_photo'] = raw
+        return super().to_internal_value(mutable)
+
+    def validate(self, attrs):
+        if not attrs.get('profile_photo'):
+            raise serializers.ValidationError({
+                'profile_photo': 'Image requise (champ profile_photo, photo ou file).',
+            })
+        return attrs
 
     def validate_profile_photo(self, file_obj):
+        if file_obj is None:
+            return file_obj
         ext = os.path.splitext(file_obj.name or '')[1].lower()
         if ext not in PROFILE_PHOTO_EXTENSIONS:
             raise serializers.ValidationError(
