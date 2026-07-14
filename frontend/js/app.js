@@ -1,20 +1,19 @@
 document.querySelectorAll('.nav-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));
-    const views = document.querySelectorAll('.view');
-    views.forEach((v) => {
+    document.querySelectorAll('.view').forEach((v) => {
       v.classList.remove('active');
       v.style.removeProperty('animation');
+      v.style.removeProperty('opacity');
+      v.style.removeProperty('visibility');
     });
     btn.classList.add('active');
     const viewName = btn.dataset.view;
     const target = document.getElementById('view-' + viewName);
     if (!target) return;
-    // Relance l’entrée CSS sans laisser opacity bloqué à 0
-    target.style.animation = 'none';
-    void target.offsetWidth;
-    target.style.removeProperty('animation');
     target.classList.add('active');
+    target.style.opacity = '1';
+    target.style.visibility = 'visible';
     target.querySelectorAll('.animate-stagger').forEach((grid) => {
       window.SigSolsAnimations?.refreshStagger?.(grid);
     });

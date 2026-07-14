@@ -99,16 +99,14 @@ body::before {
 #view-help.active,
 .view.active {
   opacity: 1;
-  animation: viewEnterEnhanced 0.55s var(--ease-out-expo) both;
+  animation: viewEnterEnhanced 0.45s var(--ease-out-expo) both;
 }
 
 @keyframes viewEnterEnhanced {
   from {
-    opacity: 0;
     transform: translateY(10px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
@@ -144,11 +142,19 @@ body::before {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: fadeUp 0.6s var(--ease-smooth) both;
+  /* Pas de fade opacity : both + display:none → opacité bloquée à 0 (écran noir) */
+  opacity: 1;
+  animation: viewTitleIn 0.45s var(--ease-smooth) both;
 }
 
 .view-hero-sub {
-  animation: fadeUp 0.6s var(--ease-smooth) 0.08s both;
+  opacity: 1;
+  animation: viewTitleIn 0.45s var(--ease-smooth) 0.06s both;
+}
+
+@keyframes viewTitleIn {
+  from { transform: translateY(8px); }
+  to { transform: translateY(0); }
 }
 
 /* ─── Navigation ─── */
@@ -214,8 +220,15 @@ body::before {
 }
 
 /* ─── Cartes & grilles ─── */
+/* Transform only — fadeUp (opacity) restait à 0 après display:none */
+@keyframes staggerIn {
+  from { transform: translateY(12px); }
+  to { transform: translateY(0); }
+}
+
 .animate-stagger > * {
-  animation: fadeUp 0.55s var(--ease-out-expo) both;
+  opacity: 1;
+  animation: staggerIn 0.45s var(--ease-out-expo) both;
 }
 
 .animate-stagger > *:nth-child(1) { animation-delay: calc(var(--motion-stagger-step) * 1); }
@@ -417,10 +430,11 @@ body::before {
   transform: translateY(-2px);
 }
 
-/* Liste classement */
+/* Liste classement — transform only (évite opacity bloquée) */
 #leaderboard li,
 #my-badges .badge-item {
-  animation: fadeUp 0.45s var(--ease-smooth) both;
+  opacity: 1;
+  animation: staggerIn 0.45s var(--ease-smooth) both;
 }
 
 /* Carte Leaflet — pop */
@@ -452,6 +466,7 @@ body::before {
   }
 
   .view.active {
-    animation: fadeIn 0.2s ease !important;
+    animation: none !important;
+    opacity: 1 !important;
   }
 }

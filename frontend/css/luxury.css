@@ -566,20 +566,40 @@ body:not(.sidebar-is-open) .sidebar-backdrop {
   box-shadow: 0 8px 22px rgba(201, 169, 98, 0.28);
 }
 
-/* Critique : opacity:1 doit rester après l’animation (sinon écran noir) */
+/* Critique : ne jamais animer opacity sur .view (écran noir après l’anim) */
+.view:not(.active) {
+  display: none !important;
+}
+
 .view.active {
   opacity: 1 !important;
-  animation: luxeViewIn 0.55s var(--ease-luxe) both !important;
+  visibility: visible !important;
+  animation: luxeViewIn 0.45s var(--ease-luxe) both !important;
+}
+
+.view.active:not(#view-map) {
+  background: var(--cream);
+  color: var(--slate-900);
+}
+
+/* Contenu des vues : jamais d’opacity 0 (bug fill-mode + display:none) */
+.view .view-hero-title,
+.view .view-hero-sub,
+.view .animate-stagger > *,
+.view .kpi-card,
+.view .sheet-card,
+.view .quiz-panel,
+.view .dash-card,
+.view .video-card {
+  opacity: 1 !important;
 }
 
 @keyframes luxeViewIn {
   from {
-    opacity: 0;
-    transform: translateY(14px) scale(0.992);
+    transform: translateY(12px);
   }
   to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
