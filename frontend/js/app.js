@@ -4,14 +4,17 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
     const views = document.querySelectorAll('.view');
     views.forEach((v) => {
       v.classList.remove('active');
-      v.style.animation = 'none';
+      v.style.removeProperty('animation');
     });
     btn.classList.add('active');
     const viewName = btn.dataset.view;
     const target = document.getElementById('view-' + viewName);
-    target.classList.add('active');
+    if (!target) return;
+    // Relance l’entrée CSS sans laisser opacity bloqué à 0
+    target.style.animation = 'none';
     void target.offsetWidth;
-    target.style.animation = '';
+    target.style.removeProperty('animation');
+    target.classList.add('active');
     target.querySelectorAll('.animate-stagger').forEach((grid) => {
       window.SigSolsAnimations?.refreshStagger?.(grid);
     });
@@ -34,23 +37,17 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
       SigSolsQuiz.loadQuizStats?.();
       SigSolsQuiz.loadLeaderboard();
       SigSolsQuiz.loadBadges();
-    }
-    if (viewName === 'sheets') SigSolsQuiz.loadSheets();
-    if (viewName === 'videos') window.SigSolsVideos?.loadVideos?.();
-    if (viewName === 'shorts') window.SigSolsVideos?.loadShorts?.();
-    if (viewName === 'community') window.SigSolsCommunity?.loadCommunity?.();
-    if (viewName === 'my-dashboard') window.SigSolsFeaturesHub?.loadPersonalDashboard?.();
-    if (viewName === 'quiz') {
-      SigSolsQuiz.loadQuizStats?.();
-      SigSolsQuiz.loadLeaderboard();
-      SigSolsQuiz.loadBadges();
       window.SigSolsFeaturesHub?.loadLearningPath?.();
       window.SigSolsFeaturesHub?.loadWeeklyChallenge?.();
     }
+    if (viewName === 'sheets') SigSolsQuiz.loadSheets();
+    if (viewName === 'videos') window.SigSolsVideos?.loadVideos?.();
     if (viewName === 'shorts') {
       window.SigSolsVideos?.loadShorts?.();
       window.SigSolsFeaturesHub?.loadStories?.();
     }
+    if (viewName === 'community') window.SigSolsCommunity?.loadCommunity?.();
+    if (viewName === 'my-dashboard') window.SigSolsFeaturesHub?.loadPersonalDashboard?.();
     if (viewName === 'admin') {
       window.SigSolsVideos?.loadAdminPending?.();
       window.SigSolsVideos?.loadCommentsModeration?.();

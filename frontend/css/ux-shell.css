@@ -609,7 +609,8 @@ body.theme-dark .chip.active {
 /* ─── Vues contenu ─── */
 .view:not(#view-map) {
   padding: 1.25rem clamp(1rem, 3vw, 2rem) 2.5rem;
-  animation: fadeUp 0.45s var(--ease-out);
+  /* Pas d'animation ici : :not(#id) bat .view.active et faisait
+     disparaître la vue à la fin de fadeUp (opacity → 0). */
 }
 
 .kpi-card,

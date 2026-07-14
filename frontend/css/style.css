@@ -508,7 +508,8 @@ main {
 
 .view.active {
   display: flex;
-  animation: viewEnter 0.5s var(--ease-out) forwards;
+  opacity: 1;
+  animation: viewEnter 0.5s var(--ease-out);
 }
 
 @keyframes viewEnter {
@@ -521,6 +522,11 @@ main {
 #view-dashboard.active,
 #view-quiz.active,
 #view-sheets.active,
+#view-videos.active,
+#view-shorts.active,
+#view-community.active,
+#view-my-dashboard.active,
+#view-help.active,
 #view-admin.active {
   display: block;
   overflow-y: auto;

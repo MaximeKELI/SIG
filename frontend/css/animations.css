@@ -97,14 +97,9 @@ body::before {
 #view-shorts.active,
 #view-community.active,
 #view-help.active,
-#view-my-dashboard.active {
-  display: block;
-  overflow-y: auto;
-  height: calc(100vh - 130px);
-}
-
 .view.active {
-  animation: viewEnterEnhanced 0.55s var(--ease-out-expo) forwards;
+  opacity: 1;
+  animation: viewEnterEnhanced 0.55s var(--ease-out-expo);
 }
 
 @keyframes viewEnterEnhanced {
