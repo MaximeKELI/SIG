@@ -196,10 +196,24 @@ class ApiClient {
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> payload) =>
       patch<Map<String, dynamic>>('/auth/profile/', data: payload);
 
-  Future<Map<String, dynamic>> uploadProfilePhoto(String filePath) async {
-    final form = FormData.fromMap({
-      'photo': await MultipartFile.fromFile(filePath),
-    });
+  Future<Map<String, dynamic>> uploadProfilePhoto(
+    String? filePath, {
+    List<int>? fileBytes,
+    String? fileName,
+  }) async {
+    assert(
+      (filePath != null && filePath.isNotEmpty) || fileBytes != null,
+      'filePath ou fileBytes requis',
+    );
+    final name = fileName ?? filePath?.split('/').last ?? 'avatar.jpg';
+    final MultipartFile photo;
+    if (fileBytes != null) {
+      photo = MultipartFile.fromBytes(fileBytes, filename: name);
+    } else {
+      photo = await MultipartFile.fromFile(filePath!, filename: name);
+    }
+    // Champ API : profile_photo (aliases photo/file acceptés côté serveur).
+    final form = FormData.fromMap({'profile_photo': photo});
     return upload('/auth/profile/photo/', form);
   }
 
