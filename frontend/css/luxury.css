@@ -265,10 +265,17 @@ body:not(.sidebar-is-open) .sidebar-backdrop {
   padding: 0.15rem 0.9rem 0.9rem !important;
   gap: 0.55rem !important;
   border-top: 1px solid rgba(201, 169, 98, 0.12);
-  max-height: min(38vh, 18rem);
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--gold-500) transparent;
+  max-height: none;
+  overflow: visible;
+}
+
+/* Sections toujours dépliées — pas de “dérouler” */
+#view-map .sidebar-panel > summary {
+  cursor: default;
+  pointer-events: none;
+}
+#view-map .sidebar-panel > summary::after {
+  display: none !important;
 }
 
 @keyframes luxeBodyIn {
