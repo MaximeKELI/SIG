@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../models/parcel_analysis.dart';
 import '../../services/sig_api.dart';
@@ -197,7 +200,25 @@ class _ParcelScreenState extends State<ParcelScreen> {
             ),
           ),
         ],
+        const SizedBox(height: 12),
+        FilledButton.tonalIcon(
+          onPressed: () => _exportJson(r),
+          icon: const Icon(Icons.ios_share),
+          label: const Text('Exporter JSON'),
+        ),
       ],
     );
+  }
+
+  Future<void> _exportJson(ParcelAnalysis r) async {
+    final payload = r.raw ?? {
+      'parcel_name': r.parcelName,
+      'area_ha': r.areaHa,
+      'soil_points_count': r.soilPointsCount,
+      'health_index': r.healthIndex,
+      'recommendations': r.recommendations,
+    };
+    final text = const JsonEncoder.withIndent('  ').convert(payload);
+    await Share.share(text, subject: 'SIG Sols Togo — parcelle ${r.parcelName}');
   }
 }

@@ -276,6 +276,9 @@ class SigApi {
   String sheetPdfUrl(int id) => '${Env.origin}/api/v1/education/sheets/$id/pdf/';
 
   // --- Vidéos ---
+  Future<Map<String, dynamic>> fetchVideo(int id) =>
+      _client.get('/videos/posts/$id/');
+
   Future<List<dynamic>> fetchVideos({String kind = 'video', String? category}) async {
     final data = await _client.get<dynamic>(
       '/videos/posts/',
@@ -480,19 +483,23 @@ class SigApi {
   Future<void> confirmPasswordReset({
     required String token,
     required String password,
+    String? passwordConfirm,
   }) =>
       _client.post('/platform/password/reset/confirm/', data: {
         'token': token,
-        'password': password,
+        'new_password': password,
+        'new_password_confirm': passwordConfirm ?? password,
       });
 
   Future<void> changePassword({
     required String oldPassword,
     required String newPassword,
+    String? newPasswordConfirm,
   }) =>
       _client.post('/auth/password/change/', data: {
         'old_password': oldPassword,
         'new_password': newPassword,
+        'new_password_confirm': newPasswordConfirm ?? newPassword,
       });
 
   Future<void> postActivity({
@@ -521,7 +528,7 @@ class SigApi {
       _client.post('/points/$id/validate_point/', data: {'action': action});
 
   Future<Map<String, dynamic>> deleteProfilePhoto() =>
-      _client.delete('/auth/profile/photo/');
+      _client.deleteProfilePhoto();
 
   Future<Map<String, dynamic>> toggleCommentLike(int commentId) =>
       _client.post('/videos/comments/$commentId/toggle_like/');

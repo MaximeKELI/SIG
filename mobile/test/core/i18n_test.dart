@@ -11,7 +11,9 @@ void main() {
       '12 soil points',
     );
     expect(AppStrings.langToggleLabel('fr'), 'EN');
-    expect(AppStrings.langToggleLabel('en'), 'FR');
+    expect(AppStrings.langToggleLabel('en'), 'EE');
+    expect(AppStrings.langToggleLabel('ee'), 'KAB');
+    expect(AppStrings.langToggleLabel('kab'), 'FR');
   });
 
   test('LivePeer fromJson', () {

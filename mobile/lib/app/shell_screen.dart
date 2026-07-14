@@ -258,15 +258,20 @@ class _ShellScreenState extends State<ShellScreen> {
 }
 
 class ShellIndexScreen extends StatelessWidget {
-  const ShellIndexScreen({super.key, required this.route});
+  const ShellIndexScreen({
+    super.key,
+    required this.route,
+    this.focusPointId,
+  });
 
   final String route;
+  final int? focusPointId;
 
   @override
   Widget build(BuildContext context) {
     switch (route) {
       case '/':
-        return const MapScreen();
+        return MapScreen(focusPointId: focusPointId);
       case '/dashboard':
         return const DashboardScreen();
       case '/quiz':
@@ -284,7 +289,7 @@ class ShellIndexScreen extends StatelessWidget {
       case '/profile':
         return const ProfileScreen();
       default:
-        return const MapScreen();
+        return MapScreen(focusPointId: focusPointId);
     }
   }
 }

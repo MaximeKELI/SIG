@@ -196,7 +196,8 @@ class ApiClient {
     return upload('/auth/profile/photo/', form);
   }
 
-  Future<void> deleteProfilePhoto() => delete('/auth/profile/photo/');
+  Future<Map<String, dynamic>> deleteProfilePhoto() =>
+      delete<Map<String, dynamic>>('/auth/profile/photo/');
 
   Future<String> downloadText(String path, {Map<String, dynamic>? query}) async {
     try {

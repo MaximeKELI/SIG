@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/sig_api.dart';
@@ -43,6 +44,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
               controller: _emailCtrl,
@@ -55,19 +57,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             FilledButton(
               onPressed: _loading ? null : _submit,
               child: _loading
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Text('Envoyer le lien'),
             ),
             TextButton(
-              onPressed: () => Navigator.of(context).pushNamed('/reset-password'),
+              onPressed: () => context.push('/reset-password'),
               child: const Text('J’ai déjà un jeton — réinitialiser'),
-            ),
-            TextButton(
-              onPressed: () {
-                // go_router path
-                // ignore: unnecessary_import
-              },
-              child: const SizedBox.shrink(),
             ),
           ],
         ),

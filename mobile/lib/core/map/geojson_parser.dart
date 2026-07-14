@@ -39,13 +39,23 @@ List<List<LatLng>> _ringsFromGeometry(Map<String, dynamic> geom) {
   final coords = geom['coordinates'];
   if (coords == null) return [];
 
+  // Polygon: [ ring, hole… ] where ring = [[lon, lat], …]
   if (type == 'Polygon') {
-    return [_ringFromCoords(coords as List)];
-  }
-  if (type == 'MultiPolygon') {
     return (coords as List)
-        .map((poly) => _ringFromCoords((poly as List).first as List))
+        .map((ring) => _ringFromCoords(ring as List))
+        .where((ring) => ring.isNotEmpty)
         .toList();
+  }
+  // MultiPolygon: [ polygon, … ] where polygon = [ ring, … ]
+  if (type == 'MultiPolygon') {
+    final rings = <List<LatLng>>[];
+    for (final poly in coords as List) {
+      for (final ring in poly as List) {
+        final parsed = _ringFromCoords(ring as List);
+        if (parsed.isNotEmpty) rings.add(parsed);
+      }
+    }
+    return rings;
   }
   return [];
 }
@@ -54,7 +64,9 @@ List<LatLng> _ringFromCoords(List ring) {
   return ring
       .map((c) {
         final pair = c as List;
-        return LatLng((pair[1] as num).toDouble(), (pair[0] as num).toDouble());
+        final lon = (pair[0] as num).toDouble();
+        final lat = (pair[1] as num).toDouble();
+        return LatLng(lat, lon);
       })
       .toList();
 }

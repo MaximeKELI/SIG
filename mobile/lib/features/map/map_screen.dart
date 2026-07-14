@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../core/auth/auth_service.dart';
 import '../../core/i18n/locale_service.dart';
@@ -23,7 +26,9 @@ import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  const MapScreen({super.key, this.focusPointId});
+
+  final int? focusPointId;
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -126,6 +131,7 @@ class _MapScreenState extends State<MapScreen> {
         _loading = false;
       });
       await _loadParcels();
+      await _focusPointIfNeeded();
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -133,6 +139,39 @@ class _MapScreenState extends State<MapScreen> {
         _loading = false;
       });
     }
+  }
+
+  Future<void> _focusPointIfNeeded() async {
+    final id = widget.focusPointId;
+    if (id == null || !mounted) return;
+    SoilPoint? match;
+    for (final p in _points) {
+      if (p.id == id) {
+        match = p;
+        break;
+      }
+    }
+    if (match == null) {
+      try {
+        final data = await context.read<SigApi>().fetchPoint(id);
+        if (!mounted) return;
+        match = SoilPoint.fromJson(Map<String, dynamic>.from(data));
+        setState(() {
+          if (!_points.any((p) => p.id == id)) {
+            _points = [..._points, match!];
+          }
+        });
+      } catch (_) {
+        return;
+      }
+    }
+    if (!mounted) return;
+    final focused = match!;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _mapController.move(LatLng(focused.lat, focused.lon), 15);
+      _showPointSheet(focused);
+    });
   }
 
   Color _phColor(SoilPoint p) {
@@ -678,10 +717,28 @@ class _MapScreenState extends State<MapScreen> {
                       nasa: r.nasa,
                       ml: r.mlPrediction,
                     ),
+                    const SizedBox(height: 12),
+                    FilledButton.tonalIcon(
+                      onPressed: () => _exportParcelJson(r),
+                      icon: const Icon(Icons.ios_share),
+                      label: const Text('Exporter JSON'),
+                    ),
                   ],
                 ),
           ),
     );
+  }
+
+  Future<void> _exportParcelJson(ParcelAnalysis r) async {
+    final payload = r.raw ?? {
+      'parcel_name': r.parcelName,
+      'area_ha': r.areaHa,
+      'soil_points_count': r.soilPointsCount,
+      'health_index': r.healthIndex,
+      'recommendations': r.recommendations,
+    };
+    final text = const JsonEncoder.withIndent('  ').convert(payload);
+    await Share.share(text, subject: 'SIG Sols Togo — parcelle ${r.parcelName}');
   }
 
   void _showPointSheet(SoilPoint p) {

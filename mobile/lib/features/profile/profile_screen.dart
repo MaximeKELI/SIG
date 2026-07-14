@@ -19,6 +19,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _dbInfo;
   String? _dbStatus;
+  bool _photoBusy = false;
 
   @override
   void initState() {
@@ -51,7 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final phone = TextEditingController(text: user.phone ?? '');
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Modifier le profil'),
         content: SingleChildScrollView(
           child: Column(
@@ -65,12 +66,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Enregistrer')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Annuler')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Enregistrer')),
         ],
       ),
     );
-    if (ok != true) return;
+    if (ok != true || !mounted) return;
     try {
       final client = context.read<ApiClient>();
       final data = await client.updateProfile({
@@ -81,8 +82,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
       if (data['user'] != null) {
         await auth.refreshFromJson(Map<String, dynamic>.from(data['user'] as Map));
+      } else {
+        await auth.refreshFromJson(Map<String, dynamic>.from(data));
       }
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil mis à jour')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil mis à jour')));
+      }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
@@ -91,40 +96,91 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _changePassword() async {
     final oldP = TextEditingController();
     final newP = TextEditingController();
+    final confirmP = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Changer le mot de passe'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(controller: oldP, obscureText: true, decoration: const InputDecoration(labelText: 'Ancien')),
             TextField(controller: newP, obscureText: true, decoration: const InputDecoration(labelText: 'Nouveau')),
+            TextField(
+              controller: confirmP,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Confirmer'),
+            ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Valider')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Annuler')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Valider')),
         ],
       ),
     );
-    if (ok != true) return;
+    if (ok != true || !mounted) return;
+    if (newP.text != confirmP.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Les mots de passe ne correspondent pas.')),
+      );
+      return;
+    }
     try {
-      await context.read<SigApi>().changePassword(oldPassword: oldP.text, newPassword: newP.text);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mot de passe changé')));
+      await context.read<SigApi>().changePassword(
+        oldPassword: oldP.text,
+        newPassword: newP.text,
+        newPasswordConfirm: confirmP.text,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mot de passe changé')));
+      }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
   }
 
-  Future<void> _uploadPhoto() async {
+  Future<void> _uploadPhoto(AuthService auth) async {
     final pick = await FilePicker.platform.pickFiles(type: FileType.image);
-    if (pick == null || pick.files.single.path == null) return;
+    if (pick == null || pick.files.single.path == null || !mounted) return;
+    setState(() => _photoBusy = true);
     try {
-      await context.read<ApiClient>().uploadProfilePhoto(pick.files.single.path!);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Photo mise à jour')));
+      final data = await context.read<ApiClient>().uploadProfilePhoto(pick.files.single.path!);
+      await auth.refreshFromJson(Map<String, dynamic>.from(data));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Photo mise à jour')));
+      }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    } finally {
+      if (mounted) setState(() => _photoBusy = false);
+    }
+  }
+
+  Future<void> _deletePhoto(AuthService auth) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Supprimer la photo'),
+        content: const Text('Retirer votre photo de profil ?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Annuler')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Supprimer')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _photoBusy = true);
+    try {
+      final data = await context.read<SigApi>().deleteProfilePhoto();
+      await auth.refreshFromJson(Map<String, dynamic>.from(data));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Photo supprimée')));
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    } finally {
+      if (mounted) setState(() => _photoBusy = false);
     }
   }
 
@@ -144,23 +200,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Widget _avatar(AuthService auth) {
+    final user = auth.user;
+    final photoUrl = Env.resolveMediaUrl(user?.profilePhotoUrl);
+    final letter = (user?.displayName ?? '?')[0].toUpperCase();
+    return CircleAvatar(
+      radius: 40,
+      backgroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+      child: _photoBusy
+          ? const SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : (photoUrl.isEmpty
+              ? Text(letter, style: const TextStyle(fontSize: 32))
+              : null),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
     final sync = context.watch<OfflineSyncService>();
     final user = auth.user;
+    final hasPhoto = (user?.profilePhotoUrl ?? '').isNotEmpty;
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         GestureDetector(
-          onTap: _uploadPhoto,
-          child: CircleAvatar(
-            radius: 40,
-            child: Text((user?.displayName ?? '?')[0].toUpperCase(), style: const TextStyle(fontSize: 32)),
-          ),
+          onTap: _photoBusy ? null : () => _uploadPhoto(auth),
+          child: _avatar(auth),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextButton(
+              onPressed: _photoBusy ? null : () => _uploadPhoto(auth),
+              child: const Text('Changer la photo'),
+            ),
+            if (hasPhoto)
+              TextButton(
+                onPressed: _photoBusy ? null : () => _deletePhoto(auth),
+                child: const Text('Supprimer'),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
         Text(user?.displayName ?? '', style: Theme.of(context).textTheme.headlineSmall, textAlign: TextAlign.center),
         Text('@${user?.username ?? ''} · ${user?.role ?? ''}', textAlign: TextAlign.center),
         const SizedBox(height: 12),
@@ -199,24 +287,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 20),
         FilledButton.icon(
           onPressed: () async {
-            final ok = await showDialog<bool>(
-              context: context,
-              builder: (_) => AlertDialog(
-                title: const Text('Déconnexion'),
-                content: const Text('Voulez-vous vraiment vous déconnecter ?'),
-                actions: [
-                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
-                  FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Déconnecter')),
-                ],
-              ),
-            );
-            if (ok == true) {
-              await auth.logout();
-              if (context.mounted) context.go('/login');
-            }
+            await auth.logout();
+            if (context.mounted) context.go('/login');
           },
           icon: const Icon(Icons.logout),
-          label: const Text('Se déconnecter'),
+          label: const Text('Déconnexion'),
         ),
       ],
     );

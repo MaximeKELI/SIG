@@ -3,8 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/config/env.dart';
 import '../../services/sig_api.dart';
+import '../videos/video_player_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -30,12 +30,30 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() => _loading = true);
     try {
       final results = await context.read<SigApi>().globalSearch(q);
+      if (!mounted) return;
       setState(() {
         _results = results;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
+  Future<void> _openVideo(dynamic id) async {
+    final postId = id is int ? id : int.tryParse('$id');
+    if (postId == null) return;
+    try {
+      final post = await context.read<SigApi>().fetchVideo(postId);
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => VideoPlayerScreen(post: post),
+        ),
+      );
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
       }
@@ -60,10 +78,15 @@ class _SearchScreenState extends State<SearchScreen> {
         break;
       case 'video':
       case 'short':
-        context.go(type == 'short' ? '/shorts' : '/videos');
+        await _openVideo(id);
         break;
       case 'point':
-        context.go('/');
+        final pointId = id is int ? id : int.tryParse('$id');
+        if (pointId != null) {
+          context.go('/?point=$pointId');
+        } else {
+          context.go('/');
+        }
         break;
       default:
         break;
@@ -122,6 +145,7 @@ class _SearchScreenState extends State<SearchScreen> {
       case 'sheet':
         return Icons.menu_book;
       case 'video':
+      case 'short':
         return Icons.videocam;
       case 'user':
         return Icons.person;

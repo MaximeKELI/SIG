@@ -25,6 +25,9 @@ class _AdminScreenState extends State<AdminScreen> {
   List<dynamic> _activity = [];
   List<dynamic> _comments = [];
   List<dynamic> _journal = [];
+  Map<String, dynamic>? _userActivity;
+  final _userActivityCtrl = TextEditingController();
+  final _zoneCodeCtrl = TextEditingController();
   bool _loading = true;
   String? _error;
 
@@ -32,6 +35,13 @@ class _AdminScreenState extends State<AdminScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _userActivityCtrl.dispose();
+    _zoneCodeCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -226,9 +236,75 @@ class _AdminScreenState extends State<AdminScreen> {
                           }).toList(),
                     ),
           ),
+          const SizedBox(height: 20),
+          Text(
+            'Activité par utilisateur',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _userActivityCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'ID utilisateur',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.tonal(
+                      onPressed: _loadUserActivity,
+                      child: const Text('Charger'),
+                    ),
+                  ),
+                  if (_userActivity != null) ...[
+                    const Divider(),
+                    ..._userActivity!.entries
+                        .where(
+                          (e) =>
+                              e.value is num ||
+                              e.value is String ||
+                              e.value is bool,
+                        )
+                        .take(12)
+                        .map(
+                          (e) => ListTile(
+                            dense: true,
+                            title: Text(_label(e.key)),
+                            trailing: Text('${e.value}'),
+                          ),
+                        ),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _loadUserActivity() async {
+    final id = int.tryParse(_userActivityCtrl.text.trim());
+    if (id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ID utilisateur invalide.')),
+      );
+      return;
+    }
+    try {
+      final data = await context.read<SigApi>().adminUserActivity(id);
+      if (mounted) setState(() => _userActivity = data);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
   }
 
   Widget _metricChart(List<double> values) => BarChart(
@@ -404,11 +480,40 @@ class _AdminScreenState extends State<AdminScreen> {
               title: const Text('Ouvrir le rapport ministère'),
               onTap: _openMinistryReport,
             ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: TextField(
+                controller: _zoneCodeCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Code zone (rapport)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.map_outlined),
+              title: const Text('Rapport zone (CSV)'),
+              onTap: _exportZoneReport,
+            ),
           ],
         ),
       ),
     ],
   );
+
+  Future<void> _exportZoneReport() async {
+    final code = _zoneCodeCtrl.text.trim();
+    if (code.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Saisissez un code zone.')),
+      );
+      return;
+    }
+    await _exportCsv(
+      'zone $code',
+      () => context.read<SigApi>().downloadZoneReport(code),
+    );
+  }
 
   Future<void> _runOperation(
     String label,

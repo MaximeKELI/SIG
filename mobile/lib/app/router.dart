@@ -67,7 +67,13 @@ GoRouter createRouter(AuthService auth) {
         routes: [
           GoRoute(
             path: '/',
-            builder: (_, __) => const ShellIndexScreen(route: '/'),
+            builder: (_, state) {
+              final raw = state.uri.queryParameters['point'];
+              return ShellIndexScreen(
+                route: '/',
+                focusPointId: raw != null ? int.tryParse(raw) : null,
+              );
+            },
           ),
           GoRoute(
             path: '/dashboard',

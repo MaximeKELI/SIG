@@ -43,6 +43,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       await context.read<SigApi>().confirmPasswordReset(
         token: _tokenController.text.trim(),
         password: _passwordController.text,
+        passwordConfirm: _confirmationController.text,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

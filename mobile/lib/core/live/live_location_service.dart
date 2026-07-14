@@ -201,8 +201,13 @@ class LiveLocationService extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _reconnectTimer?.cancel();
-    stopSharing();
+    _positionSub?.cancel();
+    _positionSub = null;
+    _pollTimer?.cancel();
+    _pollTimer = null;
+    _sharing = false;
     disconnectWebSocket();
+    // No network clearLocation() here: dispose must stay sync for Flutter tests.
     super.dispose();
   }
 }
