@@ -6,6 +6,7 @@ import { notifyError } from './core/ui.js';
 
 let clickProbeEnabled = false;
 let autoBadgeEnabled = true;
+let weatherConfigured = null; // null = unknown, false = no key, true = ok
 let clickHandler = null;
 let moveendHandler = null;
 let moveDebounce = null;
@@ -112,16 +113,21 @@ export async function loadWeatherStatus() {
   if (!statusEl) return false;
   try {
     const status = await SigSolsAPI.api('/weather/status/');
+    weatherConfigured = Boolean(status.ok);
     statusEl.textContent = status.message || (status.ok ? 'OpenWeather OK' : 'Non configuré');
-    statusEl.classList.toggle('weather-status--ok', Boolean(status.ok));
-    statusEl.classList.toggle('weather-status--err', !status.ok);
-    if (status.ok && autoBadgeEnabled) {
+    statusEl.classList.toggle('weather-status--ok', weatherConfigured);
+    statusEl.classList.toggle('weather-status--err', !weatherConfigured);
+    if (weatherConfigured && autoBadgeEnabled) {
       refreshWeatherAtMapCenter('current', { silent: true });
+    } else {
+      document.getElementById('weather-map-badge')?.classList.add('hidden');
     }
-    return Boolean(status.ok);
+    return weatherConfigured;
   } catch (e) {
+    weatherConfigured = false;
     statusEl.textContent = e.message || 'OpenWeather indisponible';
     statusEl.classList.add('weather-status--err');
+    document.getElementById('weather-map-badge')?.classList.add('hidden');
     return false;
   }
 }
@@ -167,12 +173,20 @@ export async function refreshWeatherAtMapCenter(kind = 'current', { silent = fal
     if (!silent) notifyError({ message: 'Carte non initialisée.' });
     return null;
   }
+  if (weatherConfigured === false) {
+    if (out && !silent) {
+      out.innerHTML = '<p class="parcel-weather parcel-weather--warn">OpenWeather non configuré (.env)</p>';
+    }
+    document.getElementById('weather-map-badge')?.classList.add('hidden');
+    return null;
+  }
   const c = map.getCenter();
   const lat = c.lat;
   const lon = c.lng;
   if (out && !silent) out.textContent = 'Chargement météo…';
   try {
     const data = await fetchWeatherAt(lat, lon, kind);
+    weatherConfigured = true;
     if (out) {
       out.innerHTML = kind === 'forecast'
         ? `<p class="weather-coords">${lat.toFixed(3)}°, ${lon.toFixed(3)}°</p>${formatForecastList(data.forecast)}`
@@ -181,7 +195,12 @@ export async function refreshWeatherAtMapCenter(kind = 'current', { silent = fal
     if (kind === 'current') updateMapBadge(data);
     return data;
   } catch (e) {
-    if (out) out.textContent = e.message || 'Erreur météo';
+    const msg = e.message || e.detail || 'Erreur météo';
+    if (/non configuré|OPENWEATHER_API_KEY/i.test(String(msg))) {
+      weatherConfigured = false;
+      document.getElementById('weather-map-badge')?.classList.add('hidden');
+    }
+    if (out) out.textContent = msg;
     if (!silent) notifyError(e);
     return null;
   }
@@ -217,6 +236,7 @@ function bindAutoBadge() {
   if (!autoBadgeEnabled) return;
 
   moveendHandler = () => {
+    if (weatherConfigured === false) return;
     clearTimeout(moveDebounce);
     moveDebounce = setTimeout(() => {
       refreshWeatherAtMapCenter('current', { silent: true });
@@ -239,8 +259,11 @@ export function setWeatherClickProbe(enabled) {
 export function setWeatherAutoBadge(enabled) {
   autoBadgeEnabled = Boolean(enabled);
   bindAutoBadge();
-  if (autoBadgeEnabled) refreshWeatherAtMapCenter('current', { silent: true });
-  else document.getElementById('weather-map-badge')?.classList.add('hidden');
+  if (autoBadgeEnabled && weatherConfigured === true) {
+    refreshWeatherAtMapCenter('current', { silent: true });
+  } else {
+    document.getElementById('weather-map-badge')?.classList.add('hidden');
+  }
 }
 
 function addMapControl() {
@@ -292,7 +315,12 @@ export function initWeatherMapTools() {
   }
 
   addMapControl();
-  setWeatherAutoBadge(autoBadgeEnabled);
+  bindAutoBadge();
+  if (weatherConfigured === true && autoBadgeEnabled) {
+    refreshWeatherAtMapCenter('current', { silent: true });
+  } else if (weatherConfigured === false) {
+    document.getElementById('weather-map-badge')?.classList.add('hidden');
+  }
 }
 
 export function displayWeatherParcelSummary(weather, parcelName = '') {

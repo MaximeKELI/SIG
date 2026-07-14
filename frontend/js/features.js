@@ -39,7 +39,9 @@ export function initMapAdvanced(map, markersLayer) {
 }
 
 export function addMarkerToCluster(marker) {
-  if (clusterGroup) clusterGroup.addLayer(marker);
+  if (!clusterGroup) return false;
+  clusterGroup.addLayer(marker);
+  return true;
 }
 
 export function clearClusters() {

@@ -31,6 +31,7 @@ import { toast } from './core/toast.js';
 let map, markersLayer, usersLayer, nasaOverlays = {};
 let mapReady = false;
 let loadDebounce = null;
+let loadSeq = 0;
 let bboxLoadEnabled = true;
 let locationTracker = null;
 let selfMarker = null;
@@ -66,7 +67,7 @@ function initMap() {
   map.on('moveend', () => {
     if (bboxLoadEnabled) {
       clearTimeout(loadDebounce);
-      loadDebounce = setTimeout(() => loadSoilPoints(), 450);
+      loadDebounce = setTimeout(() => loadSoilPoints({ showOverlay: false }), 450);
     }
     const now = Date.now();
     if (now - lastPanTrack < 2000) return;
@@ -83,12 +84,11 @@ function initMap() {
       trackMapZoom(map.getZoom(), map.getCenter());
     }).catch(() => {});
   });
-  loadSoilPoints();
+  loadSoilPoints({ showOverlay: true });
   loadNasaToggles();
   loadSentinelToggles();
   initSentinelMapTools();
-  loadWeatherStatus();
-  initWeatherMapTools();
+  loadWeatherStatus().then(() => initWeatherMapTools());
 }
 
 function updateSelfMarker(lat, lon, accuracy_m) {
@@ -208,8 +208,9 @@ async function toggleLiveLocation() {
   else await startLiveLocation();
 }
 
-async function loadSoilPoints() {
-  showLoading(true);
+async function loadSoilPoints({ showOverlay = true } = {}) {
+  const seq = ++loadSeq;
+  if (showOverlay) showLoading(true);
   try {
     const validationMode = document.getElementById('filter-validation')?.value || 'validated';
     const query = buildSoilFiltersQuery({
@@ -220,6 +221,7 @@ async function loadSoilPoints() {
       bbox: document.getElementById('filter-bbox')?.checked ? bboxFromLeaflet(map) : '',
     });
     const data = await SigSolsAPI.api('/points/?' + query);
+    if (seq !== loadSeq) return;
     markersLayer.clearLayers();
     window.SigSolsFeatures?.clearClusters();
     parseSoilPointsList(data).forEach((props) => {
@@ -250,13 +252,15 @@ async function loadSoilPoints() {
           showWeatherAtPoint(lat, lon);
         }, { once: true });
       });
-      markersLayer.addLayer(marker);
-      window.SigSolsFeatures?.addMarkerToCluster(marker);
+      // Un seul parent Leaflet : cluster si dispo, sinon layer brute (évite flash double-add)
+      if (!window.SigSolsFeatures?.addMarkerToCluster?.(marker)) {
+        markersLayer.addLayer(marker);
+      }
     });
   } catch (e) {
-    notifyError(e);
+    if (seq === loadSeq) notifyError(e);
   } finally {
-    showLoading(false);
+    if (showOverlay && seq === loadSeq) showLoading(false);
   }
 }
 

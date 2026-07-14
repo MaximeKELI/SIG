@@ -64,7 +64,7 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
   });
 });
 
-document.getElementById('btn-apply-filters')?.addEventListener('click', () => SigSolsMap.loadSoilPoints());
+document.getElementById('btn-apply-filters')?.addEventListener('click', () => SigSolsMap.loadSoilPoints({ showOverlay: true }));
 document.getElementById('btn-export-geojson')?.addEventListener('click', () => {
   if (SigSolsAPI.isAuthenticated()) {
     SigSolsMap.exportWithAuth('/points/geojson/', 'points.geojson');
