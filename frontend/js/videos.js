@@ -376,12 +376,17 @@ function bindModeration(container) {
       try {
         if (action === 'approve') {
           await API().api(`/videos/posts/${id}/approve/`, { method: 'POST' });
-        } else {
+        } else if (action === 'delete-post') {
+          if (!confirm('Supprimer définitivement cette publication ?')) return;
+          await API().api(`/videos/posts/${id}/`, { method: 'DELETE' });
+        } else if (action === 'reject') {
           const reason = prompt('Motif du refus (optionnel) :') || '';
           await API().api(`/videos/posts/${id}/reject/`, {
             method: 'POST',
             body: JSON.stringify({ reason }),
           });
+        } else {
+          return;
         }
         loadVideos();
         loadShorts();
