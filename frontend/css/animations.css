@@ -105,13 +105,11 @@ body::before {
 @keyframes viewEnterEnhanced {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.995);
-    filter: blur(2px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
+    transform: translateY(0);
   }
 }
 
@@ -454,6 +452,6 @@ body::before {
   }
 
   .view.active {
-    animation: fadeIn 0.2s ease forwards !important;
+    animation: fadeIn 0.2s ease !important;
   }
 }

@@ -1,10 +1,12 @@
-const CACHE = 'sig-sols-v8';
+const CACHE = 'sig-sols-v9';
 const ASSETS = [
   '/frontend/index.html',
   '/frontend/css/style.css',
   '/frontend/css/enhancements.css',
   '/frontend/css/animations.css',
   '/frontend/css/features-extended.css',
+  '/frontend/css/ux-shell.css',
+  '/frontend/css/luxury.css',
   '/frontend/js/init.js',
   '/frontend/js/api.js',
   '/frontend/js/auth.js',
