@@ -99,7 +99,7 @@ body::before {
 #view-help.active,
 .view.active {
   opacity: 1;
-  animation: viewEnterEnhanced 0.55s var(--ease-out-expo);
+  animation: viewEnterEnhanced 0.55s var(--ease-out-expo) both;
 }
 
 @keyframes viewEnterEnhanced {
