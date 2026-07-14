@@ -8,9 +8,9 @@ import { initShortcuts } from './core/shortcuts.js';
 import { initOnboarding } from './core/onboarding.js';
 import {
   initConnectionBanner,
-  initSidebarToggle,
   initModals,
 } from './core/ui.js';
+import { initUxShell, updateOfflineQueuePill } from './core/ux.js';
 
 export function initAppShell() {
   initToast();
@@ -18,8 +18,9 @@ export function initAppShell() {
   initTheme();
   initShortcuts();
   initConnectionBanner();
-  initSidebarToggle();
+  initUxShell();
   initModals();
+  window.SigSolsUx = { updateOfflineQueuePill };
   document.getElementById('btn-theme')?.addEventListener('click', toggleTheme);
   document.getElementById('btn-lang')?.addEventListener('click', () => {
     toggleLang();

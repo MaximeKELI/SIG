@@ -7,6 +7,9 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Carte — filtre validation', () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('sig_sols_onboarding_done', '1');
+    });
     await page.route('**/api/v1/**', async (route) => {
       const url = route.request().url();
       if (url.includes('/points/') && route.request().method() === 'GET') {
@@ -66,13 +69,13 @@ test.describe('Carte — filtre validation', () => {
   });
 
   test('filtre validation présent avec modes Validés / En attente / Tous', async ({ page }) => {
-    const select = page.locator('#filter-validation');
-    await expect(select).toBeVisible();
-    await expect(select).toHaveValue('validated');
-    await select.selectOption('pending');
-    await expect(select).toHaveValue('pending');
-    await select.selectOption('all');
-    await expect(select).toHaveValue('all');
+    const chips = page.locator('.chip[data-validation]');
+    await expect(chips).toHaveCount(4);
+    await expect(page.locator('.chip[data-validation="validated"]')).toHaveClass(/active/);
+    await page.locator('.chip[data-validation="pending"]').click();
+    await expect(page.locator('#filter-validation')).toHaveValue('pending');
+    await page.locator('.chip[data-validation="all"]').click();
+    await expect(page.locator('#filter-validation')).toHaveValue('all');
   });
 
   test('appliquer filtres envoie le mode validation', async ({ page }) => {
@@ -80,8 +83,7 @@ test.describe('Carte — filtre validation', () => {
     page.on('request', (req) => {
       if (req.url().includes('/points/')) requests.push(req.url());
     });
-    await page.locator('#filter-validation').selectOption('pending');
-    await page.locator('#btn-apply-filters').click();
+    await page.locator('.chip[data-validation="pending"]').click();
     await page.waitForTimeout(500);
     const hit = requests.find((u) => u.includes('validation_status=pending'));
     expect(hit).toBeTruthy();

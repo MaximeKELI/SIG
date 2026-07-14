@@ -31,25 +31,23 @@ export function initConnectionBanner() {
 }
 
 export function initSidebarToggle() {
-  const btn = document.getElementById('btn-sidebar-toggle');
-  const sidebar = document.getElementById('sidebar');
-  if (!btn || !sidebar) return;
-  btn.addEventListener('click', () => {
-    sidebar.classList.toggle('sidebar-open');
-    btn.setAttribute('aria-expanded', sidebar.classList.contains('sidebar-open') ? 'true' : 'false');
-  });
+  // Remplacé par initSidebarUx (core/ux.js) — conserve no-op pour imports legacy.
 }
 
 export function openModal(id) {
   const m = document.getElementById(id);
   if (!m) return;
   m.classList.remove('hidden');
+  document.body.classList.add('modal-open');
   const focusable = m.querySelector('input, button, select, textarea');
   focusable?.focus();
 }
 
 export function closeModal(id) {
   document.getElementById(id)?.classList.add('hidden');
+  if (![...document.querySelectorAll('.modal, [id$="-modal"]')].some((el) => !el.classList.contains('hidden'))) {
+    document.body.classList.remove('modal-open');
+  }
 }
 
 export function initModals() {

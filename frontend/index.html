@@ -22,11 +22,17 @@
   <link rel="stylesheet" href="css/enhancements.css" />
   <link rel="stylesheet" href="css/animations.css" />
   <link rel="stylesheet" href="css/features-extended.css" />
+  <link rel="stylesheet" href="css/ux-shell.css" />
 </head>
 <body>
   <a href="#main-content" class="skip-link">Aller au contenu</a>
   <div id="connection-banner" class="hidden" role="status"></div>
   <div id="global-loading" class="hidden" aria-busy="false"><div class="spinner" aria-hidden="true"></div></div>
+  <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
+  <button type="button" id="offline-queue-pill" class="hidden" aria-live="polite" title="Synchroniser la file hors ligne">
+    <span class="pill-count" id="offline-queue-count">0</span>
+    <span id="offline-queue-label">points à sync</span>
+  </button>
   <header class="app-header">
     <div class="brand">
       <div class="brand-logos" role="img" aria-label="DUSOL et SIG-SOL">
@@ -56,19 +62,22 @@
     </div>
     <div class="header-tools">
       <div class="notif-wrap auth-user-only hidden">
-        <button type="button" id="btn-notif-toggle" class="btn-icon" title="Notifications" aria-label="Notifications">🔔</button>
+      <button type="button" id="btn-notif-toggle" class="btn-icon" title="Notifications" aria-label="Notifications">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 1 0-14 0v5l-2 2v1h18v-1l-2-2Z" fill="currentColor"/></svg>
+        </button>
         <span id="notif-badge" class="notif-badge hidden">0</span>
         <div id="notif-panel" class="notif-panel hidden">
           <button type="button" id="btn-notif-mark-all" class="btn-link btn-sm">Tout marquer lu</button>
           <ul id="notif-panel-list" class="compact-list"></ul>
         </div>
       </div>
-      <button type="button" id="btn-theme" class="btn-icon" aria-pressed="false" title="Thème clair/sombre">☀</button>
-      <button type="button" id="btn-lang" class="btn-icon" title="Langue">EN</button>
-      <button type="button" id="btn-help-tour" class="btn-icon" data-i18n="help.tour" title="Visite guidée">?</button>
+      <button type="button" id="btn-theme" class="btn-icon" aria-pressed="false" title="Thème clair/sombre" aria-label="Basculer le thème">◐</button>
+      <button type="button" id="btn-lang" class="btn-icon" title="Langue" aria-label="Changer de langue">EN</button>
+      <button type="button" id="btn-help-tour" class="btn-icon" data-i18n="help.tour" title="Visite guidée" aria-label="Visite guidée">?</button>
     </div>
     <div class="auth-box" id="auth-box">
       <div id="auth-guest" class="auth-guest">
+        <button type="button" id="btn-auth-cta" class="btn-auth-cta">Connexion</button>
         <div class="auth-tabs">
           <button type="button" class="auth-tab active" data-auth-tab="login">Connexion</button>
           <button type="button" class="auth-tab" data-auth-tab="register">Inscription</button>
@@ -143,163 +152,218 @@
     <p data-i18n="welcome.sub">Cartographie des sols, NASA, IA et quiz — DUSOL / DISIA, Région Maritime.</p>
     <p class="developer-signature developer-signature--welcome">Développement : Maxime Dzidula KELI · +33 754830039</p>
   </section>
-  <button type="button" id="btn-sidebar-toggle" aria-expanded="false" aria-controls="sidebar">☰ Filtres</button>
+  <button type="button" id="btn-sidebar-toggle" aria-expanded="false" aria-controls="sidebar">
+    <span aria-hidden="true">☰</span> Filtres
+  </button>
   <!-- MAP VIEW -->
   <section id="view-map" class="view active">
     <aside class="sidebar" id="sidebar">
-      <h2>Filtres</h2>
-      <label>pH min <input type="number" id="filter-ph-min" step="0.1" min="3.5" max="9.5" /></label>
-      <label>pH max <input type="number" id="filter-ph-max" step="0.1" min="3.5" max="9.5" /></label>
-      <label>Type de sol
-        <select id="filter-soil-type">
-          <option value="">Tous</option>
-          <option value="argileux">Argileux</option>
-          <option value="sableux">Sableux</option>
-          <option value="limoneux">Limoneux</option>
-          <option value="tourbeux">Tourbeux</option>
-          <option value="calcaire">Calcaire</option>
-        </select>
-      </label>
-      <label>Validation
-        <select id="filter-validation">
-          <option value="validated" selected>Validés</option>
-          <option value="pending">En attente</option>
-          <option value="rejected">Rejetés</option>
-          <option value="all">Tous</option>
-        </select>
-      </label>
-      <label><input type="checkbox" id="filter-bbox" checked /> Limiter à la carte visible</label>
-      <button type="button" id="btn-apply-filters">Appliquer</button>
-      <hr />
-      <h3>Recherche &amp; proximité</h3>
-      <label>ID point <input type="number" id="search-point-id" min="1" placeholder="ex. 42" /></label>
-      <button type="button" id="btn-search-point">Localiser</button>
-      <label>Rayon proximité (m)
-        <input type="range" id="proximity-radius" min="100" max="10000" step="100" value="5000" />
-        <span id="proximity-radius-label">5000 m</span>
-      </label>
-      <button type="button" id="btn-proximity-search">Recherche autour de moi</button>
-      <hr />
-      <h3 class="agent-only">Import terrain</h3>
-      <label class="agent-only">Fichier GeoJSON / CSV
-        <input type="file" id="import-file" accept=".geojson,.json,.csv" />
-      </label>
-      <hr />
-      <h3>Comparer deux points</h3>
-      <label>#A <input type="number" id="compare-id-a" min="1" /></label>
-      <label>#B <input type="number" id="compare-id-b" min="1" /></label>
-      <button type="button" id="btn-compare-points">Comparer</button>
-      <div id="compare-result" class="parcel-analysis-result hidden"></div>
-      <hr />
-      <h3>Parcelles</h3>
-      <label class="parcel-check"><input type="checkbox" id="parcel-show-on-map" checked /> Afficher les parcelles sur la carte</label>
-      <label class="parcel-check"><input type="checkbox" id="parcel-show-soil-points" checked /> Points de sol dans la parcelle</label>
-      <label class="parcel-check"><input type="checkbox" id="parcel-live-update" checked /> Infos en temps réel</label>
-      <input type="search" id="parcel-search" class="parcel-search" placeholder="Rechercher une parcelle…" />
-      <div class="parcel-filter-tabs" role="tablist">
-        <button type="button" class="parcel-filter-tab active" data-filter="all">Toutes</button>
-        <button type="button" class="parcel-filter-tab" data-filter="canton">Cantons</button>
-        <button type="button" class="parcel-filter-tab" data-filter="degraded">Dégradées</button>
+      <div class="sidebar-head">
+        <h2>Filtres</h2>
+        <button type="button" id="btn-sidebar-close" class="btn-icon-ghost" aria-label="Fermer les filtres">×</button>
       </div>
-      <label>Parcelle / zone
-        <select id="parcel-zone-select">
-          <option value="">— Cliquer sur la carte ou dessiner —</option>
-        </select>
-      </label>
-      <ul id="parcel-list" class="parcel-list compact-list" aria-label="Liste des parcelles"></ul>
-      <p id="parcel-status" class="parcel-status">Sélectionnez une parcelle sur la carte ou dans la liste.</p>
-      <label class="parcel-check"><input type="checkbox" id="parcel-use-nasa" checked /> Données NASA (NDVI, SMAP)</label>
-      <label class="parcel-check"><input type="checkbox" id="parcel-use-sentinel" checked /> NDVI Sentinel-2 (parcelle)</label>
-      <label class="parcel-check"><input type="checkbox" id="parcel-use-weather" checked /> Météo OpenWeather (parcelle)</label>
-      <label class="parcel-check"><input type="checkbox" id="parcel-use-ml" /> Prédiction IA (analyse complète)</label>
-      <div class="parcel-actions-row">
-        <button type="button" id="btn-parcel-refresh" class="btn-parcel-clear" title="Actualiser">↻</button>
-        <button type="button" id="btn-parcel-analyze" class="btn-parcel-analyze">Analyse complète</button>
-        <button type="button" id="btn-parcel-export" class="btn-parcel-clear">Export JSON</button>
-      <button type="button" id="btn-parcel-print" class="btn-parcel-clear">Imprimer</button>
-        <button type="button" id="btn-parcel-clear" class="btn-parcel-clear">Effacer</button>
-      </div>
-      <div id="parcel-analysis-result" class="parcel-analysis-result hidden"></div>
-      <hr />
-      <h3>Outils carte</h3>
-      <label><input type="checkbox" id="mode-add-point" /> Ajouter un point (clic carte)</label>
-      <button type="button" id="btn-heatmap">Carte de chaleur pH</button>
-      <button type="button" id="btn-near-me">Près de moi</button>
-      <button type="button" id="btn-trajectory">Ma trajectoire (24 h)</button>
-      <hr />
-      <h3>Alertes & notifications</h3>
-      <ul id="alerts-list" class="compact-list"></ul>
-      <ul id="notifications-list" class="compact-list"></ul>
-      <h4>Alertes près de moi</h4>
-      <ul id="alerts-near-me" class="compact-list"></ul>
-      <hr />
-      <h3>NDVI — comparaison temporelle</h3>
-      <label>Point ID <input type="number" id="nasa-ts-point-id" min="1" placeholder="ID point" /></label>
-      <button type="button" id="btn-nasa-timeseries" class="btn-sm">Charger série NDVI</button>
-      <pre id="nasa-timeseries-out" class="nasa-ts-out"></pre>
-      <hr />
-      <h3>Localisation temps réel</h3>
-      <label class="location-share">
-        <input type="checkbox" id="share-location" />
-        Partager ma position (agents connectés)
-      </label>
-      <button type="button" id="btn-location-toggle" class="btn-location">Activer GPS</button>
-      <p id="location-status" class="location-status">Localisation désactivée</p>
-      <p class="location-legend"><span class="dot dot-self"></span> Moi · <span class="dot dot-agent"></span> Agent · <span class="dot dot-admin"></span> Admin</p>
-      <hr />
-      <h3>Imagerie satellite (carte)</h3>
-      <p class="panel-hint map-sat-hint">Superposez les couches sur la carte — fond satellite recommandé pour Sentinel-2.</p>
-      <h4 class="map-sat-sub">NASA (catalogue)</h4>
-      <div id="nasa-layers-toggles" class="map-layer-toggles"></div>
-      <h4 class="map-sat-sub">Sentinel Hub (Sentinel-2)</h4>
-      <p id="sentinel-status-msg" class="sentinel-status panel-hint">—</p>
-      <div id="sentinel-layers-toggles" class="map-layer-toggles"></div>
-      <label class="map-sat-opacity">Opacité Sentinel
-        <input type="range" id="sentinel-opacity" min="20" max="100" value="55" />
-        <span id="sentinel-opacity-label">55%</span>
-      </label>
-      <label class="parcel-check"><input type="checkbox" id="sentinel-auto-satellite" checked /> Fond satellite auto (couches Sentinel)</label>
-      <label class="parcel-check"><input type="checkbox" id="sentinel-click-probe" /> Sonder NDVI au clic sur la carte</label>
-      <div class="map-sat-actions">
-        <button type="button" id="btn-sentinel-ndvi" class="btn-sm">NDVI moyen (vue actuelle)</button>
-        <button type="button" id="btn-sentinel-fit-maritime" class="btn-sm btn-auth-outline">Zone pilote</button>
-      </div>
-      <pre id="sentinel-ndvi-out" class="nasa-ts-out" aria-live="polite"></pre>
-      <div class="sentinel-ndvi-legend hidden" aria-hidden="true">
-        <span class="sentinel-legend-title">Légende NDVI</span>
-        <div class="sentinel-legend-bar"></div>
-        <span class="sentinel-legend-labels"><em>faible</em><em>élevé</em></span>
-      </div>
-      <h4 class="map-sat-sub">OpenWeather (météo sur la carte)</h4>
-      <p id="weather-status-msg" class="weather-status panel-hint">—</p>
-      <label class="parcel-check"><input type="checkbox" id="weather-auto-badge" checked /> Badge météo (suit le centre carte)</label>
-      <label class="parcel-check"><input type="checkbox" id="weather-click-probe" /> Météo au clic sur la carte</label>
-      <div class="map-sat-actions">
-        <button type="button" id="btn-weather-current" class="btn-sm">Actuelle (centre)</button>
-        <button type="button" id="btn-weather-forecast" class="btn-sm">Prévisions</button>
-        <button type="button" id="btn-weather-fit-maritime" class="btn-sm btn-auth-outline">Zone pilote</button>
-      </div>
-      <div id="weather-out" class="weather-out" aria-live="polite"></div>
-      <p class="panel-hint map-weather-hint">Bouton ☁ en haut à droite de la carte · popup au clic si activé.</p>
-      <hr />
-      <h3>Export</h3>
-      <button type="button" id="btn-export-geojson">GeoJSON</button>
-      <button type="button" id="btn-export-csv">CSV</button>
-      <hr />
-      <h3>Prédiction IA</h3>
-      <label>pH <input type="number" id="pred-ph" value="6.2" step="0.1" /></label>
-      <label>Humidité % <input type="number" id="pred-humidity" value="35" /></label>
-      <label>Type
-        <select id="pred-soil-type">
-          <option value="argileux">Argileux</option>
-          <option value="sableux">Sableux</option>
-          <option value="limoneux" selected>Limoneux</option>
-          <option value="tourbeux">Tourbeux</option>
-          <option value="calcaire">Calcaire</option>
-        </select>
-      </label>
-      <button type="button" id="btn-predict">Prédire fertilité</button>
-      <div id="pred-result" class="pred-result-card" role="status"></div>
+
+      <details class="sidebar-panel" open>
+        <summary>Sols &amp; validation</summary>
+        <div class="sidebar-panel-body">
+          <label>pH min <input type="number" id="filter-ph-min" step="0.1" min="3.5" max="9.5" /></label>
+          <label>pH max <input type="number" id="filter-ph-max" step="0.1" min="3.5" max="9.5" /></label>
+          <label>Type de sol
+            <select id="filter-soil-type">
+              <option value="">Tous</option>
+              <option value="argileux">Argileux</option>
+              <option value="sableux">Sableux</option>
+              <option value="limoneux">Limoneux</option>
+              <option value="tourbeux">Tourbeux</option>
+              <option value="calcaire">Calcaire</option>
+            </select>
+          </label>
+          <div class="chip-row" role="group" aria-label="Filtre validation">
+            <button type="button" class="chip active" data-validation="validated">Validés</button>
+            <button type="button" class="chip" data-validation="pending">En attente</button>
+            <button type="button" class="chip" data-validation="rejected">Rejetés</button>
+            <button type="button" class="chip" data-validation="all">Tous</button>
+          </div>
+          <label class="filter-validation-native">Validation
+            <select id="filter-validation">
+              <option value="validated" selected>Validés</option>
+              <option value="pending">En attente</option>
+              <option value="rejected">Rejetés</option>
+              <option value="all">Tous</option>
+            </select>
+          </label>
+          <label><input type="checkbox" id="filter-bbox" checked /> Limiter à la carte visible</label>
+          <button type="button" id="btn-apply-filters">Appliquer les filtres</button>
+        </div>
+      </details>
+
+      <details class="sidebar-panel">
+        <summary>Recherche &amp; proximité</summary>
+        <div class="sidebar-panel-body">
+          <label>ID point <input type="number" id="search-point-id" min="1" placeholder="ex. 42" /></label>
+          <button type="button" id="btn-search-point">Localiser</button>
+          <label>Rayon proximité (m)
+            <input type="range" id="proximity-radius" min="100" max="10000" step="100" value="5000" />
+            <span id="proximity-radius-label">5000 m</span>
+          </label>
+          <button type="button" id="btn-proximity-search">Recherche autour de moi</button>
+        </div>
+      </details>
+
+      <details class="sidebar-panel agent-only">
+        <summary>Import terrain</summary>
+        <div class="sidebar-panel-body">
+          <label>Fichier GeoJSON / CSV
+            <input type="file" id="import-file" accept=".geojson,.json,.csv" />
+          </label>
+        </div>
+      </details>
+
+      <details class="sidebar-panel">
+        <summary>Comparer deux points</summary>
+        <div class="sidebar-panel-body">
+          <label>#A <input type="number" id="compare-id-a" min="1" /></label>
+          <label>#B <input type="number" id="compare-id-b" min="1" /></label>
+          <button type="button" id="btn-compare-points">Comparer</button>
+          <div id="compare-result" class="parcel-analysis-result hidden"></div>
+        </div>
+      </details>
+
+      <details class="sidebar-panel" open>
+        <summary>Parcelles</summary>
+        <div class="sidebar-panel-body">
+          <label class="parcel-check"><input type="checkbox" id="parcel-show-on-map" checked /> Afficher les parcelles sur la carte</label>
+          <label class="parcel-check"><input type="checkbox" id="parcel-show-soil-points" checked /> Points de sol dans la parcelle</label>
+          <label class="parcel-check"><input type="checkbox" id="parcel-live-update" checked /> Infos en temps réel</label>
+          <input type="search" id="parcel-search" class="parcel-search" placeholder="Rechercher une parcelle…" />
+          <div class="parcel-filter-tabs" role="tablist">
+            <button type="button" class="parcel-filter-tab active" data-filter="all">Toutes</button>
+            <button type="button" class="parcel-filter-tab" data-filter="canton">Cantons</button>
+            <button type="button" class="parcel-filter-tab" data-filter="degraded">Dégradées</button>
+          </div>
+          <label>Parcelle / zone
+            <select id="parcel-zone-select">
+              <option value="">— Cliquer sur la carte ou dessiner —</option>
+            </select>
+          </label>
+          <ul id="parcel-list" class="parcel-list compact-list" aria-label="Liste des parcelles"></ul>
+          <p id="parcel-status" class="parcel-status">Sélectionnez une parcelle sur la carte ou dans la liste.</p>
+          <label class="parcel-check"><input type="checkbox" id="parcel-use-nasa" checked /> Données NASA (NDVI, SMAP)</label>
+          <label class="parcel-check"><input type="checkbox" id="parcel-use-sentinel" checked /> NDVI Sentinel-2 (parcelle)</label>
+          <label class="parcel-check"><input type="checkbox" id="parcel-use-weather" checked /> Météo OpenWeather (parcelle)</label>
+          <label class="parcel-check"><input type="checkbox" id="parcel-use-ml" /> Prédiction IA (analyse complète)</label>
+          <div class="parcel-actions-row">
+            <button type="button" id="btn-parcel-refresh" class="btn-parcel-clear" title="Actualiser">↻</button>
+            <button type="button" id="btn-parcel-analyze" class="btn-parcel-analyze">Analyse complète</button>
+            <button type="button" id="btn-parcel-export" class="btn-parcel-clear">Export JSON</button>
+            <button type="button" id="btn-parcel-print" class="btn-parcel-clear">Imprimer</button>
+            <button type="button" id="btn-parcel-clear" class="btn-parcel-clear">Effacer</button>
+          </div>
+          <div id="parcel-analysis-result" class="parcel-analysis-result hidden"></div>
+        </div>
+      </details>
+
+      <details class="sidebar-panel">
+        <summary>Outils carte</summary>
+        <div class="sidebar-panel-body">
+          <label><input type="checkbox" id="mode-add-point" /> Ajouter un point (clic carte)</label>
+          <button type="button" id="btn-heatmap">Carte de chaleur pH</button>
+          <button type="button" id="btn-near-me">Près de moi</button>
+          <button type="button" id="btn-trajectory">Ma trajectoire (24 h)</button>
+        </div>
+      </details>
+
+      <details class="sidebar-panel">
+        <summary>Alertes &amp; notifications</summary>
+        <div class="sidebar-panel-body">
+          <ul id="alerts-list" class="compact-list"></ul>
+          <ul id="notifications-list" class="compact-list"></ul>
+          <h4>Alertes près de moi</h4>
+          <ul id="alerts-near-me" class="compact-list"></ul>
+        </div>
+      </details>
+
+      <details class="sidebar-panel">
+        <summary>NDVI — série temporelle</summary>
+        <div class="sidebar-panel-body">
+          <label>Point ID <input type="number" id="nasa-ts-point-id" min="1" placeholder="ID point" /></label>
+          <button type="button" id="btn-nasa-timeseries" class="btn-sm">Charger série NDVI</button>
+          <pre id="nasa-timeseries-out" class="nasa-ts-out"></pre>
+        </div>
+      </details>
+
+      <details class="sidebar-panel">
+        <summary>Localisation temps réel</summary>
+        <div class="sidebar-panel-body">
+          <label class="location-share">
+            <input type="checkbox" id="share-location" />
+            Partager ma position (agents connectés)
+          </label>
+          <button type="button" id="btn-location-toggle" class="btn-location">Activer GPS</button>
+          <p id="location-status" class="location-status">Localisation désactivée</p>
+          <p class="location-legend"><span class="dot dot-self"></span> Moi · <span class="dot dot-agent"></span> Agent · <span class="dot dot-admin"></span> Admin</p>
+        </div>
+      </details>
+
+      <details class="sidebar-panel">
+        <summary>Imagerie satellite</summary>
+        <div class="sidebar-panel-body">
+          <p class="panel-hint map-sat-hint">Superposez les couches sur la carte — fond satellite recommandé pour Sentinel-2.</p>
+          <h4 class="map-sat-sub">NASA (catalogue)</h4>
+          <div id="nasa-layers-toggles" class="map-layer-toggles"></div>
+          <h4 class="map-sat-sub">Sentinel Hub (Sentinel-2)</h4>
+          <p id="sentinel-status-msg" class="sentinel-status panel-hint">—</p>
+          <div id="sentinel-layers-toggles" class="map-layer-toggles"></div>
+          <label class="map-sat-opacity">Opacité Sentinel
+            <input type="range" id="sentinel-opacity" min="20" max="100" value="55" />
+            <span id="sentinel-opacity-label">55%</span>
+          </label>
+          <label class="parcel-check"><input type="checkbox" id="sentinel-auto-satellite" checked /> Fond satellite auto (couches Sentinel)</label>
+          <label class="parcel-check"><input type="checkbox" id="sentinel-click-probe" /> Sonder NDVI au clic sur la carte</label>
+          <div class="map-sat-actions">
+            <button type="button" id="btn-sentinel-ndvi" class="btn-sm">NDVI moyen (vue actuelle)</button>
+            <button type="button" id="btn-sentinel-fit-maritime" class="btn-sm btn-auth-outline">Zone pilote</button>
+          </div>
+          <pre id="sentinel-ndvi-out" class="nasa-ts-out" aria-live="polite"></pre>
+          <div class="sentinel-ndvi-legend hidden" aria-hidden="true">
+            <span class="sentinel-legend-title">Légende NDVI</span>
+            <div class="sentinel-legend-bar"></div>
+            <span class="sentinel-legend-labels"><em>faible</em><em>élevé</em></span>
+          </div>
+          <h4 class="map-sat-sub">OpenWeather</h4>
+          <p id="weather-status-msg" class="weather-status panel-hint">—</p>
+          <label class="parcel-check"><input type="checkbox" id="weather-auto-badge" checked /> Badge météo (suit le centre carte)</label>
+          <label class="parcel-check"><input type="checkbox" id="weather-click-probe" /> Météo au clic sur la carte</label>
+          <div class="map-sat-actions">
+            <button type="button" id="btn-weather-current" class="btn-sm">Actuelle (centre)</button>
+            <button type="button" id="btn-weather-forecast" class="btn-sm">Prévisions</button>
+            <button type="button" id="btn-weather-fit-maritime" class="btn-sm btn-auth-outline">Zone pilote</button>
+          </div>
+          <div id="weather-out" class="weather-out" aria-live="polite"></div>
+          <p class="panel-hint map-weather-hint">Contrôle météo en haut à droite de la carte.</p>
+        </div>
+      </details>
+
+      <details class="sidebar-panel">
+        <summary>Export &amp; IA</summary>
+        <div class="sidebar-panel-body">
+          <button type="button" id="btn-export-geojson">GeoJSON</button>
+          <button type="button" id="btn-export-csv">CSV</button>
+          <label>pH <input type="number" id="pred-ph" value="6.2" step="0.1" /></label>
+          <label>Humidité % <input type="number" id="pred-humidity" value="35" /></label>
+          <label>Type
+            <select id="pred-soil-type">
+              <option value="argileux">Argileux</option>
+              <option value="sableux">Sableux</option>
+              <option value="limoneux" selected>Limoneux</option>
+              <option value="tourbeux">Tourbeux</option>
+              <option value="calcaire">Calcaire</option>
+            </select>
+          </label>
+          <button type="button" id="btn-predict">Prédire fertilité</button>
+          <div id="pred-result" class="pred-result-card" role="status"></div>
+        </div>
+      </details>
     </aside>
     <div id="map" class="map-container">
       <div id="sentinel-map-badge" class="sentinel-map-badge hidden" aria-live="polite"></div>

@@ -1523,7 +1523,10 @@ main {
 }
 
 /* Public mode */
-body.public-mode .sidebar label:not(:has(#filter-validation)),
+body.public-mode .agent-only,
+body.public-mode .sidebar-panel.agent-only {
+  display: none !important;
+}
 body.public-mode #pred-result,
 body.public-mode #btn-predict {
   opacity: 0.45;

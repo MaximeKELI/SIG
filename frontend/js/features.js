@@ -317,6 +317,7 @@ export function connectWebSocket() {
 
 export function queueOfflinePoint(payload) {
   enqueueOfflinePoint(payload);
+  window.SigSolsUx?.updateOfflineQueuePill?.();
 }
 
 export async function syncOfflineQueue() {
@@ -336,6 +337,7 @@ export async function syncOfflineQueue() {
   if (deadLetter.length) {
     writeDeadLetter([...readDeadLetter(), ...deadLetter]);
   }
+  window.SigSolsUx?.updateOfflineQueuePill?.();
   if (synced) {
     notifySuccess(`${synced} point(s) synchronisé(s).`);
     SigSolsMap.loadSoilPoints();
