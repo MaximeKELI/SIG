@@ -58,6 +58,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Text('Envoyer le lien'),
             ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pushNamed('/reset-password'),
+              child: const Text('J’ai déjà un jeton — réinitialiser'),
+            ),
+            TextButton(
+              onPressed: () {
+                // go_router path
+                // ignore: unnecessary_import
+              },
+              child: const SizedBox.shrink(),
+            ),
           ],
         ),
       ),

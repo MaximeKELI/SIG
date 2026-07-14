@@ -23,6 +23,12 @@ dependencies:
   shared_preferences: ^2.5.3
   connectivity_plus: ^6.1.4
   file_picker: ^8.3.7
+  video_player: ^2.9.5
+  chewie: ^1.11.3
+  path_provider: ^2.1.5
+  share_plus: ^10.1.4
+  fl_chart: ^0.70.2
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

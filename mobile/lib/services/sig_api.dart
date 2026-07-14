@@ -520,6 +520,61 @@ class SigApi {
   Future<Map<String, dynamic>> validatePoint(int id, {String action = 'validate'}) =>
       _client.post('/points/$id/validate_point/', data: {'action': action});
 
+  Future<Map<String, dynamic>> deleteProfilePhoto() =>
+      _client.delete('/auth/profile/photo/');
+
+  Future<Map<String, dynamic>> toggleCommentLike(int commentId) =>
+      _client.post('/videos/comments/$commentId/toggle_like/');
+
+  Future<List<dynamic>> commentsModeration() async {
+    final data = await _client.get<dynamic>('/videos/comments/moderation/');
+    if (data is List) return data;
+    return (data as Map)['results'] as List? ?? [];
+  }
+
+  Future<void> hideComment(int commentId) =>
+      _client.post('/videos/comments/$commentId/hide/');
+
+  Future<Map<String, dynamic>> aiCheckComment(int commentId) =>
+      _client.post('/videos/comments/$commentId/ai-check/');
+
+  Future<List<dynamic>> moderationJournal() async {
+    final data = await _client.get<dynamic>('/platform/moderation/journal/');
+    if (data is List) return data;
+    return (data as Map)['results'] as List? ?? data['entries'] as List? ?? [];
+  }
+
+  Future<List<dynamic>> adminActivity({int days = 30}) async {
+    final data = await _client.get<dynamic>(
+      '/platform/admin/activity/',
+      query: {'days': days},
+    );
+    if (data is List) return data;
+    return (data as Map)['results'] as List? ?? data['events'] as List? ?? [];
+  }
+
+  Future<Map<String, dynamic>> adminUserActivity(int userId, {int days = 30}) =>
+      _client.get('/platform/admin/activity/users/$userId/', query: {'days': days});
+
+  Future<Map<String, dynamic>> importUsersCsv(String filePath) async {
+    final form = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath),
+    });
+    return _client.upload('/platform/admin/import/users/', form);
+  }
+
+  String ministryReportUrl({String format = 'csv'}) =>
+      '${Env.origin}/api/v1/platform/reports/ministry/?format=$format';
+
+  String zoneReportUrl(String zoneCode, {String format = 'csv'}) =>
+      '${Env.origin}/api/v1/platform/reports/zone/$zoneCode/?format=$format';
+
+  Future<String> downloadMinistryReport({String format = 'csv'}) =>
+      _client.downloadText('/platform/reports/ministry/', query: {'format': format});
+
+  Future<String> downloadZoneReport(String zoneCode, {String format = 'csv'}) =>
+      _client.downloadText('/platform/reports/zone/$zoneCode/', query: {'format': format});
+
   Future<Map<String, Map<String, dynamic>>> fetchExternalApiStatus() async {
     final results = await Future.wait([
       weatherStatus(),

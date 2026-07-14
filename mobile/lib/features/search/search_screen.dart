@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/config/env.dart';
 import '../../services/sig_api.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -33,7 +36,37 @@ class _SearchScreenState extends State<SearchScreen> {
       });
     } catch (e) {
       setState(() => _loading = false);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
+  }
+
+  Future<void> _open(Map<String, dynamic> r) async {
+    final type = r['type']?.toString();
+    final id = r['id'];
+    final username = r['username']?.toString() ?? r['title']?.toString();
+    switch (type) {
+      case 'user':
+        if (username != null && username.isNotEmpty) {
+          context.push('/community/profil/$username');
+        }
+        break;
+      case 'sheet':
+        if (id != null) {
+          final url = context.read<SigApi>().sheetPdfUrl(id is int ? id : int.parse('$id'));
+          await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+        }
+        break;
+      case 'video':
+      case 'short':
+        context.go(type == 'short' ? '/shorts' : '/videos');
+        break;
+      case 'point':
+        context.go('/');
+        break;
+      default:
+        break;
     }
   }
 
@@ -71,6 +104,8 @@ class _SearchScreenState extends State<SearchScreen> {
                   leading: Icon(_iconFor(r['type']?.toString())),
                   title: Text(r['title']?.toString() ?? '—'),
                   subtitle: Text('${r['type'] ?? ''} · ${r['subtitle'] ?? ''}'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _open(r),
                 );
               },
             ),

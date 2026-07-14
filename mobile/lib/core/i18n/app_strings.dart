@@ -1,5 +1,7 @@
-/// Chaînes FR / EN — parité avec frontend/js/core/i18n.js
+/// Chaînes FR / EN / EE / KAB — parité frontend/js/core/i18n.js
 class AppStrings {
+  static const langs = ['fr', 'en', 'ee', 'kab'];
+
   static const _strings = {
     'fr': {
       'app.title': 'SIG Sols Togo',
@@ -46,6 +48,7 @@ class AppStrings {
       'map.parcels.degraded': 'Dégradées',
       'map.parcels.analyze': 'Analyser',
       'parcel.tooltip': 'Parcelle',
+      'welcome.title': 'Bienvenue sur SIG Sols Togo',
     },
     'en': {
       'app.title': 'SIG Sols Togo',
@@ -92,6 +95,101 @@ class AppStrings {
       'map.parcels.degraded': 'Degraded',
       'map.parcels.analyze': 'Analyze',
       'parcel.tooltip': 'Parcel',
+      'welcome.title': 'Welcome to SIG Sols Togo',
+    },
+    'ee': {
+      'app.title': 'SIG Sols Togo',
+      'nav.map': 'Map',
+      'nav.dashboard': 'Tablo',
+      'nav.quiz': 'Quiz',
+      'nav.sheets': 'Nuŋlɔ̃wo',
+      'nav.videos': 'Video',
+      'nav.shorts': 'Shorts',
+      'nav.community': 'Hame',
+      'nav.assistant': 'AI',
+      'nav.profile': 'Profil',
+      'drawer.search': 'Di',
+      'drawer.notifications': 'Nyatakakawo',
+      'drawer.myspace': 'Nye teƒe',
+      'drawer.admin': 'Admin',
+      'drawer.help': 'Kpekpeɖeŋu',
+      'drawer.theme': 'Theme',
+      'drawer.lang': 'Gbe',
+      'auth.login': 'Ge ɖe eme',
+      'auth.register': 'Ŋlɔ ŋkɔ',
+      'auth.forgot': 'Ńyɔ anyi wò ŋkɔ?',
+      'offline.banner': 'Internet meli o',
+      'offline.pending': 'Offline — {n} point(s)',
+      'offline.syncing': 'Syncing…',
+      'offline.queue': '{n} point(s) queued',
+      'map.loading': 'Map le loading…',
+      'map.points': '{n} anyigba points',
+      'map.addPoint': 'Tsɔ point',
+      'map.ndviSentinel': 'NDVI Sentinel',
+      'map.ndviNasa': 'NDVI NASA',
+      'map.addMode': 'Tsɔ point le map dzi',
+      'map.liveShare': 'Share location',
+      'map.liveActive': 'Location shared',
+      'map.livePeers': '{n} agents',
+      'map.basemap': 'Basemap',
+      'map.basemap.osm': 'Plan',
+      'map.basemap.satellite': 'Satellite',
+      'map.basemap.topo': 'Topo',
+      'map.parcels': 'Parcels',
+      'map.parcels.show': 'Show parcels',
+      'map.parcels.all': 'All',
+      'map.parcels.canton': 'Cantons',
+      'map.parcels.degraded': 'Degraded',
+      'map.parcels.analyze': 'Analyze',
+      'parcel.tooltip': 'Parcel',
+      'welcome.title': 'Woezo le SIG Sols Togo',
+    },
+    'kab': {
+      'app.title': 'SIG Sols Togo',
+      'nav.map': 'Takarut',
+      'nav.dashboard': 'Asenfaru',
+      'nav.quiz': 'Quiz',
+      'nav.sheets': 'Iɣerbazen',
+      'nav.videos': 'Tividyutin',
+      'nav.shorts': 'Shorts',
+      'nav.community': 'Tamegdazt',
+      'nav.assistant': 'AI',
+      'nav.profile': 'Amaɣnu',
+      'drawer.search': 'Nadi',
+      'drawer.notifications': 'Ilɣuten',
+      'drawer.myspace': 'Amkan-iw',
+      'drawer.admin': 'Admin',
+      'drawer.help': 'Tallalt',
+      'drawer.theme': 'Theme',
+      'drawer.lang': 'Tutlayt',
+      'auth.login': 'Qqen',
+      'auth.register': 'Kles',
+      'auth.forgot': 'Tettuḍ awal uffir?',
+      'offline.banner': 'War internet',
+      'offline.pending': 'Offline — {n} points',
+      'offline.syncing': 'Syncing…',
+      'offline.queue': '{n} points queued',
+      'map.loading': 'Takarut…',
+      'map.points': '{n} iqqiɛen',
+      'map.addPoint': 'Rnu anqiɛ',
+      'map.ndviSentinel': 'NDVI Sentinel',
+      'map.ndviNasa': 'NDVI NASA',
+      'map.addMode': 'Rnu anqiɛ ɣef takarut',
+      'map.liveShare': 'Bḍu adɣar',
+      'map.liveActive': 'Adɣar yettwabḍa',
+      'map.livePeers': '{n} imegzanen',
+      'map.basemap': 'Basemap',
+      'map.basemap.osm': 'Aseklu',
+      'map.basemap.satellite': 'Satellite',
+      'map.basemap.topo': 'Topo',
+      'map.parcels': 'Iger',
+      'map.parcels.show': 'Sken iger',
+      'map.parcels.all': 'Akk',
+      'map.parcels.canton': 'Cantons',
+      'map.parcels.degraded': 'Iɣebbaren',
+      'map.parcels.analyze': 'Sleḍ',
+      'parcel.tooltip': 'Iger',
+      'welcome.title': 'Ansuf ɣer SIG Sols Togo',
     },
   };
 
@@ -102,5 +200,13 @@ class AppStrings {
     return text;
   }
 
-  static String langToggleLabel(String lang) => lang == 'fr' ? 'EN' : 'FR';
+  static String langToggleLabel(String lang) {
+    const labels = {'fr': 'EN', 'en': 'EE', 'ee': 'KAB', 'kab': 'FR'};
+    return labels[lang] ?? 'FR';
+  }
+
+  static String nextLang(String lang) {
+    final i = langs.indexOf(lang);
+    return langs[(i + 1) % langs.length];
+  }
 }

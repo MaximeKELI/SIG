@@ -19,12 +19,22 @@ class LocaleService extends ChangeNotifier {
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     final stored = prefs.getString(_key);
-    if (stored == 'en' || stored == 'fr') _lang = stored!;
+    if (stored != null && AppStrings.langs.contains(stored)) {
+      _lang = stored;
+    }
     notifyListeners();
   }
 
   Future<void> toggle() async {
-    _lang = isFrench ? 'en' : 'fr';
+    _lang = AppStrings.nextLang(_lang);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, _lang);
+    notifyListeners();
+  }
+
+  Future<void> setLang(String lang) async {
+    if (!AppStrings.langs.contains(lang)) return;
+    _lang = lang;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, _lang);
     notifyListeners();

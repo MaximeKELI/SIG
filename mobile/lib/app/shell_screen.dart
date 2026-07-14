@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/activity/activity_tracker.dart';
 import '../core/auth/auth_service.dart';
@@ -10,6 +11,7 @@ import '../features/assistant/assistant_screen.dart';
 import '../features/community/community_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/map/map_screen.dart';
+import '../features/onboarding/onboarding_sheet.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/quiz/quiz_screen.dart';
 import '../features/sheets/sheets_screen.dart';
@@ -33,6 +35,7 @@ class _ShellScreenState extends State<ShellScreen> {
   void initState() {
     super.initState();
     _loadUnread();
+    _showOnboardingIfNeeded();
   }
 
   Future<void> _loadUnread() async {
@@ -40,6 +43,23 @@ class _ShellScreenState extends State<ShellScreen> {
       final n = await context.read<SigApi>().unreadNotifications();
       if (mounted) setState(() => _unread = n);
     } catch (_) {}
+  }
+
+  Future<void> _showOnboardingIfNeeded() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(OnboardingSheet.preferenceKey) == true || !mounted) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showModalBottomSheet<void>(
+        context: context,
+        isDismissible: false,
+        enableDrag: false,
+        isScrollControlled: true,
+        builder: (_) => const OnboardingSheet(),
+      );
+    });
   }
 
   int _indexFromLocation(String loc) {
@@ -55,8 +75,28 @@ class _ShellScreenState extends State<ShellScreen> {
   }
 
   void _go(int index) {
-    const routes = ['/', '/dashboard', '/quiz', '/sheets', '/videos', '/shorts', '/community', '/assistant', '/profile'];
-    const names = ['map', 'dashboard', 'quiz', 'sheets', 'videos', 'shorts', 'community', 'assistant', 'profile'];
+    const routes = [
+      '/',
+      '/dashboard',
+      '/quiz',
+      '/sheets',
+      '/videos',
+      '/shorts',
+      '/community',
+      '/assistant',
+      '/profile',
+    ];
+    const names = [
+      'map',
+      'dashboard',
+      'quiz',
+      'sheets',
+      'videos',
+      'shorts',
+      'community',
+      'assistant',
+      'profile',
+    ];
     context.read<ActivityTracker>().trackNav(names[index]);
     context.go(routes[index]);
   }
@@ -73,8 +113,13 @@ class _ShellScreenState extends State<ShellScreen> {
         child: ListView(
           children: [
             DrawerHeader(
-              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer),
-              child: Text('${i18n.t('app.title')}\n${user?.displayName ?? ''}', style: const TextStyle(fontSize: 18)),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+              ),
+              child: Text(
+                '${i18n.t('app.title')}\n${user?.displayName ?? ''}',
+                style: const TextStyle(fontSize: 18),
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.search),
@@ -85,7 +130,11 @@ class _ShellScreenState extends State<ShellScreen> {
               },
             ),
             ListTile(
-              leading: Badge(label: Text('$_unread'), isLabelVisible: _unread > 0, child: const Icon(Icons.notifications)),
+              leading: Badge(
+                label: Text('$_unread'),
+                isLabelVisible: _unread > 0,
+                child: const Icon(Icons.notifications),
+              ),
               title: Text(i18n.t('drawer.notifications')),
               onTap: () {
                 Navigator.pop(context);
@@ -118,17 +167,23 @@ class _ShellScreenState extends State<ShellScreen> {
               },
             ),
             Consumer<ThemeService>(
-              builder: (_, theme, __) => SwitchListTile(
-                secondary: Icon(theme.isDark ? Icons.dark_mode : Icons.light_mode),
-                title: Text(i18n.t('drawer.theme')),
-                value: !theme.isDark,
-                onChanged: (_) => theme.toggle(),
-              ),
+              builder:
+                  (_, theme, __) => SwitchListTile(
+                    secondary: Icon(
+                      theme.isDark ? Icons.dark_mode : Icons.light_mode,
+                    ),
+                    title: Text(i18n.t('drawer.theme')),
+                    value: !theme.isDark,
+                    onChanged: (_) => theme.toggle(),
+                  ),
             ),
             ListTile(
               leading: const Icon(Icons.language),
               title: Text(i18n.t('drawer.lang')),
-              trailing: Text(i18n.langToggleLabel, style: const TextStyle(fontWeight: FontWeight.bold)),
+              trailing: Text(
+                i18n.langToggleLabel,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
               onTap: () => context.read<LocaleService>().toggle(),
             ),
           ],
@@ -143,7 +198,8 @@ class _ShellScreenState extends State<ShellScreen> {
               isLabelVisible: _unread > 0,
               child: const Icon(Icons.notifications_outlined),
             ),
-            onPressed: () => context.push('/notifications').then((_) => _loadUnread()),
+            onPressed:
+                () => context.push('/notifications').then((_) => _loadUnread()),
           ),
           IconButton(
             icon: const Icon(Icons.map_outlined),
@@ -153,24 +209,48 @@ class _ShellScreenState extends State<ShellScreen> {
         ],
       ),
       body: Column(
-        children: [
-          const OfflineBanner(),
-          Expanded(child: widget.child),
-        ],
+        children: [const OfflineBanner(), Expanded(child: widget.child)],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: index.clamp(0, 8),
         onDestinationSelected: _go,
         destinations: [
-          NavigationDestination(icon: const Icon(Icons.map), label: i18n.t('nav.map')),
-          NavigationDestination(icon: const Icon(Icons.dashboard), label: i18n.t('nav.dashboard')),
-          NavigationDestination(icon: const Icon(Icons.quiz), label: i18n.t('nav.quiz')),
-          NavigationDestination(icon: const Icon(Icons.menu_book), label: i18n.t('nav.sheets')),
-          NavigationDestination(icon: const Icon(Icons.video_library), label: i18n.t('nav.videos')),
-          NavigationDestination(icon: const Icon(Icons.play_circle), label: i18n.t('nav.shorts')),
-          NavigationDestination(icon: const Icon(Icons.people), label: i18n.t('nav.community')),
-          NavigationDestination(icon: const Icon(Icons.smart_toy), label: i18n.t('nav.assistant')),
-          NavigationDestination(icon: const Icon(Icons.person), label: i18n.t('nav.profile')),
+          NavigationDestination(
+            icon: const Icon(Icons.map),
+            label: i18n.t('nav.map'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.dashboard),
+            label: i18n.t('nav.dashboard'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.quiz),
+            label: i18n.t('nav.quiz'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.menu_book),
+            label: i18n.t('nav.sheets'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.video_library),
+            label: i18n.t('nav.videos'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.play_circle),
+            label: i18n.t('nav.shorts'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.people),
+            label: i18n.t('nav.community'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.smart_toy),
+            label: i18n.t('nav.assistant'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.person),
+            label: i18n.t('nav.profile'),
+          ),
         ],
       ),
     );
