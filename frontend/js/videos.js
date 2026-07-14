@@ -111,11 +111,21 @@ function renderCommentItem(c, postId, depth = 0) {
   const repliesHtml = (c.replies || [])
     .map((r) => renderCommentItem(r, postId, depth + 1))
     .join('');
+  const uname = c.author_username ? escapeHtml(c.author_username) : '';
+  const authorLabel = uname
+    ? `<button type="button" class="btn-link community-author-link" data-username="${uname}">
+         <strong>${escapeHtml(c.author_display || c.author_username)}</strong>
+         <span class="video-comment-handle">@${uname}</span>
+       </button>`
+    : `<strong>${escapeHtml(c.author_display || 'Membre')}</strong>`;
+  const avatar = uname
+    ? `<button type="button" class="btn-link comment-avatar-btn community-author-link" data-username="${uname}" aria-label="Voir le profil">${authorAvatarHtml(c.author_profile_photo_url, c.author_display)}</button>`
+    : authorAvatarHtml(c.author_profile_photo_url, c.author_display);
   return `
     <div class="video-comment ${depth > 0 ? 'video-comment--reply' : ''}" data-comment-id="${c.id}">
       <div class="video-comment-head">
-        ${authorAvatarHtml(c.author_profile_photo_url, c.author_display)}
-        <p class="video-comment-author"><strong>${escapeHtml(c.author_display)}</strong>
+        ${avatar}
+        <p class="video-comment-author">${authorLabel}
           <time>${new Date(c.created_at).toLocaleString('fr-FR')}</time></p>
       </div>
       <p class="video-comment-text">${escapeHtml(c.text)}</p>

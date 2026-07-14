@@ -23,6 +23,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _dbInfo;
   String? _dbStatus;
   bool _photoBusy = false;
+  int _photoVersion = 0;
 
   @override
   void initState() {
@@ -229,6 +230,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       await auth.refreshFromJson(Map<String, dynamic>.from(data));
       if (mounted) {
+        setState(() => _photoVersion++);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Photo de profil mise à jour')),
         );
@@ -289,20 +291,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _avatar(AuthService auth) {
     final user = auth.user;
-    final photoUrl = Env.resolveMediaUrl(user?.profilePhotoUrl);
-    final letter = (user?.displayName ?? '?')[0].toUpperCase();
-    return CircleAvatar(
+    if (_photoBusy) {
+      return const SizedBox(
+        width: 80,
+        height: 80,
+        child: Center(
+          child: SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+    return UserAvatar(
+      label: user?.displayName ?? '?',
+      photoUrl: user?.profilePhotoUrl,
       radius: 40,
-      backgroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
-      child: _photoBusy
-          ? const SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : (photoUrl.isEmpty
-              ? Text(letter, style: const TextStyle(fontSize: 32))
-              : null),
+      cacheBust: _photoVersion,
     );
   }
 

@@ -71,10 +71,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         itemBuilder: (_, i) {
                           final n = Map<String, dynamic>.from(_items[i] as Map);
                           final read = n['is_read'] == true;
+                          final message =
+                              n['message']?.toString() ??
+                              n['body']?.toString() ??
+                              '';
                           return ListTile(
                             leading: Icon(read ? Icons.notifications : Icons.notifications_active),
-                            title: Text(n['title']?.toString() ?? n['message']?.toString() ?? '—'),
-                            subtitle: Text(n['body']?.toString() ?? n['created_at']?.toString() ?? ''),
+                            title: Text(n['title']?.toString() ?? '—'),
+                            subtitle: Text(
+                              message.isNotEmpty
+                                  ? message
+                                  : (n['created_at']?.toString() ?? ''),
+                            ),
                             onTap: () async {
                               final id = n['id'] as int?;
                               if (id != null) {

@@ -1265,6 +1265,20 @@ body:not(.agent-mode) .agent-only { display: none !important; }
   color: var(--slate-600, #475569);
 }
 
+.video-comment-handle {
+  display: inline-block;
+  margin-left: 0.35rem;
+  opacity: 0.75;
+  font-weight: 400;
+}
+
+.comment-avatar-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: 0;
+}
+
 .video-comment-text {
   margin: 0 0 0.35rem;
   font-size: 0.9rem;

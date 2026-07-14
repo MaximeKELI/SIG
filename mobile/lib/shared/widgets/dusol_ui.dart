@@ -1,8 +1,10 @@
 import 'dart:io' show Platform;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../core/config/env.dart';
 import '../../core/theme/app_theme.dart';
 
 bool get dusolAnimationsEnabled => !Platform.environment.containsKey('FLUTTER_TEST');
@@ -296,6 +298,69 @@ class DusolAtmosphere extends StatelessWidget {
           color: color,
         ),
       ),
+    );
+  }
+}
+
+/// Avatar circulaire avec fallback lettre (évite le cercle vide si l’image échoue).
+class UserAvatar extends StatelessWidget {
+  const UserAvatar({
+    super.key,
+    required this.label,
+    this.photoUrl,
+    this.radius = 22,
+    this.cacheBust,
+    this.onTap,
+  });
+
+  final String label;
+  final String? photoUrl;
+  final double radius;
+  final Object? cacheBust;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final resolved = Env.resolveMediaUrl(photoUrl);
+    final initial =
+        label.trim().isNotEmpty ? label.trim()[0].toUpperCase() : '?';
+    final placeholder = ColoredBox(
+      color: AppTheme.emerald800,
+      child: Center(
+        child: Text(
+          initial,
+          style: TextStyle(
+            color: AppTheme.gold300,
+            fontSize: radius * 0.85,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+
+    final image =
+        resolved.isEmpty
+            ? placeholder
+            : CachedNetworkImage(
+              imageUrl: resolved,
+              cacheKey: cacheBust == null ? resolved : '$resolved|$cacheBust',
+              fit: BoxFit.cover,
+              width: radius * 2,
+              height: radius * 2,
+              fadeInDuration: const Duration(milliseconds: 180),
+              placeholder: (_, __) => placeholder,
+              errorWidget: (_, __, ___) => placeholder,
+            );
+
+    final avatar = ClipOval(
+      child: SizedBox(width: radius * 2, height: radius * 2, child: image),
+    );
+
+    if (onTap == null) return avatar;
+    return InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: avatar,
     );
   }
 }

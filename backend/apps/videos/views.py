@@ -101,11 +101,12 @@ class VideoPostViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Publication inaccessible.'}, status=403)
         liked, count = toggle_post_like(post, request.user)
         if liked and post.author_id != request.user.pk:
+            who = request.user.get_full_name() or request.user.username
             notify_user(
                 post.author,
                 'Nouveau like',
-                f'{request.user.username} a aimé « {post.title} ».',
-                link='/?view=videos',
+                f'{who} a aimé « {post.title} ».',
+                link=f'/?view=videos&video={post.pk}',
             )
         return Response({'liked': liked, 'like_count': count})
 
@@ -140,22 +141,32 @@ class VideoPostViewSet(viewsets.ModelViewSet):
             parent=parent,
             text=ser.validated_data['text'],
         )
-        if post.author_id != request.user.pk:
+        who = request.user.get_full_name() or request.user.username
+        link = f'/?view=videos&video={post.pk}'
+        if parent is not None:
+            if parent.author_id != request.user.pk:
+                notify_user(
+                    parent.author,
+                    'Réponse à votre commentaire',
+                    f'{who} a répondu à votre commentaire sur « {post.title} ».',
+                    link=link,
+                )
+            if (
+                post.author_id != request.user.pk
+                and post.author_id != parent.author_id
+            ):
+                notify_user(
+                    post.author,
+                    'Nouveau commentaire',
+                    f'{who} a commenté « {post.title} ».',
+                    link=link,
+                )
+        elif post.author_id != request.user.pk:
             notify_user(
                 post.author,
                 'Nouveau commentaire',
-                f'{request.user.username} a commenté « {post.title} ».',
-                link='/?view=videos',
-            )
-        if parent and parent.author_id not in (
-            request.user.pk,
-            post.author_id,
-        ):
-            notify_user(
-                parent.author,
-                'Réponse à votre commentaire',
-                f'{request.user.username} a répondu sur « {post.title} ».',
-                link='/?view=videos',
+                f'{who} a commenté « {post.title} ».',
+                link=link,
             )
         out = annotate_comment_engagement(
             VideoComment.objects.filter(pk=comment.pk).select_related('author'),
@@ -268,11 +279,12 @@ class VideoCommentViewSet(
             return Response({'detail': 'Publication inaccessible.'}, status=403)
         liked, count = toggle_comment_like(comment, request.user)
         if liked and comment.author_id != request.user.pk:
+            who = request.user.get_full_name() or request.user.username
             notify_user(
                 comment.author,
                 'Like sur commentaire',
-                f'{request.user.username} a aimé votre commentaire.',
-                link='/?view=videos',
+                f'{who} a aimé votre commentaire.',
+                link=f'/?view=videos&video={comment.post_id}',
             )
         return Response({'liked': liked, 'like_count': count})
 

@@ -303,10 +303,14 @@ class SigApi {
     return (data as Map)['results'] as List? ?? [];
   }
 
-  Future<Map<String, dynamic>> postVideoComment(int postId, String text, {int? parentId}) =>
+  Future<Map<String, dynamic>> postVideoComment(
+    int postId,
+    String text, {
+    int? parentId,
+  }) =>
       _client.post('/videos/posts/$postId/comments/', data: {
         'text': text,
-        if (parentId != null) 'parent': parentId,
+        if (parentId != null) 'parent_id': parentId,
       });
 
   Future<Map<String, dynamic>> uploadVideo({

@@ -2,6 +2,7 @@ import 'dart:io' show Platform, Process;
 
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
@@ -10,6 +11,7 @@ import '../../core/auth/auth_service.dart';
 import '../../core/config/env.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/sig_api.dart';
+import '../../shared/widgets/dusol_ui.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   const VideoPlayerScreen({
@@ -319,8 +321,48 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               children: [
                 Text(title, style: Theme.of(context).textTheme.headlineSmall),
                 if (author.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text('Par $author'),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () {
+                      final u = _post['author_username']?.toString() ?? '';
+                      if (u.isEmpty) return;
+                      context.push(
+                        '/community/profil/${Uri.encodeComponent(u)}',
+                      );
+                    },
+                    child: Row(
+                      children: [
+                        UserAvatar(
+                          label: author,
+                          photoUrl:
+                              _post['author_profile_photo_url']?.toString(),
+                          radius: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                author,
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if ((_post['author_username']?.toString() ?? '')
+                                  .isNotEmpty)
+                                Text(
+                                  '@${_post['author_username']}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
                 if ((_post['description']?.toString() ?? '').isNotEmpty) ...[
                   const SizedBox(height: 12),
@@ -369,10 +411,12 @@ class _CommentsSheet extends StatefulWidget {
 
 class _CommentsSheetState extends State<_CommentsSheet> {
   final TextEditingController _controller = TextEditingController();
-  List<dynamic> _comments = [];
+  List<Map<String, dynamic>> _comments = [];
   bool _loading = true;
   bool _sending = false;
   String? _error;
+  int? _replyToId;
+  String? _replyToName;
 
   @override
   void initState() {
@@ -391,7 +435,15 @@ class _CommentsSheetState extends State<_CommentsSheet> {
       );
       if (mounted) {
         setState(() {
-          _comments = comments;
+          _comments =
+              comments
+                  .map(
+                    (e) =>
+                        e is Map<String, dynamic>
+                            ? e
+                            : Map<String, dynamic>.from(e as Map),
+                  )
+                  .toList();
           _loading = false;
         });
       }
@@ -405,13 +457,34 @@ class _CommentsSheetState extends State<_CommentsSheet> {
     }
   }
 
+  List<Map<String, dynamic>> get _roots =>
+      _comments.where((c) => c['parent_id'] == null).toList();
+
+  List<Map<String, dynamic>> _repliesOf(int parentId) =>
+      _comments
+          .where((c) {
+            final pid = c['parent_id'];
+            final asInt =
+                pid is int ? pid : int.tryParse(pid?.toString() ?? '');
+            return asInt == parentId;
+          })
+          .toList();
+
   Future<void> _sendComment() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _sending) return;
     setState(() => _sending = true);
     try {
-      await context.read<SigApi>().postVideoComment(widget.postId, text);
+      await context.read<SigApi>().postVideoComment(
+        widget.postId,
+        text,
+        parentId: _replyToId,
+      );
       _controller.clear();
+      setState(() {
+        _replyToId = null;
+        _replyToName = null;
+      });
       await _loadComments();
     } catch (e) {
       if (mounted) {
@@ -448,13 +521,26 @@ class _CommentsSheetState extends State<_CommentsSheet> {
     }
   }
 
-  Map<String, dynamic> _commentAt(int index) {
-    final value = _comments[index];
-    if (value is Map<String, dynamic>) return value;
-    final comment =
-        value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};
-    _comments[index] = comment;
-    return comment;
+  void _openAuthor(Map<String, dynamic> comment) {
+    final username = comment['author_username']?.toString() ?? '';
+    if (username.isEmpty) return;
+    Navigator.of(context).pop();
+    context.push('/community/profil/${Uri.encodeComponent(username)}');
+  }
+
+  void _startReply(Map<String, dynamic> comment) {
+    final id =
+        comment['id'] is int
+            ? comment['id'] as int
+            : int.tryParse(comment['id']?.toString() ?? '');
+    if (id == null) return;
+    setState(() {
+      _replyToId = id;
+      _replyToName =
+          comment['author_display']?.toString() ??
+          comment['author_username']?.toString() ??
+          'commentaire';
+    });
   }
 
   @override
@@ -488,52 +574,78 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                         ? const Center(child: CircularProgressIndicator())
                         : _error != null
                         ? Center(child: Text('Erreur : $_error'))
-                        : _comments.isEmpty
+                        : _roots.isEmpty
                         ? const Center(
                           child: Text('Aucun commentaire — soyez le premier.'),
                         )
                         : ListView.builder(
-                          itemCount: _comments.length,
+                          itemCount: _roots.length,
                           itemBuilder: (_, index) {
-                            final comment = _commentAt(index);
-                            return ListTile(
-                              title: Text(comment['text']?.toString() ?? ''),
-                              subtitle: Text(
-                                comment['author_display']?.toString() ??
-                                    comment['author_username']?.toString() ??
-                                    '',
-                              ),
-                              trailing:
-                                  comment['id'] == null
-                                      ? null
-                                      : Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text('${comment['like_count'] ?? 0}'),
-                                          IconButton(
-                                            onPressed:
-                                                () =>
-                                                    _toggleCommentLike(comment),
-                                            icon: Icon(
-                                              comment['liked_by_me'] == true
-                                                  ? Icons.favorite
-                                                  : Icons.favorite_border,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                            final root = _roots[index];
+                            final rootId =
+                                root['id'] is int
+                                    ? root['id'] as int
+                                    : int.tryParse(root['id']?.toString() ?? '');
+                            final replies =
+                                rootId == null ? const <Map<String, dynamic>>[] : _repliesOf(rootId);
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _CommentTile(
+                                  comment: root,
+                                  onLike: () => _toggleCommentLike(root),
+                                  onReply: () => _startReply(root),
+                                  onOpenAuthor: () => _openAuthor(root),
+                                  showReply: true,
+                                ),
+                                for (final reply in replies)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 28),
+                                    child: _CommentTile(
+                                      comment: reply,
+                                      onLike: () => _toggleCommentLike(reply),
+                                      onOpenAuthor: () => _openAuthor(reply),
+                                      showReply: false,
+                                    ),
+                                  ),
+                              ],
                             );
                           },
                         ),
               ),
+              if (_replyToId != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Réponse à $_replyToName',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed:
+                            () => setState(() {
+                              _replyToId = null;
+                              _replyToName = null;
+                            }),
+                        child: const Text('Annuler'),
+                      ),
+                    ],
+                  ),
+                ),
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _controller,
                       textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                        hintText: 'Ajouter un commentaire…',
+                      decoration: InputDecoration(
+                        hintText:
+                            _replyToId == null
+                                ? 'Ajouter un commentaire…'
+                                : 'Écrire une réponse…',
                       ),
                       onSubmitted: (_) => _sendComment(),
                     ),
@@ -554,6 +666,91 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CommentTile extends StatelessWidget {
+  const _CommentTile({
+    required this.comment,
+    required this.onLike,
+    required this.onOpenAuthor,
+    this.onReply,
+    this.showReply = false,
+  });
+
+  final Map<String, dynamic> comment;
+  final VoidCallback onLike;
+  final VoidCallback onOpenAuthor;
+  final VoidCallback? onReply;
+  final bool showReply;
+
+  @override
+  Widget build(BuildContext context) {
+    final display =
+        comment['author_display']?.toString() ??
+        comment['author_username']?.toString() ??
+        'Membre';
+    final username = comment['author_username']?.toString() ?? '';
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          UserAvatar(
+            label: display,
+            photoUrl: comment['author_profile_photo_url']?.toString(),
+            radius: 18,
+            onTap: username.isEmpty ? null : onOpenAuthor,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                InkWell(
+                  onTap: username.isEmpty ? null : onOpenAuthor,
+                  child: Text(
+                    display,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: AppTheme.emerald700,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (username.isNotEmpty)
+                  Text(
+                    '@$username',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                const SizedBox(height: 4),
+                Text(comment['text']?.toString() ?? ''),
+                Row(
+                  children: [
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      onPressed: onLike,
+                      icon: Icon(
+                        comment['liked_by_me'] == true
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        size: 18,
+                        color:
+                            comment['liked_by_me'] == true
+                                ? Colors.redAccent
+                                : null,
+                      ),
+                    ),
+                    Text('${comment['like_count'] ?? 0}'),
+                    if (showReply && onReply != null)
+                      TextButton(onPressed: onReply, child: const Text('Répondre')),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

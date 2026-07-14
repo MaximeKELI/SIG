@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/sig_api.dart';
+import '../../shared/widgets/dusol_ui.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
 
@@ -88,9 +89,24 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   bool get _isFollowing =>
       _profile?['is_following'] == true || _profile?['following'] == true;
 
+  Map<String, dynamic> get _user {
+    final raw = _profile?['user'];
+    if (raw is Map<String, dynamic>) return raw;
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    return _profile ?? <String, dynamic>{};
+  }
+
+  Map<String, dynamic>? get _stats {
+    final raw = _profile?['stats'] ?? _profile?['profile_stats'] ?? _user['profile_stats'];
+    if (raw is Map<String, dynamic>) return raw;
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = _profile;
+    final user = profile == null ? <String, dynamic>{} : _user;
     return Scaffold(
       appBar: AppBar(title: const Text('Profil public')),
       body:
@@ -103,29 +119,38 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    Center(child: _avatar(profile!)),
+                    Center(
+                      child: UserAvatar(
+                        label: _displayName(user),
+                        photoUrl: user['profile_photo_url']?.toString(),
+                        radius: 48,
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     Text(
-                      _displayName(profile),
+                      _displayName(user),
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '@${profile['username'] ?? widget.username}',
+                      '@${user['username'] ?? widget.username}',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 20),
-                    FilledButton.icon(
-                      onPressed: _updatingFollow ? null : _toggleFollow,
-                      icon: Icon(
-                        _isFollowing
-                            ? Icons.person_remove_outlined
-                            : Icons.person_add_outlined,
+                    if (profile?['is_self'] != true)
+                      FilledButton.icon(
+                        onPressed: _updatingFollow ? null : _toggleFollow,
+                        icon: Icon(
+                          _isFollowing
+                              ? Icons.person_remove_outlined
+                              : Icons.person_add_outlined,
+                        ),
+                        label: Text(
+                          _isFollowing ? 'Ne plus suivre' : 'Suivre',
+                        ),
                       ),
-                      label: Text(_isFollowing ? 'Ne plus suivre' : 'Suivre'),
-                    ),
                     const SizedBox(height: 24),
                     Card(
                       child: Padding(
@@ -139,38 +164,23 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              profile['bio']?.toString().trim().isNotEmpty ==
-                                      true
-                                  ? profile['bio'].toString()
+                              (user['bio']?.toString().trim().isNotEmpty ==
+                                      true)
+                                  ? user['bio'].toString()
                                   : 'Ce membre n’a pas encore renseigné de biographie.',
                             ),
                           ],
                         ),
                       ),
                     ),
-                    if (profile['profile_stats'] is Map)
-                      _stats(profile['profile_stats'] as Map),
+                    if (_stats != null) _statsWidget(_stats!),
                   ],
                 ),
               ),
     );
   }
 
-  Widget _avatar(Map<String, dynamic> profile) {
-    final photo = profile['profile_photo_url']?.toString();
-    final initial =
-        _displayName(profile).isNotEmpty
-            ? _displayName(profile)[0].toUpperCase()
-            : '?';
-    return CircleAvatar(
-      radius: 48,
-      foregroundImage:
-          photo != null && photo.isNotEmpty ? NetworkImage(photo) : null,
-      child: Text(initial, style: const TextStyle(fontSize: 32)),
-    );
-  }
-
-  Widget _stats(Map<dynamic, dynamic> stats) {
+  Widget _statsWidget(Map<String, dynamic> stats) {
     final values = stats.entries.where((entry) => entry.value is num).toList();
     if (values.isEmpty) return const SizedBox.shrink();
     return Card(
@@ -199,14 +209,14 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     );
   }
 
-  String _displayName(Map<String, dynamic> profile) {
-    final name = profile['display_name']?.toString();
+  String _displayName(Map<String, dynamic> user) {
+    final name = user['display_name']?.toString();
     if (name != null && name.isNotEmpty) return name;
-    final first = profile['first_name']?.toString() ?? '';
-    final last = profile['last_name']?.toString() ?? '';
-    return '$first $last'.trim().isNotEmpty
-        ? '$first $last'.trim()
-        : widget.username;
+    final first = user['first_name']?.toString() ?? '';
+    final last = user['last_name']?.toString() ?? '';
+    final full = '$first $last'.trim();
+    if (full.isNotEmpty) return full;
+    return user['username']?.toString() ?? widget.username;
   }
 
   String _label(String key) => key.replaceAll('_', ' ');
