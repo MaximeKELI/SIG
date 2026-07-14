@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../core/auth/auth_service.dart';
 import '../../core/config/env.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/sig_api.dart';
@@ -127,6 +128,47 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     }
   }
 
+  Future<void> _deletePost() async {
+    final id = _postId;
+    if (id == null) return;
+    final auth = context.read<AuthService>();
+    final can =
+        auth.user?.isAdmin == true ||
+        _post['is_mine'] == true ||
+        (_post['author_username']?.toString() == auth.user?.username);
+    if (!can) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Supprimer cette publication ?'),
+            content: const Text('Action définitive.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Annuler'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Supprimer'),
+              ),
+            ],
+          ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      await context.read<SigApi>().deleteVideo(id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Publication supprimée.')),
+        );
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      if (mounted) _showMessage('Suppression impossible : $e');
+    }
+  }
+
   Future<void> _toggleLike() async {
     final id = _postId;
     if (id == null) return;
@@ -181,11 +223,23 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         '';
     final likes = _post['like_count'] ?? 0;
     final canEngage = _postId != null;
+    final auth = context.watch<AuthService>();
+    final canDelete =
+        auth.isAuthenticated &&
+        (auth.user?.isAdmin == true ||
+            _post['is_mine'] == true ||
+            _post['author_username']?.toString() == auth.user?.username);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
         actions: [
+          if (canDelete)
+            IconButton(
+              tooltip: 'Supprimer',
+              onPressed: _deletePost,
+              icon: const Icon(Icons.delete_outline),
+            ),
           if (_resolvedUrl != null && _resolvedUrl!.isNotEmpty)
             IconButton(
               tooltip: 'Ouvrir à l’extérieur',

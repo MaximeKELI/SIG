@@ -164,6 +164,14 @@ function renderModerationActions(post) {
     </div>`;
 }
 
+function renderOwnerDelete(post) {
+  if (!post.is_mine && !post.can_moderate) return '';
+  return `
+    <button type="button" class="btn-auth-outline btn-sm" data-action="delete-post" data-id="${post.id}" title="Supprimer">
+      Supprimer
+    </button>`;
+}
+
 function renderVideoCard(post) {
   const src = mediaUrl(post.file_url);
   const thumb = post.thumbnail_url ? mediaUrl(post.thumbnail_url) : '';
@@ -190,6 +198,7 @@ function renderVideoCard(post) {
         ${post.rejection_reason && post.status === 'rejected'
     ? `<p class="video-reject">${escapeHtml(post.rejection_reason)}</p>` : ''}
         ${renderModerationActions(post)}
+        ${renderOwnerDelete(post)}
         ${post.status === 'published' ? renderEngagementBlock(post) : ''}
       </div>
     </article>`;
@@ -205,6 +214,7 @@ function renderShortCard(post) {
         <span>${escapeHtml(post.author_display)}</span>
         <span class="${statusClass(post.status)}">${statusLabel(post.status)}</span>
         ${renderModerationActions(post)}
+        ${renderOwnerDelete(post)}
       </div>
       ${post.status === 'published' ? renderEngagementBlock(post) : ''}
     </article>`;

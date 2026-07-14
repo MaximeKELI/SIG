@@ -447,6 +447,90 @@ class _VideosScreenState extends State<VideosScreen> {
     }
   }
 
+  bool _canDeleteMedia(Map<String, dynamic> item) {
+    final auth = context.read<AuthService>();
+    if (!auth.isAuthenticated) return false;
+    if (auth.user?.isAdmin == true) return true;
+    if (item['is_mine'] == true) return true;
+    final me = auth.user?.username;
+    final author =
+        item['author_username']?.toString() ??
+        (item['author'] is String ? item['author'].toString() : null);
+    if (me != null && author != null && me == author) return true;
+    final authorId = item['author'];
+    if (authorId is int && auth.user?.id == authorId) return true;
+    return false;
+  }
+
+  Future<bool> _confirmDelete(String label) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Supprimer ?'),
+            content: Text(
+              'Cette action est définitive.\n$label sera retiré de la plateforme.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Annuler'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Supprimer'),
+              ),
+            ],
+          ),
+    );
+    return ok == true;
+  }
+
+  Future<void> _deleteVideoPost(Map<String, dynamic> post) async {
+    if (!_canDeleteMedia(post)) return;
+    final id = _idOf(post);
+    if (id == null) return;
+    final title = post['title']?.toString() ?? 'Cette publication';
+    if (!await _confirmDelete('« $title »')) return;
+    if (!mounted) return;
+    final api = context.read<SigApi>();
+    try {
+      await api.deleteVideo(id);
+      if (!mounted) return;
+      setState(() => _posts.removeWhere((p) {
+            final m = p is Map ? Map<String, dynamic>.from(p) : <String, dynamic>{};
+            return _idOf(m) == id;
+          }));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Publication supprimée.')),
+      );
+    } catch (e) {
+      _showError('Suppression impossible : $e');
+    }
+  }
+
+  Future<void> _deleteStoryItem(Map<String, dynamic> story) async {
+    if (!_canDeleteMedia(story)) return;
+    final id = _idOf(story);
+    if (id == null) return;
+    if (!await _confirmDelete('Cette story')) return;
+    if (!mounted) return;
+    final api = context.read<SigApi>();
+    try {
+      await api.deleteStory(id);
+      if (!mounted) return;
+      setState(() => _stories.removeWhere((s) {
+            final m = s is Map ? Map<String, dynamic>.from(s) : <String, dynamic>{};
+            return _idOf(m) == id;
+          }));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Story supprimée.')),
+      );
+    } catch (e) {
+      _showError('Suppression impossible : $e');
+    }
+  }
+
   String _mediaUrl(Map<String, dynamic> post) => Env.resolveMediaUrl(
     post['file_url']?.toString() ??
         post['video_url']?.toString() ??
@@ -711,27 +795,55 @@ class _VideosScreenState extends State<VideosScreen> {
             padding: const EdgeInsets.only(right: 12),
             child: InkWell(
               onTap: () => _openStory(story),
+              onLongPress:
+                  _canDeleteMedia(story)
+                      ? () => _deleteStoryItem(story)
+                      : null,
               child: Column(
                 children: [
-                  Container(
-                    width: 68,
-                    height: 68,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [AppTheme.gold500, AppTheme.emerald600],
+                  Stack(
+                    children: [
+                      Container(
+                        width: 68,
+                        height: 68,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: const LinearGradient(
+                            colors: [AppTheme.gold500, AppTheme.emerald600],
+                          ),
+                          border: Border.all(color: Colors.white24, width: 2),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          label.isNotEmpty ? label[0].toUpperCase() : 'S',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 22,
+                          ),
+                        ),
                       ),
-                      border: Border.all(color: Colors.white24, width: 2),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      label.isNotEmpty ? label[0].toUpperCase() : 'S',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontSize: 22,
-                      ),
-                    ),
+                      if (_canDeleteMedia(story))
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: GestureDetector(
+                            onTap: () => _deleteStoryItem(story),
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: AppTheme.emerald950,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.delete_outline,
+                                size: 14,
+                                color: AppTheme.gold300,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 6),
                   SizedBox(
@@ -860,6 +972,12 @@ class _VideosScreenState extends State<VideosScreen> {
                       favorite ? Icons.bookmark : Icons.bookmark_border,
                     ),
                   ),
+                  if (_canDeleteMedia(post))
+                    IconButton(
+                      tooltip: 'Supprimer',
+                      onPressed: () => _deleteVideoPost(post),
+                      icon: const Icon(Icons.delete_outline),
+                    ),
                 ],
               ),
             ),
@@ -950,6 +1068,12 @@ class _VideosScreenState extends State<VideosScreen> {
                         color: Colors.white,
                       ),
                     ),
+                    if (_canDeleteMedia(post))
+                      IconButton(
+                        tooltip: 'Supprimer',
+                        onPressed: () => _deleteVideoPost(post),
+                        icon: const Icon(Icons.delete_outline, color: Colors.white),
+                      ),
                   ],
                 ),
               ],

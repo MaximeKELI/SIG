@@ -151,3 +151,75 @@ class VideoPostAPITest(APITestCase):
         )
         self.assertEqual(like_c.status_code, status.HTTP_200_OK)
         self.assertTrue(like_c.data['liked'])
+
+    def test_author_can_delete_own_video(self):
+        post = VideoPost.objects.create(
+            author=self.public,
+            kind=VideoPost.Kind.VIDEO,
+            title='À supprimer',
+            file=SimpleUploadedFile('d.mp4', b'4', content_type='video/mp4'),
+            status=VideoPost.Status.PENDING,
+        )
+        self.client.force_authenticate(self.public)
+        res = self.client.delete(self._url('video-post-detail', pk=post.pk))
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(VideoPost.objects.filter(pk=post.pk).exists())
+
+    def test_other_user_cannot_delete_video(self):
+        post = VideoPost.objects.create(
+            author=self.public,
+            kind=VideoPost.Kind.SHORT,
+            title='Protégé',
+            file=SimpleUploadedFile('e.mp4', b'5', content_type='video/mp4'),
+            status=VideoPost.Status.PUBLISHED,
+        )
+        other = User.objects.create_user(
+            username='vid_other',
+            password='pass12345',
+            role=User.Role.PUBLIC,
+        )
+        self.client.force_authenticate(other)
+        res = self.client.delete(self._url('video-post-detail', pk=post.pk))
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(VideoPost.objects.filter(pk=post.pk).exists())
+
+    def test_admin_can_delete_any_video(self):
+        post = VideoPost.objects.create(
+            author=self.public,
+            kind=VideoPost.Kind.VIDEO,
+            title='Modéré',
+            file=SimpleUploadedFile('f.mp4', b'6', content_type='video/mp4'),
+            status=VideoPost.Status.PUBLISHED,
+        )
+        self.client.force_authenticate(self.admin)
+        res = self.client.delete(self._url('video-post-detail', pk=post.pk))
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_author_can_delete_own_story(self):
+        from django.utils import timezone
+        from videos.models import StoryPost
+
+        story = StoryPost.objects.create(
+            author=self.public,
+            media=SimpleUploadedFile('s.jpg', b'img', content_type='image/jpeg'),
+            caption='story test',
+            expires_at=timezone.now() + timezone.timedelta(hours=20),
+        )
+        self.client.force_authenticate(self.public)
+        res = self.client.delete(f'/api/v1/videos/stories/{story.pk}/')
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(StoryPost.objects.filter(pk=story.pk).exists())
+
+    def test_is_mine_flag_on_list(self):
+        VideoPost.objects.create(
+            author=self.public,
+            kind=VideoPost.Kind.VIDEO,
+            title='Mine',
+            file=SimpleUploadedFile('g.mp4', b'7', content_type='video/mp4'),
+            status=VideoPost.Status.PUBLISHED,
+        )
+        self.client.force_authenticate(self.public)
+        res = self.client.get(self._url('video-post-list'), {'kind': 'video'})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        mine = [r for r in res.data['results'] if r['title'] == 'Mine'][0]
+        self.assertTrue(mine['is_mine'])

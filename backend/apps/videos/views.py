@@ -67,6 +67,14 @@ class VideoPostViewSet(viewsets.ModelViewSet):
         if post.status == VideoPost.Status.PENDING:
             self._notify_admins_pending(post)
 
+    def perform_destroy(self, instance):
+        """Suppression auteur/admin + fichiers média associés."""
+        if instance.file:
+            instance.file.delete(save=False)
+        if instance.thumbnail:
+            instance.thumbnail.delete(save=False)
+        instance.delete()
+
     def _notify_admins_pending(self, post):
         link = '/?view=admin'
         title = 'Vidéo à modérer'

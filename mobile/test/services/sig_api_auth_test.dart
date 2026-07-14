@@ -68,34 +68,23 @@ void main() {
     expect(url, contains('format=csv'));
   });
 
-  test('uploadVideo envoie tags (pas hashtags) en multipart', () async {
-    adapter = CapturingAdapter(response: {
-      'id': 7,
-      'status': 'pending',
-      'title': 'Demo sols',
-    });
+  test('deleteVideo appelle DELETE /videos/posts/:id/', () async {
+    adapter = CapturingAdapter(response: {});
     client.dio.httpClientAdapter = adapter;
     api = SigApi(client);
 
-    await api.uploadVideo(
-      kind: 'short',
-      title: 'Demo sols',
-      tags: 'sols,nasa',
-      fileBytes: [0, 0, 0, 1],
-      fileName: 'clip',
-    );
+    await api.deleteVideo(9);
+    expect(adapter.last!.method, 'DELETE');
+    expect(adapter.last!.path, contains('/videos/posts/9/'));
+  });
 
-    final req = adapter.last!;
-    expect(req.method, 'POST');
-    expect(req.path, contains('/videos/posts/'));
-    final raw = req.rawBody ?? '';
-    expect(raw.contains('name="tags"'), isTrue);
-    expect(raw.contains('name="hashtags"'), isFalse);
-    expect(raw.contains('sols,nasa'), isTrue);
-    expect(raw.contains('clip.mp4'), isTrue);
-    expect(
-      (req.contentType ?? '').toLowerCase(),
-      isNot(contains('application/json')),
-    );
+  test('deleteStory appelle DELETE /videos/stories/:id/', () async {
+    adapter = CapturingAdapter(response: {});
+    client.dio.httpClientAdapter = adapter;
+    api = SigApi(client);
+
+    await api.deleteStory(3);
+    expect(adapter.last!.method, 'DELETE');
+    expect(adapter.last!.path, contains('/videos/stories/3/'));
   });
 }

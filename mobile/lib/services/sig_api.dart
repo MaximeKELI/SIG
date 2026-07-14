@@ -383,6 +383,10 @@ class SigApi {
     return _client.upload('/videos/stories/', form);
   }
 
+  Future<void> deleteVideo(int id) => _client.delete('/videos/posts/$id/');
+
+  Future<void> deleteStory(int id) => _client.delete('/videos/stories/$id/');
+
   Future<List<dynamic>> pendingVideos() async {
     final data = await _client.get<dynamic>('/videos/posts/pending/');
     if (data is List) return data;

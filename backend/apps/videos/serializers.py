@@ -26,6 +26,7 @@ class VideoPostSerializer(serializers.ModelSerializer):
     file_url = serializers.SerializerMethodField()
     thumbnail_url = serializers.SerializerMethodField()
     can_moderate = serializers.SerializerMethodField()
+    is_mine = serializers.SerializerMethodField()
     like_count = serializers.IntegerField(read_only=True, default=0)
     comment_count = serializers.IntegerField(read_only=True, default=0)
     liked_by_me = serializers.BooleanField(read_only=True, default=False)
@@ -35,7 +36,7 @@ class VideoPostSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'kind', 'category', 'title', 'tags', 'description', 'status',
             'duration_seconds', 'view_count', 'is_featured',
-            'like_count', 'comment_count', 'liked_by_me',
+            'like_count', 'comment_count', 'liked_by_me', 'is_mine',
             'author', 'author_username', 'author_display',
             'author_profile_photo_url',
             'file_url', 'thumbnail_url', 'rejection_reason',
@@ -45,7 +46,7 @@ class VideoPostSerializer(serializers.ModelSerializer):
             'id', 'status', 'view_count', 'author', 'author_username',
             'author_display', 'file_url', 'thumbnail_url',
             'rejection_reason', 'created_at', 'updated_at', 'can_moderate',
-            'like_count', 'comment_count', 'liked_by_me',
+            'like_count', 'comment_count', 'liked_by_me', 'is_mine',
         )
 
     def get_author_display(self, obj):
@@ -53,6 +54,15 @@ class VideoPostSerializer(serializers.ModelSerializer):
 
     def get_author_profile_photo_url(self, obj):
         return _author_photo_url(obj.author)
+
+    def get_is_mine(self, obj):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None) if request else None
+        return bool(
+            user
+            and getattr(user, 'is_authenticated', False)
+            and obj.author_id == getattr(user, 'pk', None)
+        )
 
     def get_file_url(self, obj):
         return obj.file.url if obj.file else None
