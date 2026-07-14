@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 
 import '../config/env.dart';
@@ -207,6 +209,22 @@ class ApiClient {
         options: Options(responseType: ResponseType.plain),
       );
       return res.data?.toString() ?? '';
+    } on DioException catch (e) {
+      throw ApiException(_parseError(e), statusCode: e.response?.statusCode);
+    }
+  }
+
+  Future<List<int>> downloadBytes(String path, {Map<String, dynamic>? query}) async {
+    try {
+      final res = await _dio.get(
+        path,
+        queryParameters: query,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      final data = res.data;
+      if (data is List<int>) return data;
+      if (data is Uint8List) return data;
+      return List<int>.from(data as List);
     } on DioException catch (e) {
       throw ApiException(_parseError(e), statusCode: e.response?.statusCode);
     }

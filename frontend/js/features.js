@@ -298,10 +298,14 @@ export async function showTrajectory(map, userId) {
 }
 
 export function connectWebSocket() {
-  if (!SigSolsAPI.getToken()) return;
-  if (ws?.readyState === WebSocket.OPEN) return;
+  const token = SigSolsAPI.getToken?.();
+  if (!token) return;
+  if (ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) return;
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  ws = new WebSocket(`${proto}://${location.host}/ws/live/`);
+  // JWT en query (comme le mobile) — la session cookie n’est pas utilisée par le SPA
+  ws = new WebSocket(
+    `${proto}://${location.host}/ws/live/?token=${encodeURIComponent(token)}`,
+  );
   ws.onmessage = (ev) => {
     try {
       const msg = JSON.parse(ev.data);
@@ -310,10 +314,12 @@ export function connectWebSocket() {
       }
     } catch { /* ignore */ }
   };
-  ws.onclose = () => {
+  ws.onclose = (ev) => {
+    // Ne pas spammer si auth refusée
+    if (ev.code === 1008 || ev.code === 4001 || ev.code === 1006) return;
     setTimeout(() => {
       if (SigSolsAPI.isAuthenticated()) connectWebSocket();
-    }, 5000);
+    }, 8000);
   };
 }
 

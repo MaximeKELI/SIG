@@ -125,3 +125,52 @@ def test_award_apprenti_badge(agent_user, db):
 @pytest.mark.django_db
 def test_weekly_leaderboard_empty():
     assert weekly_leaderboard() == []
+
+
+@pytest.mark.django_db
+def test_quiz_certificate_requires_auth(api_client, quiz_questions, agent_user):
+    from education.models import QuizSession
+    session = QuizSession.objects.create(
+        user=agent_user,
+        difficulty='facile',
+        score=25,
+        questions_answered=5,
+        completed=True,
+    )
+    r = api_client.get(f'/api/v1/education/quiz/{session.pk}/certificate/')
+    assert r.status_code in (401, 403)
+
+
+@pytest.mark.django_db
+def test_quiz_certificate_pdf_authenticated(auth_client, quiz_questions, agent_user):
+    from education.models import QuizSession
+    session = QuizSession.objects.create(
+        user=agent_user,
+        difficulty='facile',
+        score=25,
+        questions_answered=5,
+        completed=True,
+    )
+    r = auth_client.get(f'/api/v1/education/quiz/{session.pk}/certificate/')
+    assert r.status_code == 200
+    assert r['Content-Type'] == 'application/pdf'
+    assert r.content[:4] == b'%PDF'
+    assert len(r.content) > 2000
+    assert 'certificat-quiz' in (r.get('Content-Disposition') or '')
+
+
+@pytest.mark.django_db
+def test_build_certificate_bytes_premium_layout(agent_user, db):
+    from education.certificate_pdf import build_quiz_certificate_bytes
+    from education.models import QuizSession
+    session = QuizSession.objects.create(
+        user=agent_user,
+        difficulty='moyen',
+        score=18,
+        questions_answered=10,
+        completed=True,
+        exam_mode=True,
+    )
+    pdf = build_quiz_certificate_bytes(session, agent_user)
+    assert pdf[:4] == b'%PDF'
+    assert len(pdf) > 2500

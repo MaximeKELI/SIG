@@ -270,6 +270,9 @@ class SigApi {
   String quizCertificateUrl(int sessionId) =>
       '${Env.origin}/api/v1/education/quiz/$sessionId/certificate/';
 
+  Future<List<int>> downloadQuizCertificate(int sessionId) =>
+      _client.downloadBytes('/education/quiz/$sessionId/certificate/');
+
   Future<List<dynamic>> fetchSheets() async {
     final data = await _client.get<dynamic>('/education/sheets/');
     if (data is List) return data;

@@ -1,9 +1,10 @@
 import 'dart:async';
-import 'dart:io' show Platform;
+import 'dart:io' show File, Platform;
 
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../services/sig_api.dart';
 import '../../shared/widgets/error_view.dart';
@@ -251,14 +252,23 @@ class _QuizScreenState extends State<QuizScreen> {
 
   Future<void> _openCertificate() async {
     if (_sessionId == null) return;
-    final uri = Uri.parse(
-      context.read<SigApi>().quizCertificateUrl(_sessionId!),
-    );
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication) &&
-        mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Impossible d’ouvrir le certificat PDF.')),
+    try {
+      final bytes = await context.read<SigApi>().downloadQuizCertificate(
+        _sessionId!,
       );
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/certificat-quiz-$_sessionId.pdf');
+      await file.writeAsBytes(bytes, flush: true);
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'application/pdf')],
+        text: 'Certificat SIG Sols Togo',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Certificat indisponible : $e')),
+        );
+      }
     }
   }
 

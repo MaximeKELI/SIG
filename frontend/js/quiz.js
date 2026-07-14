@@ -175,11 +175,24 @@ async function finishQuiz() {
   document.getElementById('btn-quiz-finish').classList.add('hidden');
   const certBtn = document.getElementById('btn-quiz-certificate');
   if (certBtn && quizSession && finalScore >= 10) {
-    certBtn.href = `/api/v1/education/quiz/${quizSession}/certificate/`;
     certBtn.classList.remove('hidden');
+    certBtn.onclick = async (e) => {
+      e.preventDefault();
+      certBtn.disabled = true;
+      try {
+        await SigSolsAPI.download(
+          `/education/quiz/${quizSession}/certificate/`,
+          `certificat-quiz-${quizSession}.pdf`,
+        );
+      } catch (err) {
+        notifyError(err);
+      } finally {
+        certBtn.disabled = false;
+      }
+    };
   } else if (certBtn) {
     certBtn.classList.add('hidden');
-    certBtn.removeAttribute('href');
+    certBtn.onclick = null;
   }
   loadLeaderboard();
   loadBadges();
