@@ -83,6 +83,23 @@ def test_profile_photo_upload_and_delete(auth_client, agent_user):
 
 
 @pytest.mark.django_db
+def test_profile_photo_accepts_photo_alias(auth_client, agent_user):
+    """Compat mobile : champ multipart `photo` au lieu de `profile_photo`."""
+    img = SimpleUploadedFile(
+        'avatar2.png',
+        _TINY_PNG,
+        content_type='image/png',
+    )
+    r = auth_client.post(
+        '/api/v1/auth/profile/photo/',
+        {'photo': img},
+        format='multipart',
+    )
+    assert r.status_code == 200
+    assert r.json()['profile_photo_url']
+
+
+@pytest.mark.django_db
 def test_user_list_requires_admin(api_client, agent_user, admin_user):
     from rest_framework_simplejwt.tokens import RefreshToken
     api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {RefreshToken.for_user(agent_user).access_token}')
