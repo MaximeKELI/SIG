@@ -578,18 +578,14 @@ class SigApi {
     return (data as Map)['results'] as List? ?? [];
   }
 
-  Future<List<dynamic>> droughtAlerts() async {
-    final data = await _client.get<dynamic>('/platform/alerts/drought/');
+  /// Liste admin paginée (`/auth/users/`).
+  Future<List<dynamic>> listUsers({String? cursor}) async {
+    final data = await _client.get<dynamic>(
+      '/auth/users/',
+      query: {if (cursor != null && cursor.isNotEmpty) 'cursor': cursor},
+    );
     if (data is List) return data;
     return (data as Map)['results'] as List? ?? [];
-  }
-
-  Future<List<dynamic>> liveLocations() async {
-    final data = await _client.get<dynamic>('/auth/locations/live/');
-    if (data is List) return data;
-    return (data as Map)['users'] as List? ??
-        (data as Map)['results'] as List? ??
-        [];
   }
 
   Future<Map<String, dynamic>> adminAnalytics({int days = 30}) =>

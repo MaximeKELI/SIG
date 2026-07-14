@@ -250,8 +250,7 @@ export async function validatePoint(id, action) {
       body: JSON.stringify({ action }),
     });
     notifySuccess(action === 'validate' ? 'Point validé.' : 'Point rejeté.');
-    loadPendingValidation();
-    loadAdminDashboard();
+    await loadAdminDashboard();
     SigSolsMap.loadSoilPoints();
   } catch (e) {
     notifyError(e);

@@ -678,13 +678,22 @@
       </div>
 
       <div class="admin-tab-panel" data-adm-panel="users">
-        <h3>Derniers utilisateurs</h3>
+        <div class="an-user-search">
+          <label>Recherche
+            <input type="search" id="adm-users-q" placeholder="username, email…" />
+          </label>
+          <button type="button" id="btn-adm-users-search" class="btn-auth-secondary btn-sm">Chercher</button>
+          <button type="button" id="btn-adm-users-reload" class="btn-auth-outline btn-sm">Liste complète</button>
+        </div>
+        <h3>Utilisateurs</h3>
         <div class="admin-table-wrap">
           <table class="an-table adm-users-table">
-            <thead><tr><th>ID</th><th>Utilisateur</th><th>Rôle</th><th>Région</th><th>Inscription</th></tr></thead>
+            <thead><tr><th>ID</th><th>Utilisateur</th><th>Rôle</th><th>Région</th><th>Inscription</th><th></th></tr></thead>
             <tbody id="adm-users-table"></tbody>
           </table>
         </div>
+        <p class="panel-lead" id="adm-users-page-hint"></p>
+        <div id="adm-user-activity-inline" class="an-user-detail"></div>
         <h3>Import CSV</h3>
         <p class="panel-lead">Colonnes : username, password, email, role, first_name, last_name, region</p>
         <input type="file" id="btn-import-users" accept=".csv,text/csv" />
@@ -744,6 +753,12 @@
       </div>
 
       <div class="admin-tab-panel" data-adm-panel="ops">
+        <h3>Santé système</h3>
+        <p class="panel-lead" id="adm-health-status">—</p>
+        <p class="panel-lead">
+          <a href="/health/?detail=1" target="_blank" rel="noopener" class="btn-auth-outline btn-sm">Ouvrir /health/</a>
+          <button type="button" id="btn-adm-health" class="btn-auth-secondary btn-sm">Rafraîchir santé</button>
+        </p>
         <h3>Journal d’audit</h3>
         <ul id="adm-audit" class="compact-list audit-list"></ul>
         <h3>Modèle IA &amp; NASA</h3>

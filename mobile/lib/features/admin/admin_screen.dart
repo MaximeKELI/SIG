@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/auth/auth_service.dart';
+import '../../core/config/env.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/sig_api.dart';
 import '../../shared/widgets/error_view.dart';
@@ -23,10 +26,14 @@ class AdminScreen extends StatefulWidget {
 class _AdminScreenState extends State<AdminScreen> {
   Map<String, dynamic>? _cockpit;
   List<dynamic> _journal = [];
+  List<dynamic> _usersList = [];
   Map<String, dynamic>? _userActivity;
+  Map<String, dynamic>? _health;
   final _userActivityCtrl = TextEditingController();
   final _zoneCodeCtrl = TextEditingController();
+  final _usersSearchCtrl = TextEditingController();
   bool _loading = true;
+  bool _usersLoading = false;
   String? _error;
 
   @override
@@ -39,6 +46,7 @@ class _AdminScreenState extends State<AdminScreen> {
   void dispose() {
     _userActivityCtrl.dispose();
     _zoneCodeCtrl.dispose();
+    _usersSearchCtrl.dispose();
     super.dispose();
   }
 
@@ -82,12 +90,44 @@ class _AdminScreenState extends State<AdminScreen> {
         _journal = results[1] as List<dynamic>;
         _loading = false;
       });
+      unawaited(_loadUsersList());
+      unawaited(_loadHealth());
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;
       });
+    }
+  }
+
+  Future<void> _loadUsersList() async {
+    setState(() => _usersLoading = true);
+    try {
+      final q = _usersSearchCtrl.text.trim();
+      final api = context.read<SigApi>();
+      final list =
+          q.isEmpty
+              ? await api.listUsers()
+              : await api.searchUsers(q);
+      if (!mounted) return;
+      setState(() {
+        _usersList = list;
+        _usersLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _usersLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
+  Future<void> _loadHealth() async {
+    try {
+      final data = await context.read<SigApi>().fetchSystemHealth();
+      if (mounted) setState(() => _health = data);
+    } catch (_) {
+      if (mounted) setState(() => _health = null);
     }
   }
 
@@ -248,7 +288,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 title: Text('${(o['ml_model'] as Map)['algorithm'] ?? '—'}'),
                 subtitle: Text(
                   'F1 ${(o['ml_model'] as Map)['f1_macro'] ?? '—'} · '
-                  '${'${(o['ml_model'] as Map)['trained_at'] ?? ''}'.substring(0, ('${(o['ml_model'] as Map)['trained_at'] ?? ''}').length.clamp(0, 16))}',
+                  '${_shortDate((o['ml_model'] as Map)['trained_at'])}',
                 ),
               ),
             ),
@@ -373,10 +413,15 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   Widget _usersTab() {
-    final recent = _usersBlock['recent'] as List? ?? const [];
     final byRole = _usersBlock['by_role'] as List? ?? const [];
+    final rows =
+        _usersList.isNotEmpty
+            ? _usersList
+            : (_usersBlock['recent'] as List? ?? const []);
     return RefreshIndicator(
-      onRefresh: _load,
+      onRefresh: () async {
+        await _loadUsersList();
+      },
       child: ListView(
         padding: const EdgeInsets.all(12),
         children: [
@@ -396,15 +441,38 @@ class _AdminScreenState extends State<AdminScreen> {
                 }).toList(),
           ),
           const SizedBox(height: 12),
+          TextField(
+            controller: _usersSearchCtrl,
+            decoration: InputDecoration(
+              labelText: 'Recherche utilisateur',
+              border: const OutlineInputBorder(),
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: _loadUsersList,
+              ),
+            ),
+            onSubmitted: (_) => _loadUsersList(),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: _usersLoading ? null : _loadUsersList,
+              child: Text(_usersLoading ? 'Chargement…' : 'Actualiser la liste'),
+            ),
+          ),
           Text(
-            'Derniers inscrits',
+            'Utilisateurs (${rows.length})',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           Card(
             child: Column(
               children:
-                  recent.take(30).map((raw) {
+                  rows.take(50).map((raw) {
                     final u = Map<String, dynamic>.from(raw as Map);
+                    final id = u['id'] is int
+                        ? u['id'] as int
+                        : int.tryParse('${u['id']}');
                     return ListTile(
                       leading: CircleAvatar(
                         child: Text(
@@ -413,9 +481,18 @@ class _AdminScreenState extends State<AdminScreen> {
                       ),
                       title: Text('${u['username']}'),
                       subtitle: Text(
-                        '${u['role']} · ${u['region'] ?? '—'} · ${'${u['date_joined'] ?? ''}'.substring(0, ('${u['date_joined'] ?? ''}').length.clamp(0, 10))}',
+                        '${u['role']} · ${u['region'] ?? '—'} · ${_shortDate(u['date_joined'], len: 10)}',
                       ),
-                      trailing: Text('#${u['id']}'),
+                      trailing: id == null
+                          ? Text('#${u['id']}')
+                          : TextButton(
+                            onPressed: () {
+                              _userActivityCtrl.text = '$id';
+                              DefaultTabController.of(context).animateTo(4);
+                              _loadUserActivity();
+                            },
+                            child: const Text('Activité'),
+                          ),
                     );
                   }).toList(),
             ),
@@ -593,6 +670,41 @@ class _AdminScreenState extends State<AdminScreen> {
   Widget _opsTab() => ListView(
     padding: const EdgeInsets.all(12),
     children: [
+      Text('Santé système', style: Theme.of(context).textTheme.titleMedium),
+      Card(
+        child: ListTile(
+          leading: Icon(
+            _health == null
+                ? Icons.monitor_heart_outlined
+                : Icons.favorite,
+            color: _health != null ? Colors.greenAccent : null,
+          ),
+          title: Text(
+            _health == null
+                ? 'Indisponible'
+                : 'Statut ${_health!['status'] ?? 'ok'}',
+          ),
+          subtitle: Text(
+            _health == null
+                ? Env.healthUrl
+                : (_health!['checks'] is Map
+                    ? (_health!['checks'] as Map).entries
+                        .take(4)
+                        .map((e) => '${e.key}: ${e.value}')
+                        .join(' · ')
+                    : Env.healthUrl),
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadHealth,
+          ),
+          onTap: () => launchUrl(
+            Uri.parse(Env.healthUrl),
+            mode: LaunchMode.externalApplication,
+          ),
+        ),
+      ),
+      const SizedBox(height: 16),
       Text('Journal d’audit', style: Theme.of(context).textTheme.titleMedium),
       Card(
         child: Column(
@@ -842,6 +954,12 @@ class _AdminScreenState extends State<AdminScreen> {
         ).showSnackBar(SnackBar(content: Text('$e')));
       }
     }
+  }
+
+  String _shortDate(Object? value, {int len = 16}) {
+    final s = '${value ?? ''}';
+    if (s.isEmpty) return '—';
+    return s.substring(0, s.length < len ? s.length : len);
   }
 
   Widget _pendingList(

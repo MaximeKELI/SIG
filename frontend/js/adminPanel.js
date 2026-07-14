@@ -202,18 +202,86 @@ function renderModeration(data) {
   }
 }
 
-function renderUsers(data) {
+function fillUsersTable(rows, hint = '') {
   const tbody = document.getElementById('adm-users-table');
+  const hintEl = document.getElementById('adm-users-page-hint');
+  if (hintEl) hintEl.textContent = hint;
   if (!tbody) return;
-  const rows = data.users?.recent || [];
-  tbody.innerHTML = rows.map((u) => `
+  tbody.innerHTML = (rows || []).map((u) => `
     <tr>
       <td>${u.id}</td>
       <td>${escapeHtml(u.username)}${u.first_name ? ` (${escapeHtml(u.first_name)})` : ''}</td>
       <td>${escapeHtml(u.role)}</td>
       <td>${escapeHtml(u.region || '—')}</td>
       <td>${String(u.date_joined || '').slice(0, 10)}</td>
-    </tr>`).join('') || '<tr><td colspan="5">Aucun utilisateur</td></tr>';
+      <td><button type="button" class="btn-link adm-user-activity" data-uid="${u.id}">Activité</button></td>
+    </tr>`).join('') || '<tr><td colspan="6">Aucun utilisateur</td></tr>';
+  tbody.querySelectorAll('.adm-user-activity').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const box = document.getElementById('adm-user-activity-inline');
+      if (box) box.innerHTML = '<p>Chargement…</p>';
+      switchTab('stats');
+      const idInput = document.getElementById('an-user-id');
+      if (idInput) idInput.value = btn.dataset.uid;
+      await window.SigSolsAdminAnalytics?.loadUserActivity?.(btn.dataset.uid);
+      if (box) {
+        box.innerHTML = `<p>Activité chargée pour l’utilisateur #${btn.dataset.uid} (onglet Statistiques).</p>`;
+      }
+    });
+  });
+}
+
+function renderUsers(data) {
+  fillUsersTable(
+    data.users?.recent || [],
+    'Aperçu des dernières inscriptions (cockpit). Utilisez Recherche / Liste complète pour /auth/users/.',
+  );
+}
+
+export async function loadAdminUsersList() {
+  try {
+    const data = await SigSolsAPI.api('/auth/users/');
+    const rows = data.results || data || [];
+    fillUsersTable(rows, `Liste admin (${rows.length} lignes — pagination curseur API).`);
+  } catch (e) {
+    notifyError(e);
+  }
+}
+
+export async function searchAdminUsers() {
+  const q = document.getElementById('adm-users-q')?.value?.trim();
+  if (!q) {
+    await loadAdminUsersList();
+    return;
+  }
+  try {
+    const data = await SigSolsAPI.api(`/auth/users/search/?q=${encodeURIComponent(q)}`);
+    const rows = data.results || data || [];
+    fillUsersTable(rows, `Résultats pour « ${q} » (${rows.length}).`);
+  } catch (e) {
+    notifyError(e);
+  }
+}
+
+export async function refreshAdminHealth() {
+  const el = document.getElementById('adm-health-status');
+  if (!el) return;
+  el.textContent = 'Vérification…';
+  try {
+    const res = await fetch('/health/?detail=1', { credentials: 'same-origin' });
+    const data = await res.json().catch(() => ({}));
+    const status = data.status || (res.ok ? 'ok' : 'error');
+    const checks = data.checks || data;
+    const bits = typeof checks === 'object'
+      ? Object.entries(checks).slice(0, 8).map(([k, v]) => {
+        const val = v && typeof v === 'object' ? (v.status || JSON.stringify(v).slice(0, 40)) : v;
+        return `${k}: ${val}`;
+      }).join(' · ')
+      : '';
+    el.textContent = `Statut ${status}${bits ? ` — ${bits}` : ''}`;
+  } catch (e) {
+    el.textContent = e.message || 'Santé indisponible';
+  }
 }
 
 function renderTerrain(data) {
@@ -269,6 +337,7 @@ export async function loadAdminCockpit() {
     renderTerrain(data);
     renderAudit(data);
     renderAnalyticsFromCockpit(data);
+    refreshAdminHealth();
 
     // Journal unifié (endpoint dédié — enrichit la modération)
     try {
@@ -296,13 +365,26 @@ export function initAdminPanel() {
   adminPanelReady = true;
 
   document.querySelectorAll('.admin-tab').forEach((btn) => {
-    btn.addEventListener('click', () => switchTab(btn.dataset.admTab));
+    btn.addEventListener('click', () => {
+      switchTab(btn.dataset.admTab);
+      if (btn.dataset.admTab === 'ops') refreshAdminHealth();
+      if (btn.dataset.admTab === 'users' && !document.querySelector('#adm-users-table tr td button')) {
+        loadAdminUsersList();
+      }
+    });
   });
   document.getElementById('btn-adm-refresh')?.addEventListener('click', () => {
     loadAdminCockpit();
+    refreshAdminHealth();
   });
   document.getElementById('btn-adm-train-ml')?.addEventListener('click', trainMlModel);
   document.getElementById('btn-adm-nasa-ingest')?.addEventListener('click', triggerNasaIngest);
+  document.getElementById('btn-adm-users-search')?.addEventListener('click', searchAdminUsers);
+  document.getElementById('btn-adm-users-reload')?.addEventListener('click', loadAdminUsersList);
+  document.getElementById('btn-adm-health')?.addEventListener('click', refreshAdminHealth);
+  document.getElementById('adm-users-q')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchAdminUsers();
+  });
 }
 
 window.SigSolsAdminPanel = {
@@ -310,5 +392,8 @@ window.SigSolsAdminPanel = {
   trainMlModel,
   triggerNasaIngest,
   loadAdminCockpit,
+  loadAdminUsersList,
+  searchAdminUsers,
+  refreshAdminHealth,
   getCockpit: () => cockpitCache,
 };
