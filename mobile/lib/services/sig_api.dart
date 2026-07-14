@@ -569,6 +569,29 @@ class SigApi {
   Future<Map<String, dynamic>> adminDashboard() =>
       _client.get('/platform/admin/dashboard/');
 
+  Future<Map<String, dynamic>> adminCockpit({int days = 30}) =>
+      _client.get('/platform/admin/cockpit/', query: {'days': days});
+
+  Future<List<dynamic>> adminAudit() async {
+    final data = await _client.get<dynamic>('/platform/audit/');
+    if (data is List) return data;
+    return (data as Map)['results'] as List? ?? [];
+  }
+
+  Future<List<dynamic>> droughtAlerts() async {
+    final data = await _client.get<dynamic>('/platform/alerts/drought/');
+    if (data is List) return data;
+    return (data as Map)['results'] as List? ?? [];
+  }
+
+  Future<List<dynamic>> liveLocations() async {
+    final data = await _client.get<dynamic>('/auth/locations/live/');
+    if (data is List) return data;
+    return (data as Map)['users'] as List? ??
+        (data as Map)['results'] as List? ??
+        [];
+  }
+
   Future<Map<String, dynamic>> adminAnalytics({int days = 30}) =>
       _client.get('/platform/admin/analytics/', query: {'days': days});
 

@@ -617,88 +617,147 @@
   </section>
 
   <section id="view-admin" class="view">
-    <div class="admin-panel">
-      <h2 class="panel-title">Administration</h2>
-      <p class="panel-lead">Validation, audit et rapports zone</p>
-      <div class="dashboard-grid">
-        <article class="kpi-card"><h3>Utilisateurs</h3><p id="adm-users">—</p></article>
-        <article class="kpi-card"><h3>Points sol</h3><p id="adm-points">—</p></article>
-        <article class="kpi-card"><h3>En attente</h3><p id="adm-pending">—</p></article>
-        <article class="kpi-card"><h3>Agents live</h3><p id="adm-agents">—</p></article>
-        <article class="kpi-card"><h3>Alertes actives</h3><p id="adm-alerts">—</p></article>
-      </div>
-      <h3>Validation en attente</h3>
-      <ul id="adm-pending-list" class="compact-list"></ul>
-      <h3>Vidéos en attente</h3>
-      <ul id="adm-videos-pending" class="compact-list"></ul>
-      <h3>Modération commentaires</h3>
-      <ul id="adm-comments-moderation" class="compact-list"></ul>
-      <h3>Journal modération unifié</h3>
-      <ul id="adm-mod-journal" class="compact-list"></ul>
-      <h3>Import utilisateurs (CSV)</h3>
-      <p class="panel-lead">Colonnes : username, password, email, role, first_name, last_name, region</p>
-      <input type="file" id="btn-import-users" accept=".csv,text/csv" />
-      <h3>Rapport ministère</h3>
-      <button type="button" id="btn-ministry-report" class="btn-auth-primary btn-sm">Rapport HTML (30 j.)</button>
-      <h3>Exports CSV</h3>
-      <p class="panel-lead">
-        <a href="/api/v1/platform/admin/export/users.csv" class="btn-auth-outline btn-sm" id="adm-export-users">Utilisateurs</a>
-        <a href="/api/v1/platform/admin/export/activity.csv?days=30" class="btn-auth-outline btn-sm" id="adm-export-activity">Activité (30 j.)</a>
-      </p>
-      <h3>Journal d'audit</h3>
-      <ul id="adm-audit" class="compact-list audit-list"></ul>
-      <h3>Rapport zone</h3>
-      <label>Code zone <input type="text" id="adm-zone-code" placeholder="MAR-01" /></label>
-      <button type="button" id="btn-zone-report">Ouvrir rapport HTML</button>
-      <hr />
-      <h3>Modèle IA &amp; NASA</h3>
-      <label>Algorithme
-        <select id="adm-ml-algo">
-          <option value="RandomForest">Random Forest</option>
-          <option value="XGBoost">XGBoost</option>
-        </select>
-      </label>
-      <button type="button" id="btn-adm-train-ml" class="btn-parcel-analyze">Réentraîner le modèle IA</button>
-      <p id="adm-ml-status" class="parcel-status"></p>
-      <button type="button" id="btn-adm-nasa-ingest" class="btn-parcel-clear">Ingestion NASA (admin)</button>
-      <p id="adm-nasa-status" class="parcel-status">Nécessite NASA_EARTHDATA_* dans .env</p>
-      <hr />
-      <h3>Analytics &amp; activité utilisateurs</h3>
-      <p class="panel-lead">Suivi détaillé (zoom carte, navigation, quiz, API…) pour analyse et data science.</p>
-      <div class="dashboard-grid an-kpi-grid">
-        <article class="kpi-card"><h3>Événements (30 j.)</h3><p id="an-events-total">—</p></article>
-        <article class="kpi-card"><h3>Aujourd’hui</h3><p id="an-events-today">—</p></article>
-        <article class="kpi-card"><h3>Zooms carte</h3><p id="an-map-zoom">—</p></article>
-        <article class="kpi-card"><h3>Déplacements carte</h3><p id="an-map-pan">—</p></article>
-        <article class="kpi-card"><h3>Utilisateurs</h3><p id="an-users-total">—</p></article>
-      </div>
-      <div class="an-charts-row">
-        <div class="an-chart-box">
-          <h4>Événements par jour</h4>
-          <canvas id="chart-activity-canvas" height="200"></canvas>
+    <div class="admin-panel admin-cockpit">
+      <header class="admin-cockpit-header">
+        <div>
+          <h2 class="panel-title">Cockpit administration</h2>
+          <p class="panel-lead">Vision globale — web &amp; mobile · stats · validation · modération · ops</p>
         </div>
-        <div class="an-side-panels">
-          <div class="an-panel">
-            <h4>Top utilisateurs</h4>
-            <table class="an-table"><thead><tr><th>Utilisateur</th><th>Événements</th></tr></thead><tbody id="an-top-users"></tbody></table>
+        <button type="button" id="btn-adm-refresh" class="btn-auth-primary btn-sm">Actualiser</button>
+      </header>
+
+      <nav class="admin-tabs" role="tablist" aria-label="Sections admin">
+        <button type="button" class="admin-tab active" data-adm-tab="overview">Vue d’ensemble</button>
+        <button type="button" class="admin-tab" data-adm-tab="validation">Validation</button>
+        <button type="button" class="admin-tab" data-adm-tab="moderation">Modération</button>
+        <button type="button" class="admin-tab" data-adm-tab="users">Utilisateurs</button>
+        <button type="button" class="admin-tab" data-adm-tab="stats">Statistiques</button>
+        <button type="button" class="admin-tab" data-adm-tab="terrain">Terrain</button>
+        <button type="button" class="admin-tab" data-adm-tab="ops">Opérations</button>
+      </nav>
+
+      <div class="admin-tab-panel active" data-adm-panel="overview">
+        <div class="dashboard-grid" id="adm-kpi-grid">
+          <article class="kpi-card"><h3>Utilisateurs</h3><p id="adm-users">—</p></article>
+          <article class="kpi-card"><h3>Actifs</h3><p id="adm-users-active">—</p></article>
+          <article class="kpi-card"><h3>Points sol</h3><p id="adm-points">—</p></article>
+          <article class="kpi-card"><h3>En attente sol</h3><p id="adm-pending">—</p></article>
+          <article class="kpi-card"><h3>Vidéos publiées</h3><p id="adm-videos">—</p></article>
+          <article class="kpi-card"><h3>Quiz (30 j.)</h3><p id="adm-quizzes">—</p></article>
+          <article class="kpi-card"><h3>Agents live</h3><p id="adm-agents">—</p></article>
+          <article class="kpi-card"><h3>Alertes</h3><p id="adm-alerts">—</p></article>
+          <article class="kpi-card"><h3>Événements (30 j.)</h3><p id="adm-events">—</p></article>
+          <article class="kpi-card"><h3>Aujourd’hui</h3><p id="adm-events-today">—</p></article>
+        </div>
+        <div class="admin-split">
+          <div>
+            <h3>Sols (validés)</h3>
+            <ul id="adm-soil-stats" class="compact-list an-stat-list"></ul>
           </div>
-          <div class="an-panel">
-            <h4>Types d’événements</h4>
-            <ul id="an-event-types" class="compact-list an-stat-list"></ul>
-          </div>
-          <div class="an-panel">
-            <h4>Répartition par âge</h4>
-            <ul id="an-age-buckets" class="compact-list an-stat-list"></ul>
+          <div>
+            <h3>Modèle IA</h3>
+            <p id="adm-ml-overview" class="panel-lead">—</p>
+            <h3>Rôles utilisateurs</h3>
+            <ul id="adm-roles" class="compact-list an-stat-list"></ul>
           </div>
         </div>
       </div>
-      <div class="an-user-search">
-        <label>ID utilisateur <input type="number" id="an-user-id" min="1" placeholder="ex. 3" /></label>
-        <button type="button" id="btn-an-load-user" class="btn-auth-secondary">Voir l’activité</button>
+
+      <div class="admin-tab-panel" data-adm-panel="validation">
+        <h3>Points de sol en attente</h3>
+        <ul id="adm-pending-list" class="compact-list"></ul>
+        <h3>Vidéos en attente</h3>
+        <ul id="adm-videos-pending" class="compact-list"></ul>
       </div>
-      <div id="an-user-detail" class="an-user-detail"></div>
-      <h4>Activité récente (site entier)</h4>
-      <ul id="an-recent-activity" class="compact-list an-timeline"></ul>
+
+      <div class="admin-tab-panel" data-adm-panel="moderation">
+        <h3>Commentaires récents</h3>
+        <ul id="adm-comments-moderation" class="compact-list"></ul>
+        <h3>Journal modération unifié</h3>
+        <ul id="adm-mod-journal" class="compact-list"></ul>
+      </div>
+
+      <div class="admin-tab-panel" data-adm-panel="users">
+        <h3>Derniers utilisateurs</h3>
+        <div class="admin-table-wrap">
+          <table class="an-table adm-users-table">
+            <thead><tr><th>ID</th><th>Utilisateur</th><th>Rôle</th><th>Région</th><th>Inscription</th></tr></thead>
+            <tbody id="adm-users-table"></tbody>
+          </table>
+        </div>
+        <h3>Import CSV</h3>
+        <p class="panel-lead">Colonnes : username, password, email, role, first_name, last_name, region</p>
+        <input type="file" id="btn-import-users" accept=".csv,text/csv" />
+        <h3>Exports</h3>
+        <p class="panel-lead">
+          <a href="/api/v1/platform/admin/export/users.csv" class="btn-auth-outline btn-sm" id="adm-export-users">Utilisateurs</a>
+          <a href="/api/v1/platform/admin/export/activity.csv?days=30" class="btn-auth-outline btn-sm" id="adm-export-activity">Activité (30 j.)</a>
+        </p>
+      </div>
+
+      <div class="admin-tab-panel" data-adm-panel="stats">
+        <div class="dashboard-grid an-kpi-grid">
+          <article class="kpi-card"><h3>Événements (30 j.)</h3><p id="an-events-total">—</p></article>
+          <article class="kpi-card"><h3>Aujourd’hui</h3><p id="an-events-today">—</p></article>
+          <article class="kpi-card"><h3>Zooms carte</h3><p id="an-map-zoom">—</p></article>
+          <article class="kpi-card"><h3>Déplacements carte</h3><p id="an-map-pan">—</p></article>
+          <article class="kpi-card"><h3>Utilisateurs</h3><p id="an-users-total">—</p></article>
+        </div>
+        <div class="an-charts-row">
+          <div class="an-chart-box">
+            <h4>Événements par jour (web + mobile)</h4>
+            <canvas id="chart-activity-canvas" height="200"></canvas>
+          </div>
+          <div class="an-side-panels">
+            <div class="an-panel">
+              <h4>Top utilisateurs</h4>
+              <table class="an-table"><thead><tr><th>Utilisateur</th><th>Événements</th></tr></thead><tbody id="an-top-users"></tbody></table>
+            </div>
+            <div class="an-panel">
+              <h4>Types d’événements</h4>
+              <ul id="an-event-types" class="compact-list an-stat-list"></ul>
+            </div>
+            <div class="an-panel">
+              <h4>Répartition par âge</h4>
+              <ul id="an-age-buckets" class="compact-list an-stat-list"></ul>
+            </div>
+          </div>
+        </div>
+        <div class="an-user-search">
+          <label>ID utilisateur <input type="number" id="an-user-id" min="1" placeholder="ex. 3" /></label>
+          <button type="button" id="btn-an-load-user" class="btn-auth-secondary">Voir l’activité</button>
+        </div>
+        <div id="an-user-detail" class="an-user-detail"></div>
+        <h4>Activité récente</h4>
+        <ul id="an-recent-activity" class="compact-list an-timeline"></ul>
+      </div>
+
+      <div class="admin-tab-panel" data-adm-panel="terrain">
+        <h3>Agents / positions live</h3>
+        <ul id="adm-live-agents" class="compact-list"></ul>
+        <h3>Alertes sécheresse</h3>
+        <ul id="adm-drought-alerts" class="compact-list"></ul>
+        <h3>Rapports</h3>
+        <button type="button" id="btn-ministry-report" class="btn-auth-primary btn-sm">Rapport ministère HTML (30 j.)</button>
+        <label>Code zone <input type="text" id="adm-zone-code" placeholder="MAR-01" /></label>
+        <button type="button" id="btn-zone-report" class="btn-auth-secondary btn-sm">Rapport zone</button>
+      </div>
+
+      <div class="admin-tab-panel" data-adm-panel="ops">
+        <h3>Journal d’audit</h3>
+        <ul id="adm-audit" class="compact-list audit-list"></ul>
+        <h3>Modèle IA &amp; NASA</h3>
+        <label>Algorithme
+          <select id="adm-ml-algo">
+            <option value="RandomForest">Random Forest</option>
+            <option value="XGBoost">XGBoost</option>
+          </select>
+        </label>
+        <button type="button" id="btn-adm-train-ml" class="btn-parcel-analyze">Réentraîner le modèle IA</button>
+        <p id="adm-ml-status" class="parcel-status"></p>
+        <button type="button" id="btn-adm-nasa-ingest" class="btn-parcel-clear">Ingestion NASA (admin)</button>
+        <p id="adm-nasa-status" class="parcel-status">Nécessite NASA_EARTHDATA_* dans .env</p>
+      </div>
     </div>
   </section>
 

@@ -8,41 +8,46 @@ function setText(id, v) {
   if (el) el.textContent = v ?? '—';
 }
 
+export function applyAnalyticsPayload(data) {
+  if (!data) return;
+  setText('an-events-total', data.events_total);
+  setText('an-events-today', data.events_today);
+  setText('an-map-zoom', data.map_zoom_total);
+  setText('an-map-pan', data.map_pan_total);
+  setText('an-users-total', data.users_total);
+
+  const top = document.getElementById('an-top-users');
+  if (top) {
+    top.innerHTML = (data.top_users || []).map(
+      (u) => `<tr><td><button type="button" class="btn-link an-user-pick" data-uid="${u.user_id}">${u.username}</button></td><td>${u.count}</td></tr>`,
+    ).join('') || '<tr><td colspan="2">Aucune donnée</td></tr>';
+    top.querySelectorAll('.an-user-pick').forEach((btn) => {
+      btn.addEventListener('click', () => loadUserActivity(btn.dataset.uid));
+    });
+  }
+
+  const ev = document.getElementById('an-event-types');
+  if (ev) {
+    ev.innerHTML = (data.by_event_type || []).slice(0, 15).map(
+      (r) => `<li><span>${r.event_type}</span><em>${r.count}</em></li>`,
+    ).join('');
+  }
+
+  const age = document.getElementById('an-age-buckets');
+  if (age && data.age_distribution) {
+    age.innerHTML = Object.entries(data.age_distribution).map(
+      ([k, v]) => `<li>${k} : <strong>${v}</strong></li>`,
+    ).join('');
+  }
+
+  renderActivityChart(data.by_day || []);
+}
+
 export async function loadAdminAnalytics() {
   if (!SigSolsAPI.getToken()) return;
   try {
     const data = await SigSolsAPI.api('/platform/admin/analytics/?days=30');
-    setText('an-events-total', data.events_total);
-    setText('an-events-today', data.events_today);
-    setText('an-map-zoom', data.map_zoom_total);
-    setText('an-map-pan', data.map_pan_total);
-    setText('an-users-total', data.users_total);
-
-    const top = document.getElementById('an-top-users');
-    if (top) {
-      top.innerHTML = (data.top_users || []).map(
-        (u) => `<tr><td><button type="button" class="btn-link an-user-pick" data-uid="${u.user_id}">${u.username}</button></td><td>${u.count}</td></tr>`,
-      ).join('') || '<tr><td colspan="2">Aucune donnée</td></tr>';
-      top.querySelectorAll('.an-user-pick').forEach((btn) => {
-        btn.addEventListener('click', () => loadUserActivity(btn.dataset.uid));
-      });
-    }
-
-    const ev = document.getElementById('an-event-types');
-    if (ev) {
-      ev.innerHTML = (data.by_event_type || []).slice(0, 15).map(
-        (r) => `<li><span>${r.event_type}</span><em>${r.count}</em></li>`,
-      ).join('');
-    }
-
-    const age = document.getElementById('an-age-buckets');
-    if (age && data.age_distribution) {
-      age.innerHTML = Object.entries(data.age_distribution).map(
-        ([k, v]) => `<li>${k} : <strong>${v}</strong></li>`,
-      ).join('');
-    }
-
-    renderActivityChart(data.by_day || []);
+    applyAnalyticsPayload(data);
   } catch (e) {
     console.warn('Analytics', e);
   }
@@ -123,6 +128,7 @@ export function initAdminAnalytics() {
 
 window.SigSolsAdminAnalytics = {
   loadAdminAnalytics,
+  applyAnalyticsPayload,
   loadUserActivity,
   loadRecentActivity,
   initAdminAnalytics,

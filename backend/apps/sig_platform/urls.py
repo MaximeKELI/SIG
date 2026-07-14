@@ -14,6 +14,7 @@ from .features import (
 from .views import (
     ActivityIngestView,
     ActivityListView,
+    AdminCockpitView,
     AdminDashboardView,
     AnalyticsSummaryView,
     AuditLogListView,
@@ -28,6 +29,7 @@ from .views import (
 
 urlpatterns = [
     path('admin/dashboard/', AdminDashboardView.as_view(), name='admin-dashboard'),
+    path('admin/cockpit/', AdminCockpitView.as_view(), name='admin-cockpit'),
     path('admin/analytics/', AnalyticsSummaryView.as_view(), name='admin-analytics'),
     path('admin/activity/', ActivityListView.as_view(), name='admin-activity-list'),
     path('admin/activity/users/<int:user_id>/', UserActivityDetailView.as_view(), name='admin-activity-user'),

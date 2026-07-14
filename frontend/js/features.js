@@ -260,6 +260,10 @@ export async function validatePoint(id, action) {
 
 export async function loadAdminDashboard() {
   if (!SigSolsAPI.isAuthenticated()) return;
+  if (typeof window.SigSolsAdminPanel?.loadAdminCockpit === 'function') {
+    await window.SigSolsAdminPanel.loadAdminCockpit();
+    return;
+  }
   try {
     const d = await SigSolsAPI.api('/platform/admin/dashboard/');
     const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
@@ -268,14 +272,6 @@ export async function loadAdminDashboard() {
     set('adm-pending', d.pending_validation);
     set('adm-agents', d.live_agents);
     set('adm-alerts', d.active_alerts);
-    const audit = document.getElementById('adm-audit');
-    if (audit) {
-      audit.innerHTML = (d.recent_audit || []).map(
-        (a) => `<li>${a.created_at?.slice(0, 16)} — ${a.username || '?'} — ${a.action} ${a.resource}</li>`,
-      ).join('');
-    }
-    window.SigSolsAdminAnalytics?.loadAdminAnalytics?.();
-    window.SigSolsAdminAnalytics?.loadRecentActivity?.();
   } catch (e) {
     console.warn('Admin dashboard', e);
   }
