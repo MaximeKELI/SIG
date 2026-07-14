@@ -1,9 +1,13 @@
+import 'dart:io' show Platform, Process;
+
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../core/config/env.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/sig_api.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
@@ -29,6 +33,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   ChewieController? _chewieController;
   late Map<String, dynamic> _post;
   String? _initializationError;
+  String? _resolvedUrl;
 
   @override
   void initState() {
@@ -62,18 +67,24 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           : int.tryParse(_post['id']?.toString() ?? '');
 
   Future<void> _initializePlayer() async {
-    if (_mediaUrl.isEmpty) {
-      setState(() => _initializationError = 'Vidéo indisponible.');
+    final url = _mediaUrl;
+    _resolvedUrl = url;
+    if (url.isEmpty) {
+      setState(() => _initializationError = 'Vidéo indisponible (URL vide).');
       return;
     }
     try {
-      final controller = VideoPlayerController.networkUrl(Uri.parse(_mediaUrl));
-      await controller.initialize();
+      final controller = VideoPlayerController.networkUrl(
+        Uri.parse(url),
+        httpHeaders: const {'Accept': '*/*'},
+      );
+      await controller.initialize().timeout(const Duration(seconds: 25));
       if (!mounted) {
         await controller.dispose();
         return;
       }
       setState(() {
+        _initializationError = null;
         _videoController = controller;
         _chewieController = ChewieController(
           videoPlayerController: controller,
@@ -81,19 +92,37 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           looping: false,
           allowFullScreen: true,
           materialProgressColors: ChewieProgressColors(
-            playedColor: Theme.of(context).colorScheme.primary,
-            handleColor: Theme.of(context).colorScheme.primary,
-            backgroundColor:
-                Theme.of(context).colorScheme.surfaceContainerHighest,
-            bufferedColor: Theme.of(context).colorScheme.secondaryContainer,
+            playedColor: AppTheme.gold500,
+            handleColor: AppTheme.gold300,
+            backgroundColor: AppTheme.emerald950,
+            bufferedColor: AppTheme.emerald800,
           ),
         );
       });
-    } catch (_) {
+    } catch (e) {
+      if (!mounted) return;
+      setState(
+        () => _initializationError =
+            'Impossible de charger cette vidéo.\n$e',
+      );
+    }
+  }
+
+  Future<void> _openExternally() async {
+    final url = _resolvedUrl ?? _mediaUrl;
+    if (url.isEmpty) return;
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (ok) return;
+      }
+      if (Platform.isLinux) {
+        await Process.run('xdg-open', [url]);
+      }
+    } catch (e) {
       if (mounted) {
-        setState(
-          () => _initializationError = 'Impossible de charger cette vidéo.',
-        );
+        _showMessage('Ouverture externe impossible : $e');
       }
     }
   }
@@ -154,7 +183,17 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     final canEngage = _postId != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        title: Text(title),
+        actions: [
+          if (_resolvedUrl != null && _resolvedUrl!.isNotEmpty)
+            IconButton(
+              tooltip: 'Ouvrir à l’extérieur',
+              onPressed: _openExternally,
+              icon: const Icon(Icons.open_in_new),
+            ),
+        ],
+      ),
       body: ListView(
         children: [
           AspectRatio(
@@ -169,10 +208,40 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                             _initializationError != null
                                 ? Padding(
                                   padding: const EdgeInsets.all(24),
-                                  child: Text(
-                                    _initializationError!,
-                                    style: const TextStyle(color: Colors.white),
-                                    textAlign: TextAlign.center,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.videocam_off_outlined,
+                                        color: AppTheme.gold300,
+                                        size: 48,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        _initializationError!,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      FilledButton.icon(
+                                        onPressed: _openExternally,
+                                        icon: const Icon(Icons.open_in_new),
+                                        label: const Text(
+                                          'Ouvrir dans le lecteur système',
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _initializationError = null;
+                                          });
+                                          _initializePlayer();
+                                        },
+                                        child: const Text('Réessayer'),
+                                      ),
+                                    ],
                                   ),
                                 )
                                 : const CircularProgressIndicator(),
@@ -407,7 +476,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                   ),
                   IconButton(
                     tooltip: 'Publier',
-                    onPressed: _sending ? null : _sendComment,
+                    onPressed: _sending ? null : _sendComment(),
                     icon:
                         _sending
                             ? const SizedBox.square(
