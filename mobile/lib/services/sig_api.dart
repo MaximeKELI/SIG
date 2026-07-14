@@ -38,8 +38,10 @@ class SigApi {
     double? phMax,
     bool? validated,
     String? validationMode,
+    String? bbox,
   }) async {
     // validationMode: validated | pending | rejected | all
+    // bbox: min_lon,min_lat,max_lon,max_lat
     final mode = validationMode ??
         (validated == true
             ? 'validated'
@@ -54,6 +56,7 @@ class SigApi {
       if (soilType != null && soilType.isNotEmpty) 'soil_type': soilType,
       if (phMin != null) 'ph_min': phMin,
       if (phMax != null) 'ph_max': phMax,
+      if (bbox != null && bbox.isNotEmpty) 'bbox': bbox,
     };
     final data = await _client.get<dynamic>('/points/', query: query);
     final list = data is Map
@@ -309,13 +312,20 @@ class SigApi {
     required String title,
     String description = '',
     String category = 'sols',
+    String hashtags = '',
+    int? durationSeconds,
+    String? thumbnailPath,
   }) async {
     final form = FormData.fromMap({
       'kind': kind,
       'title': title,
       'description': description,
       'category': category,
+      if (hashtags.isNotEmpty) 'hashtags': hashtags,
+      if (durationSeconds != null) 'duration_seconds': durationSeconds,
       'file': await MultipartFile.fromFile(filePath),
+      if (thumbnailPath != null && thumbnailPath.isNotEmpty)
+        'thumbnail': await MultipartFile.fromFile(thumbnailPath),
     });
     return _client.upload('/videos/posts/', form);
   }

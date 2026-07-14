@@ -43,8 +43,18 @@ class _MyDashboardScreenState extends State<MyDashboardScreen> {
     }
   }
 
+  Map<String, dynamic> _map(String key) {
+    final raw = _data?[key];
+    return raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+  }
+
   @override
   Widget build(BuildContext context) {
+    final quiz = _map('quiz');
+    final videos = _map('videos');
+    final social = _map('social');
+    final badges = quiz['badges'] is List ? quiz['badges'] as List : const [];
+
     return Scaffold(
       appBar: AppBar(title: const Text('Mon espace')),
       body:
@@ -63,44 +73,68 @@ class _MyDashboardScreenState extends State<MyDashboardScreen> {
                     ),
                     const SizedBox(height: 12),
                     _summaryCard(
-                      icon: Icons.quiz_outlined,
-                      label: 'Score quiz',
-                      value: _value([
-                        'quiz_score',
-                        'quiz_average',
-                        'quiz_stats.score',
-                        'quiz.score',
-                      ], fallback: 'Aucun quiz'),
+                      icon: Icons.agriculture,
+                      label: 'Points sol',
+                      value: '${_data?['soil_points_submitted'] ?? 0}',
                       color: Theme.of(context).colorScheme.primary,
                     ),
                     _summaryCard(
-                      icon: Icons.add_location_alt_outlined,
-                      label: 'Points créés',
-                      value: _value([
-                        'points_created',
-                        'points_count',
-                        'soil_points_count',
-                        'stats.points_created',
-                      ], fallback: '0'),
+                      icon: Icons.video_library_outlined,
+                      label: 'Vidéos publiées',
+                      value: '${videos['published'] ?? 0}',
                       color: Theme.of(context).colorScheme.secondary,
                     ),
                     _summaryCard(
-                      icon: Icons.bookmark_outline,
-                      label: 'Favoris',
-                      value: _value([
-                        'favorites_count',
-                        'favorites',
-                        'stats.favorites_count',
-                      ], fallback: '0'),
+                      icon: Icons.quiz_outlined,
+                      label: 'Quiz terminés',
+                      value: '${quiz['sessions_completed'] ?? 0}',
                       color: Theme.of(context).colorScheme.tertiary,
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Activité récente',
-                      style: Theme.of(context).textTheme.titleMedium,
+                    _summaryCard(
+                      icon: Icons.emoji_events_outlined,
+                      label: 'Meilleur score',
+                      value: '${quiz['best_score'] ?? 0}',
+                      color: Colors.amber.shade800,
                     ),
+                    _summaryCard(
+                      icon: Icons.people_outline,
+                      label: 'Abonnés',
+                      value: '${social['followers'] ?? 0}',
+                      color: Colors.teal,
+                    ),
+                    _summaryCard(
+                      icon: Icons.person_add_alt_1_outlined,
+                      label: 'Abonnements',
+                      value: '${social['following'] ?? 0}',
+                      color: Colors.indigo,
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Badges', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    _recentActivity(),
+                    if (badges.isEmpty)
+                      const Card(
+                        child: ListTile(
+                          leading: Icon(Icons.workspace_premium_outlined),
+                          title: Text('Aucun badge pour le moment'),
+                        ),
+                      )
+                    else
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children:
+                            badges
+                                .map(
+                                  (b) => Chip(
+                                    avatar: const Icon(
+                                      Icons.workspace_premium,
+                                      size: 16,
+                                    ),
+                                    label: Text('$b'),
+                                  ),
+                                )
+                                .toList(),
+                      ),
                   ],
                 ),
               ),
@@ -128,60 +162,5 @@ class _MyDashboardScreenState extends State<MyDashboardScreen> {
         trailing: Text(value, style: Theme.of(context).textTheme.headlineSmall),
       ),
     );
-  }
-
-  Widget _recentActivity() {
-    final raw =
-        _data?['recent_activity'] ??
-        _data?['activity'] ??
-        _data?['recent_events'];
-    final activities = raw is List ? raw : const <dynamic>[];
-    if (activities.isEmpty) {
-      return const Card(
-        child: ListTile(
-          leading: Icon(Icons.history),
-          title: Text('Aucune activité récente'),
-          subtitle: Text('Vos prochaines actions apparaîtront ici.'),
-        ),
-      );
-    }
-    return Card(
-      child: Column(
-        children:
-            activities.take(5).map((entry) {
-              final event =
-                  entry is Map
-                      ? Map<String, dynamic>.from(entry)
-                      : <String, dynamic>{};
-              final title =
-                  event['title'] ??
-                  event['action'] ??
-                  event['type'] ??
-                  'Activité';
-              final date = event['created_at'] ?? event['date'] ?? '';
-              return ListTile(
-                leading: const Icon(Icons.history),
-                title: Text('$title'),
-                subtitle: date.toString().isEmpty ? null : Text('$date'),
-              );
-            }).toList(),
-      ),
-    );
-  }
-
-  String _value(List<String> keys, {required String fallback}) {
-    for (final key in keys) {
-      dynamic value = _data;
-      for (final part in key.split('.')) {
-        if (value is Map) {
-          value = value[part];
-        } else {
-          value = null;
-          break;
-        }
-      }
-      if (value != null && value is! Map && value is! List) return '$value';
-    }
-    return fallback;
   }
 }

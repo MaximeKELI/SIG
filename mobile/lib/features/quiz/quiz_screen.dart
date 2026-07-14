@@ -1,10 +1,13 @@
+import 'dart:async';
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/sig_api.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key});
@@ -33,11 +36,48 @@ class _QuizScreenState extends State<QuizScreen> {
   bool _finished = false;
   Map<String, dynamic>? _finishResult;
   String? _error;
+  int _timerSeconds = 20;
+  int _timeLeft = 20;
+  Timer? _questionTimer;
+
+  /// Désactive le Timer.periodic sous tests (sinon pumpAndSettle bloque).
+  bool get _timersEnabled => !Platform.environment.containsKey('FLUTTER_TEST');
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _stopTimer();
+    super.dispose();
+  }
+
+  void _stopTimer() {
+    _questionTimer?.cancel();
+    _questionTimer = null;
+  }
+
+  void _startQuestionTimer() {
+    _stopTimer();
+    if (!_timersEnabled || _sessionId == null) return;
+    setState(() => _timeLeft = _timerSeconds);
+    _questionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_timeLeft <= 1) {
+        timer.cancel();
+        setState(() => _timeLeft = 0);
+        // Timeout = mauvaise réponse (index invalide forcé hors des choix)
+        unawaited(_answer(-1, fromTimeout: true));
+        return;
+      }
+      setState(() => _timeLeft -= 1);
+    });
   }
 
   Future<void> _load() async {
@@ -77,6 +117,7 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Future<void> _startQuiz() async {
+    _stopTimer();
     setState(() {
       _loading = true;
       _error = null;
@@ -93,12 +134,20 @@ class _QuizScreenState extends State<QuizScreen> {
         count: _questionCount,
         examMode: _examMode,
       );
+      final timer =
+          data['timer_seconds'] is int
+              ? data['timer_seconds'] as int
+              : (_examMode ? 120 : 20);
       setState(() {
         _sessionId = data['session_id'] as int?;
         _questions = data['questions'] as List? ?? [];
         _qIndex = 0;
+        _timerSeconds = timer;
+        _timeLeft = timer;
+        _examMode = data['exam_mode'] == true ? true : _examMode;
         _loading = false;
       });
+      _startQuestionTimer();
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -107,38 +156,50 @@ class _QuizScreenState extends State<QuizScreen> {
     }
   }
 
-  Future<void> _answer(int selectedIndex) async {
+  Future<void> _answer(int selectedIndex, {bool fromTimeout = false}) async {
     if (_submitting ||
         _answerSubmitted ||
         _sessionId == null ||
         _qIndex >= _questions.length) {
       return;
     }
+    _stopTimer();
     final q = _questions[_qIndex] as Map<String, dynamic>;
+    final choices = q['choices'] as List? ?? [];
+    final index =
+        fromTimeout
+            ? (choices.isEmpty ? 0 : (choices.length - 1).clamp(0, 3))
+            : selectedIndex.clamp(0, 3);
     setState(() => _submitting = true);
     try {
       final r = await context.read<SigApi>().submitQuizAnswer(
         _sessionId!,
         questionId: q['id'] as int,
-        selectedIndex: selectedIndex,
+        selectedIndex: index,
       );
       setState(() {
         _score = r['session_score'] as int? ?? _score;
         _feedback =
             _examMode
                 ? ''
+                : fromTimeout
+                ? 'Temps écoulé. ${r['explanation'] ?? ''}'
                 : r['correct'] == true
                 ? 'Bonne réponse ! +${r['points_earned'] ?? 0} point(s)'
                 : 'Réponse incorrecte. ${r['explanation'] ?? ''}';
         _submitting = false;
         _answerSubmitted = !_examMode;
       });
-      if (_examMode) await _nextQuestion();
+      if (_examMode || fromTimeout) {
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+        await _nextQuestion();
+      }
     } catch (e) {
       setState(() {
         _feedback = 'Erreur : $e';
         _submitting = false;
       });
+      if (!fromTimeout) _startQuestionTimer();
     }
   }
 
@@ -153,10 +214,13 @@ class _QuizScreenState extends State<QuizScreen> {
       _qIndex++;
       _feedback = '';
       _answerSubmitted = false;
+      _timeLeft = _timerSeconds;
     });
+    _startQuestionTimer();
   }
 
   Future<void> _finish() async {
+    _stopTimer();
     if (_sessionId == null) return;
     try {
       final r = await context.read<SigApi>().finishQuiz(_sessionId!);
@@ -171,6 +235,7 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _reset() {
+    _stopTimer();
     setState(() {
       _sessionId = null;
       _questions = [];
@@ -260,11 +325,38 @@ class _QuizScreenState extends State<QuizScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Question ${_qIndex + 1}/${_questions.length} · Score : $_score',
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Question ${_qIndex + 1}/${_questions.length} · Score : $_score',
+                    ),
+                  ),
+                  Chip(
+                    avatar: Icon(
+                      Icons.timer_outlined,
+                      size: 18,
+                      color: _timeLeft <= 5 ? Colors.redAccent : null,
+                    ),
+                    label: Text(
+                      '${_timeLeft}s',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: _timeLeft <= 5 ? Colors.redAccent : null,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               LinearProgressIndicator(value: progress),
+              const SizedBox(height: 4),
+              LinearProgressIndicator(
+                value: _timerSeconds <= 0 ? 0 : _timeLeft / _timerSeconds,
+                color: _timeLeft <= 5
+                    ? Colors.redAccent
+                    : Theme.of(context).colorScheme.tertiary,
+              ),
               const SizedBox(height: 12),
               Text(
                 q['text']?.toString() ?? '',

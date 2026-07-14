@@ -20,13 +20,33 @@ GoRouter createRouter(AuthService auth) {
     refreshListenable: auth,
     redirect: (context, state) {
       final loggedIn = auth.isAuthenticated;
+      final loc = state.matchedLocation;
       final onAuth =
-          state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register' ||
-          state.matchedLocation == '/forgot-password' ||
-          state.matchedLocation == '/reset-password';
-      if (!loggedIn && !onAuth) return '/login';
-      if (loggedIn && state.matchedLocation == '/login') return '/';
+          loc == '/login' ||
+          loc == '/register' ||
+          loc == '/forgot-password' ||
+          loc == '/reset-password';
+      // Parité web : navigation publique (carte, dashboard, fiches, médias…)
+      final guestOk =
+          loc == '/' ||
+          loc.startsWith('/dashboard') ||
+          loc.startsWith('/sheets') ||
+          loc.startsWith('/videos') ||
+          loc.startsWith('/shorts') ||
+          loc.startsWith('/community') ||
+          loc.startsWith('/help') ||
+          loc.startsWith('/quiz');
+      final needsAuth =
+          loc.startsWith('/admin') ||
+          loc.startsWith('/profile') ||
+          loc.startsWith('/my-dashboard') ||
+          loc.startsWith('/notifications') ||
+          loc.startsWith('/assistant') ||
+          loc.startsWith('/parcel') ||
+          loc.startsWith('/search');
+      if (!loggedIn && needsAuth) return '/login';
+      if (!loggedIn && !onAuth && !guestOk && !needsAuth) return '/login';
+      if (loggedIn && loc == '/login') return '/';
       return null;
     },
     routes: [

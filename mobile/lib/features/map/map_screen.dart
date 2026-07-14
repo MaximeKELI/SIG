@@ -53,6 +53,10 @@ class _MapScreenState extends State<MapScreen> {
   bool _drawParcelMode = false;
   List<LatLng> _drawnParcelPoints = [];
   String _validationMode = 'validated';
+  bool _limitToBbox = true;
+  String? _soilTypeFilter;
+  double? _phMinFilter;
+  double? _phMaxFilter;
   bool _showParcels = true;
   String _parcelFilter = 'all';
   BasemapType _basemap = BasemapType.osm;
