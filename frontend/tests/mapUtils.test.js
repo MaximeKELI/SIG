@@ -53,6 +53,11 @@ describe('buildSoilFiltersQuery', () => {
     assert.ok(q.includes('light=1'));
   });
 
+  it('mode validation pending / all', () => {
+    assert.ok(buildSoilFiltersQuery({ validationMode: 'pending' }).includes('validation_status=pending'));
+    assert.ok(!buildSoilFiltersQuery({ validationMode: 'all' }).includes('is_validated'));
+  });
+
   it('sans light', () => {
     const q = buildSoilFiltersQuery({ light: false });
     assert.ok(!q.includes('light='));

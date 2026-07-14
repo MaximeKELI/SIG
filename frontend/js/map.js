@@ -211,12 +211,12 @@ async function toggleLiveLocation() {
 async function loadSoilPoints() {
   showLoading(true);
   try {
-    const validatedOnly = document.getElementById('filter-validated')?.checked;
+    const validationMode = document.getElementById('filter-validation')?.value || 'validated';
     const query = buildSoilFiltersQuery({
       phMin: document.getElementById('filter-ph-min')?.value,
       phMax: document.getElementById('filter-ph-max')?.value,
       soilType: document.getElementById('filter-soil-type')?.value,
-      validated: validatedOnly,
+      validationMode,
       bbox: document.getElementById('filter-bbox')?.checked ? bboxFromLeaflet(map) : '',
     });
     const data = await SigSolsAPI.api('/points/?' + query);

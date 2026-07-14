@@ -7,7 +7,10 @@ import {
   buildTerrainPointFeature,
   drainOfflineQueue,
   enqueueOfflinePoint,
+  readDeadLetter,
   readOfflineQueue,
+  validateTerrainPointLocal,
+  writeDeadLetter,
   writeOfflineQueue,
 } from './core/offlineQueue.js';
 
@@ -104,11 +107,18 @@ function openAddPointForm(lat, lon) {
 async function submitAddPoint() {
   if (!pendingAddCoords) return;
   const { lat, lon } = pendingAddCoords;
+  const ph = parseFloat(document.getElementById('ap-ph')?.value || '6.2');
+  const humidityPct = parseFloat(document.getElementById('ap-humidity')?.value || '35');
+  const localErrors = validateTerrainPointLocal({ lon, lat, ph, humidityPct });
+  if (Object.keys(localErrors).length) {
+    notifyError(Object.values(localErrors).join(' '));
+    return;
+  }
   const body = buildTerrainPointFeature({
     lon,
     lat,
-    ph: parseFloat(document.getElementById('ap-ph')?.value || '6.2'),
-    humidityPct: parseFloat(document.getElementById('ap-humidity')?.value || '35'),
+    ph,
+    humidityPct,
     soilType: document.getElementById('ap-soil-type')?.value || 'limoneux',
     collectedAt: new Date().toISOString().slice(0, 10),
   });
@@ -121,7 +131,6 @@ async function submitAddPoint() {
         await SigSolsAPI.api('/points/', { method: 'POST', body: JSON.stringify(body) });
         notifySuccess('Point enregistré (validation en attente).');
       } catch (e) {
-        // Aligné mobile OfflineSyncService : bascule offline pendant le POST → file
         if (!navigator.onLine) {
           queueOfflinePoint({ body });
           notifySuccess('Point en file d\'attente (hors ligne).');
@@ -313,13 +322,31 @@ export function queueOfflinePoint(payload) {
 export async function syncOfflineQueue() {
   const q = readOfflineQueue();
   if (!q.length || !navigator.onLine || !SigSolsAPI.isAuthenticated()) return;
-  const { remaining, synced } = await drainOfflineQueue(q, (body) => (
-    SigSolsAPI.api('/points/', { method: 'POST', body: JSON.stringify(body) })
-  ));
+  const { remaining, deadLetter, synced, errors } = await drainOfflineQueue(q, async (body) => {
+    try {
+      return await SigSolsAPI.api('/points/', { method: 'POST', body: JSON.stringify(body) });
+    } catch (e) {
+      // Enrichit le status pour isPermanentPostError
+      const err = e instanceof Error ? e : new Error(String(e));
+      err.status = e?.status ?? e?.statusCode;
+      throw err;
+    }
+  });
   writeOfflineQueue(remaining);
+  if (deadLetter.length) {
+    writeDeadLetter([...readDeadLetter(), ...deadLetter]);
+  }
   if (synced) {
     notifySuccess(`${synced} point(s) synchronisé(s).`);
     SigSolsMap.loadSoilPoints();
+  }
+  if (deadLetter.length) {
+    notifyError(
+      `${deadLetter.length} point(s) rejeté(s) (données invalides) — voir console.`,
+    );
+    console.warn('[offline dead-letter]', deadLetter, errors);
+  } else if (errors.length && remaining.length) {
+    toast(`${remaining.length} point(s) en attente de nouvel essai.`, 'warning', 5000);
   }
 }
 

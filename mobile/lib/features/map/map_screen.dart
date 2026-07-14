@@ -38,6 +38,7 @@ class _MapScreenState extends State<MapScreen> {
   bool _showSentinelNdvi = false;
   bool _showNasaNdvi = false;
   bool _addPointMode = false;
+  String _validationMode = 'validated';
   bool _showParcels = true;
   String _parcelFilter = 'all';
   BasemapType _basemap = BasemapType.osm;
@@ -90,7 +91,7 @@ class _MapScreenState extends State<MapScreen> {
     try {
       final api = context.read<SigApi>();
       final results = await Future.wait([
-        api.fetchSoilPoints(),
+        api.fetchSoilPoints(validationMode: _validationMode),
         api.fetchExternalApiStatus().catchError((_) => <String, Map<String, dynamic>>{}),
       ]);
       if (!mounted) return;
@@ -671,32 +672,50 @@ class _MapScreenState extends State<MapScreen> {
     final soilCtrl = TextEditingController();
     final phMin = TextEditingController(text: '5');
     final phMax = TextEditingController(text: '8');
+    var mode = _validationMode;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Filtres carte'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: soilCtrl, decoration: const InputDecoration(labelText: 'Type sol')),
-            TextField(controller: phMin, decoration: const InputDecoration(labelText: 'pH min')),
-            TextField(controller: phMax, decoration: const InputDecoration(labelText: 'pH max')),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('Filtres carte'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                value: mode,
+                decoration: const InputDecoration(labelText: 'Validation'),
+                items: const [
+                  DropdownMenuItem(value: 'validated', child: Text('Validés')),
+                  DropdownMenuItem(value: 'pending', child: Text('En attente')),
+                  DropdownMenuItem(value: 'rejected', child: Text('Rejetés')),
+                  DropdownMenuItem(value: 'all', child: Text('Tous')),
+                ],
+                onChanged: (v) => setLocal(() => mode = v ?? 'validated'),
+              ),
+              TextField(controller: soilCtrl, decoration: const InputDecoration(labelText: 'Type sol')),
+              TextField(controller: phMin, decoration: const InputDecoration(labelText: 'pH min')),
+              TextField(controller: phMax, decoration: const InputDecoration(labelText: 'pH max')),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Appliquer')),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Appliquer')),
-        ],
       ),
     );
     if (ok != true) return;
     try {
       final points = await context.read<SigApi>().fetchSoilPoints(
+            validationMode: mode,
             soilType: soilCtrl.text.trim().isEmpty ? null : soilCtrl.text.trim(),
             phMin: double.tryParse(phMin.text),
             phMax: double.tryParse(phMax.text),
           );
-      setState(() => _points = points);
+      setState(() {
+        _validationMode = mode;
+        _points = points;
+      });
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }

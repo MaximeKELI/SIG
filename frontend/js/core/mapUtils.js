@@ -17,13 +17,20 @@ export function parseSoilPointsList(data) {
   return [];
 }
 
-export function buildSoilFiltersQuery({ phMin, phMax, soilType, validated, bbox, light = true }) {
+export function buildSoilFiltersQuery({
+  phMin, phMax, soilType, validated, validationMode, bbox, light = true,
+}) {
   const params = new URLSearchParams();
   if (light) params.set('light', '1');
   if (phMin) params.set('ph_min', phMin);
   if (phMax) params.set('ph_max', phMax);
   if (soilType) params.set('soil_type', soilType);
-  if (validated) params.set('is_validated', 'true');
+  // Mode: validated | pending | rejected | all (prioritaire sur le booléen legacy)
+  const mode = validationMode
+    || (validated === true ? 'validated' : validated === false ? 'all' : null);
+  if (mode === 'validated') params.set('is_validated', 'true');
+  else if (mode === 'pending') params.set('validation_status', 'pending');
+  else if (mode === 'rejected') params.set('validation_status', 'rejected');
   if (bbox) params.set('bbox', bbox);
   return params.toString();
 }

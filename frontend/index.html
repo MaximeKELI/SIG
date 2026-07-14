@@ -160,7 +160,14 @@
           <option value="calcaire">Calcaire</option>
         </select>
       </label>
-      <label><input type="checkbox" id="filter-validated" checked /> Validés uniquement</label>
+      <label>Validation
+        <select id="filter-validation">
+          <option value="validated" selected>Validés</option>
+          <option value="pending">En attente</option>
+          <option value="rejected">Rejetés</option>
+          <option value="all">Tous</option>
+        </select>
+      </label>
       <label><input type="checkbox" id="filter-bbox" checked /> Limiter à la carte visible</label>
       <button type="button" id="btn-apply-filters">Appliquer</button>
       <hr />

@@ -124,11 +124,13 @@ class PendingValidationView(APIView):
     permission_classes = [IsAdministrator]
 
     def get(self, request):
-        qs = SoilPoint.objects.filter(
+        base = SoilPoint.objects.filter(
             validation_status=SoilPoint.ValidationStatus.PENDING,
-        ).order_by('-created_at')[:100]
+        ).order_by('-created_at')
+        total = base.count()
+        page = list(base[:100])
         from .serializers import SoilPointListSerializer
         return Response({
-            'count': qs.count(),
-            'results': SoilPointListSerializer(qs, many=True).data,
+            'count': total,
+            'results': SoilPointListSerializer(page, many=True).data,
         })

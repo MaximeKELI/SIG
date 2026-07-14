@@ -37,10 +37,20 @@ class SigApi {
     double? phMin,
     double? phMax,
     bool? validated,
+    String? validationMode,
   }) async {
+    // validationMode: validated | pending | rejected | all
+    final mode = validationMode ??
+        (validated == true
+            ? 'validated'
+            : validated == false
+                ? 'all'
+                : 'validated');
     final query = <String, dynamic>{
       'light': light ? '1' : '0',
-      if (validated != null) 'is_validated': validated ? 'true' : 'false',
+      if (mode == 'validated') 'is_validated': 'true',
+      if (mode == 'pending') 'validation_status': 'pending',
+      if (mode == 'rejected') 'validation_status': 'rejected',
       if (soilType != null && soilType.isNotEmpty) 'soil_type': soilType,
       if (phMin != null) 'ph_min': phMin,
       if (phMax != null) 'ph_max': phMax,

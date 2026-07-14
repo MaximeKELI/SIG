@@ -3,11 +3,13 @@ Parcours E2E agent terrain : création → pending → validation/rejet → cart
 
 Branches critiques du TdR :
 - Anonymous ne peut pas créer
+- Public ne peut pas créer (écriture Agent/Admin)
 - Agent crée un point pending (invisible si is_validated=true)
 - Agent ne peut pas valider
 - Admin valide → point apparaît sur carte filtrée
 - Admin rejette → hors pending + hors carte validée
-- Liste light expose is_validated / validation_status (contrat web/mobile)
+- Liste light expose is_validated / validation_status
+- Idempotence client_id (sync offline)
 """
 import pytest
 
@@ -56,6 +58,13 @@ class TestAgentFieldE2E:
         r = api_client.post('/api/v1/points/', TERRAIN_POINT, format='json')
         assert r.status_code in (401, 403)
 
+    def test_public_cannot_create(self, public_client):
+        r = public_client.post('/api/v1/points/', {
+            **TERRAIN_POINT,
+            'geometry': {'type': 'Point', 'coordinates': [1.29, 6.39]},
+        }, format='json')
+        assert r.status_code == 403
+
     def test_agent_cannot_validate_or_list_pending(self, auth_client):
         create = auth_client.post('/api/v1/points/', TERRAIN_POINT, format='json')
         assert create.status_code in (200, 201)
@@ -74,7 +83,6 @@ class TestAgentFieldE2E:
     def test_create_pending_hidden_then_validated_on_map(
         self, api_client, auth_client, admin_client,
     ):
-        # 1. Agent crée (comme sync offline POST)
         create = auth_client.post('/api/v1/points/', TERRAIN_POINT, format='json')
         assert create.status_code in (200, 201)
         body = create.json()
@@ -83,12 +91,10 @@ class TestAgentFieldE2E:
         assert props.get('is_validated') is False
         assert props.get('validation_status', 'pending') == 'pending'
 
-        # 2. Carte filtrée (défaut web #filter-validated) : invisible
         validated_map = api_client.get('/api/v1/points/?light=1&is_validated=true')
         assert validated_map.status_code == 200
         assert point_id not in _ids_from_list(validated_map)
 
-        # 3. Liste unfiltered / pending admin : visible
         all_map = api_client.get('/api/v1/points/?light=1')
         assert point_id in _ids_from_list(all_map)
         light = _find_light(all_map, point_id)
@@ -98,10 +104,9 @@ class TestAgentFieldE2E:
 
         pending = admin_client.get('/api/v1/validation/pending/')
         assert pending.status_code == 200
-        pending_ids = _ids_from_list(pending)
-        assert point_id in pending_ids
+        assert pending.json()['count'] >= 1
+        assert point_id in _ids_from_list(pending)
 
-        # 4. Admin valide
         done = admin_client.post(
             f'/api/v1/points/{point_id}/validate_point/',
             {'action': 'validate'},
@@ -110,14 +115,12 @@ class TestAgentFieldE2E:
         assert done.status_code == 200
         assert done.json()['validation_status'] == 'validated'
 
-        # 5. Carte filtrée : visible + statut correct en light
         validated_map2 = api_client.get('/api/v1/points/?light=1&is_validated=true')
         assert point_id in _ids_from_list(validated_map2)
         light2 = _find_light(validated_map2, point_id)
         assert light2.get('is_validated') is True
         assert light2.get('validation_status') == 'validated'
 
-        # 6. Plus dans la file pending
         pending2 = admin_client.get('/api/v1/validation/pending/')
         assert point_id not in _ids_from_list(pending2)
 
@@ -150,31 +153,26 @@ class TestAgentFieldE2E:
             admin_client.get('/api/v1/validation/pending/'),
         )
 
-        # Toujours listable sans filtre, avec statut rejected (contrat carte)
-        light = _find_light(api_client.get('/api/v1/points/?light=1'), point_id)
+        light = _find_light(
+            api_client.get('/api/v1/points/?light=1&validation_status=rejected'),
+            point_id,
+        )
         assert light is not None
         assert light.get('is_validated') is False
         assert light.get('validation_status') == 'rejected'
 
-    def test_public_can_create_but_not_validate(self, public_client, admin_client):
-        """API auth ouverte en écriture ; validation reste admin-only."""
-        create = public_client.post('/api/v1/points/', {
+    def test_offline_client_id_idempotent(self, auth_client):
+        """Double POST sync offline → un seul point (client_id)."""
+        payload = {
             **TERRAIN_POINT,
-            'geometry': {'type': 'Point', 'coordinates': [1.29, 6.39]},
-        }, format='json')
-        assert create.status_code in (200, 201)
-        point_id = create.json()['id']
-
-        assert public_client.get('/api/v1/validation/pending/').status_code == 403
-        assert public_client.post(
-            f'/api/v1/points/{point_id}/validate_point/',
-            {'action': 'validate'},
-            format='json',
-        ).status_code == 403
-
-        # Admin peut toujours finaliser le parcours
-        assert admin_client.post(
-            f'/api/v1/points/{point_id}/validate_point/',
-            {'action': 'validate'},
-            format='json',
-        ).status_code == 200
+            'geometry': {'type': 'Point', 'coordinates': [1.265, 6.365]},
+            'properties': {
+                **TERRAIN_POINT['properties'],
+                'client_id': 'e2e-client-key-001',
+            },
+        }
+        r1 = auth_client.post('/api/v1/points/', payload, format='json')
+        assert r1.status_code in (200, 201)
+        r2 = auth_client.post('/api/v1/points/', payload, format='json')
+        assert r2.status_code == 200
+        assert r1.json()['id'] == r2.json()['id']

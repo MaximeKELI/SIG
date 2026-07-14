@@ -32,20 +32,26 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install system deps (GDAL)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gdal-bin libgdal-dev
       - name: Install dependencies
         working-directory: backend
         run: |
-          pip install -r requirements.txt
-      - name: Run tests
+          pip install -r requirements.txt -r requirements-dev.txt
+      - name: Run pytest (same as make test)
         working-directory: backend
         env:
+          DJANGO_TEST: '1'
           POSTGRES_HOST: localhost
           POSTGRES_DB: sig_sols
           POSTGRES_USER: sig_sols
           POSTGRES_PASSWORD: sig_sols_secret
           REDIS_URL: redis://localhost:6379/0
           SECRET_KEY: ci-test-secret
-        run: python manage.py test --keepdb -v 1
+          CELERY_TASK_ALWAYS_EAGER: '1'
+        run: pytest -q --tb=short -m "not nasa_live and not gemini_live"
 
   frontend:
     runs-on: ubuntu-latest
@@ -54,8 +60,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install & test
+      - name: Install & unit tests
         working-directory: frontend
         run: |
           npm ci
           npm test
+      - name: Install Playwright
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Playwright E2E (mocked API)
+        working-directory: frontend
+        run: npm run test:e2e
+        env:
+          CI: '1'

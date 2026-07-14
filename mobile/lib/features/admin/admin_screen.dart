@@ -191,6 +191,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
             children: [
               IconButton(
                 icon: const Icon(Icons.check, color: Colors.green),
+                tooltip: 'Valider',
                 onPressed: () async {
                   final api = context.read<SigApi>();
                   if (isPoint) {
@@ -201,14 +202,19 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                   _load();
                 },
               ),
-              if (!isPoint)
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.red),
-                  onPressed: () async {
-                    await context.read<SigApi>().rejectVideo(id);
-                    _load();
-                  },
-                ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.red),
+                tooltip: 'Rejeter',
+                onPressed: () async {
+                  final api = context.read<SigApi>();
+                  if (isPoint) {
+                    await api.validatePoint(id, action: 'reject');
+                  } else {
+                    await api.rejectVideo(id);
+                  }
+                  _load();
+                },
+              ),
             ],
           ),
         );
