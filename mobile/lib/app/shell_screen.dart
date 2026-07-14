@@ -18,6 +18,7 @@ import '../features/quiz/quiz_screen.dart';
 import '../features/sheets/sheets_screen.dart';
 import '../features/videos/videos_screen.dart';
 import '../services/sig_api.dart';
+import '../shared/widgets/dusol_ui.dart';
 import '../shared/widgets/offline_banner.dart';
 
 class ShellScreen extends StatefulWidget {
@@ -171,13 +172,22 @@ class _ShellScreenState extends State<ShellScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text(
-                    i18n.t('app.title'),
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: AppTheme.gold300,
-                        ),
+                  Row(
+                    children: [
+                      UserAvatar(
+                        label: user?.displayName ?? '?',
+                        photoUrl: loggedIn ? user?.profilePhotoUrl : null,
+                        radius: 22,
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.go('/profile');
+                        },
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(child: BrandTitleSpin()),
+                    ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 10),
                   Text(
                     user?.displayName ?? (loggedIn ? '' : 'Visiteur'),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -296,7 +306,20 @@ class _ShellScreenState extends State<ShellScreen> {
       appBar: hideAppBar
           ? null
           : AppBar(
-              title: Text(_titleFor(loc, i18n)),
+              titleSpacing: 12,
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const BrandTitleSpin(),
+                  Text(
+                    _titleFor(loc, i18n),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
               actions: [
                 if (!loggedIn)
                   TextButton(
@@ -320,17 +343,44 @@ class _ShellScreenState extends State<ShellScreen> {
                     tooltip: i18n.t('parcel.tooltip'),
                     onPressed: () => context.push('/parcel'),
                   ),
-                IconButton(
-                  icon: CircleAvatar(
-                    radius: 14,
-                    backgroundColor: AppTheme.gold500.withValues(alpha: 0.25),
-                    child: Icon(
-                      loggedIn ? Icons.person : Icons.person_outline,
-                      size: 16,
-                      color: AppTheme.gold300,
+                Padding(
+                  padding: const EdgeInsets.only(right: 10, left: 2),
+                  child: Center(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () => context.go('/profile'),
+                        child: Tooltip(
+                          message: loggedIn ? 'Mon profil' : 'Profil / Connexion',
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppTheme.gold500,
+                                width: 1.6,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.gold500.withValues(
+                                    alpha: 0.35,
+                                  ),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                            child: UserAvatar(
+                              label: user?.displayName ?? '?',
+                              photoUrl:
+                                  loggedIn ? user?.profilePhotoUrl : null,
+                              radius: 18,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  onPressed: () => context.go('/profile'),
                 ),
               ],
             ),

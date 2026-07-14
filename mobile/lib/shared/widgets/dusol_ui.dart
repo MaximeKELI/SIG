@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -298,6 +299,89 @@ class DusolAtmosphere extends StatelessWidget {
           color: color,
         ),
       ),
+    );
+  }
+}
+
+/// Titre marque — rotation horizontale lente (axe Y), comme le site web (~14 s).
+class BrandTitleSpin extends StatefulWidget {
+  const BrandTitleSpin({
+    super.key,
+    this.text = Env.appName,
+    this.style,
+  });
+
+  final String text;
+  final TextStyle? style;
+
+  @override
+  State<BrandTitleSpin> createState() => _BrandTitleSpinState();
+}
+
+class _BrandTitleSpinState extends State<BrandTitleSpin>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 14),
+    );
+    if (dusolAnimationsEnabled) {
+      _controller.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final style =
+        widget.style ??
+        Theme.of(context).textTheme.titleLarge?.copyWith(
+          color: AppTheme.gold300,
+          fontFamily: AppTheme.fontDisplay,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.4,
+          height: 1.05,
+        );
+    final label = Text(
+      widget.text,
+      style: style,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      softWrap: false,
+    );
+    if (!dusolAnimationsEnabled || MediaQuery.disableAnimationsOf(context)) {
+      return label;
+    }
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final angle = _controller.value * 2 * math.pi;
+        final facingFront = math.cos(angle) >= 0;
+        return Transform(
+          alignment: Alignment.center,
+          transform:
+              Matrix4.identity()
+                ..setEntry(3, 2, 0.0015)
+                ..rotateY(angle),
+          child:
+              facingFront
+                  ? label
+                  : Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.rotationY(math.pi),
+                    child: label,
+                  ),
+        );
+      },
     );
   }
 }
