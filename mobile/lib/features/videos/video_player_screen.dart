@@ -74,6 +74,16 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       setState(() => _initializationError = 'Vidéo indisponible (URL vide).');
       return;
     }
+    // video_player n’a pas de backend Linux fiable sans libmpv (media_kit).
+    // Sur desktop Linux on propose directement le lecteur système.
+    if (Platform.isLinux) {
+      setState(
+        () => _initializationError =
+            'Lecture intégrée non disponible sur Linux.\n'
+            'Utilisez le lecteur système (bouton ci-dessous).',
+      );
+      return;
+    }
     try {
       final controller = VideoPlayerController.networkUrl(
         Uri.parse(url),
