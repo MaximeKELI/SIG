@@ -343,6 +343,30 @@ class _MapScreenState extends State<MapScreen> {
           options: MapOptions(
             initialCenter: _myPosition ?? _togoCenter,
             initialZoom: 9,
+            minZoom: 4,
+            maxZoom: 19,
+            // Pinch (mobile / trackpad) + molette curseur (PC) + double-tap.
+            // Rotation désactivée pour que le pincement zoome sans conflit.
+            interactionOptions: InteractionOptions(
+              flags:
+                  InteractiveFlag.drag |
+                  InteractiveFlag.flingAnimation |
+                  InteractiveFlag.pinchMove |
+                  InteractiveFlag.pinchZoom |
+                  InteractiveFlag.scrollWheelZoom |
+                  InteractiveFlag.doubleTapZoom |
+                  InteractiveFlag.doubleTapDragZoom,
+              enableMultiFingerGestureRace: true,
+              pinchZoomThreshold: 0.2,
+              scrollWheelVelocity: 0.008,
+              cursorKeyboardRotationOptions:
+                  CursorKeyboardRotationOptions.disabled(),
+              keyboardOptions: KeyboardOptions(
+                enableArrowKeysPanning: true,
+                enableWASDPanning: true,
+                enableRFZooming: true,
+              ),
+            ),
             onPositionChanged: (camera, hasGesture) {
               if (hasGesture) _scheduleBboxReload();
             },
@@ -486,6 +510,20 @@ class _MapScreenState extends State<MapScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               FloatingActionButton.small(
+                heroTag: 'zoom_in',
+                tooltip: 'Zoom +',
+                onPressed: () => _zoomBy(1),
+                child: const Icon(Icons.add),
+              ),
+              const SizedBox(height: 6),
+              FloatingActionButton.small(
+                heroTag: 'zoom_out',
+                tooltip: 'Zoom −',
+                onPressed: () => _zoomBy(-1),
+                child: const Icon(Icons.remove),
+              ),
+              const SizedBox(height: 10),
+              FloatingActionButton.small(
                 heroTag: 'tools',
                 onPressed: () => _showMapTools(context),
                 child: const Icon(Icons.build),
@@ -500,8 +538,9 @@ class _MapScreenState extends State<MapScreen> {
               FloatingActionButton(
                 heroTag: 'loc',
                 onPressed: () {
-                  if (_myPosition != null)
+                  if (_myPosition != null) {
                     _mapController.move(_myPosition!, 12);
+                  }
                 },
                 child: const Icon(Icons.gps_fixed),
               ),
@@ -510,6 +549,12 @@ class _MapScreenState extends State<MapScreen> {
         ),
       ],
     );
+  }
+
+  void _zoomBy(double delta) {
+    final camera = _mapController.camera;
+    final next = (camera.zoom + delta).clamp(4.0, 19.0);
+    _mapController.move(camera.center, next);
   }
 
   Widget _buildMapChromeBody(
