@@ -102,6 +102,28 @@ class _MapScreenState extends State<MapScreen> {
         : Colors.teal.shade600;
   }
 
+  String? _currentBbox() {
+    if (!_limitToBbox) return null;
+    try {
+      final bounds = _mapController.camera.visibleBounds;
+      return '${bounds.west},${bounds.south},${bounds.east},${bounds.north}';
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _reloadPoints({bool keepFilters = true}) async {
+    final points = await context.read<SigApi>().fetchSoilPoints(
+      validationMode: _validationMode,
+      soilType: keepFilters ? _soilTypeFilter : null,
+      phMin: keepFilters ? _phMinFilter : null,
+      phMax: keepFilters ? _phMaxFilter : null,
+      bbox: _currentBbox(),
+    );
+    if (!mounted) return;
+    setState(() => _points = points);
+  }
+
   Future<void> _load() async {
     if (!mounted) return;
     setState(() {
@@ -110,12 +132,9 @@ class _MapScreenState extends State<MapScreen> {
     });
     try {
       final api = context.read<SigApi>();
-      final results = await Future.wait([
-        api.fetchSoilPoints(validationMode: _validationMode),
-        api.fetchExternalApiStatus().catchError(
-          (_) => <String, Map<String, dynamic>>{},
-        ),
-      ]);
+      final status = await api.fetchExternalApiStatus().catchError(
+        (_) => <String, Map<String, dynamic>>{},
+      );
       if (!mounted) return;
       LatLng? pos;
       try {
@@ -129,10 +148,18 @@ class _MapScreenState extends State<MapScreen> {
       } catch (_) {}
       if (!mounted) return;
       setState(() {
-        _points = results[0] as List<SoilPoint>;
-        _apiStatus = results[1] as Map<String, Map<String, dynamic>>;
+        _apiStatus = status;
         _myPosition = pos;
         _loading = false;
+      });
+      // Charger points après 1er frame (bbox carte disponible)
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        try {
+          await _reloadPoints();
+        } catch (e) {
+          if (mounted) setState(() => _error = e.toString());
+        }
       });
       await _loadParcels();
       await _focusPointIfNeeded();
@@ -1117,10 +1144,15 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _loadWithFilters(BuildContext context) async {
-    final soilCtrl = TextEditingController();
-    final phMin = TextEditingController(text: '5');
-    final phMax = TextEditingController(text: '8');
+    final soilCtrl = TextEditingController(text: _soilTypeFilter ?? '');
+    final phMin = TextEditingController(
+      text: _phMinFilter?.toString() ?? '5',
+    );
+    final phMax = TextEditingController(
+      text: _phMaxFilter?.toString() ?? '8',
+    );
     var mode = _validationMode;
+    var limitBbox = _limitToBbox;
     final ok = await showDialog<bool>(
       context: context,
       builder:
@@ -1128,47 +1160,58 @@ class _MapScreenState extends State<MapScreen> {
             builder:
                 (ctx, setLocal) => AlertDialog(
                   title: const Text('Filtres carte'),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      DropdownButtonFormField<String>(
-                        value: mode,
-                        decoration: const InputDecoration(
-                          labelText: 'Validation',
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        DropdownButtonFormField<String>(
+                          value: mode,
+                          decoration: const InputDecoration(
+                            labelText: 'Validation',
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'validated',
+                              child: Text('Validés'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'pending',
+                              child: Text('En attente'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'rejected',
+                              child: Text('Rejetés'),
+                            ),
+                            DropdownMenuItem(value: 'all', child: Text('Tous')),
+                          ],
+                          onChanged:
+                              (v) => setLocal(() => mode = v ?? 'validated'),
                         ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'validated',
-                            child: Text('Validés'),
+                        TextField(
+                          controller: soilCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'Type sol',
                           ),
-                          DropdownMenuItem(
-                            value: 'pending',
-                            child: Text('En attente'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'rejected',
-                            child: Text('Rejetés'),
-                          ),
-                          DropdownMenuItem(value: 'all', child: Text('Tous')),
-                        ],
-                        onChanged:
-                            (v) => setLocal(() => mode = v ?? 'validated'),
-                      ),
-                      TextField(
-                        controller: soilCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Type sol',
                         ),
-                      ),
-                      TextField(
-                        controller: phMin,
-                        decoration: const InputDecoration(labelText: 'pH min'),
-                      ),
-                      TextField(
-                        controller: phMax,
-                        decoration: const InputDecoration(labelText: 'pH max'),
-                      ),
-                    ],
+                        TextField(
+                          controller: phMin,
+                          decoration: const InputDecoration(labelText: 'pH min'),
+                        ),
+                        TextField(
+                          controller: phMax,
+                          decoration: const InputDecoration(labelText: 'pH max'),
+                        ),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Limiter à la carte visible'),
+                          subtitle: const Text(
+                            'Comme le web — charge uniquement la fenêtre affichée',
+                          ),
+                          value: limitBbox,
+                          onChanged: (v) => setLocal(() => limitBbox = v),
+                        ),
+                      ],
+                    ),
                   ),
                   actions: [
                     TextButton(
@@ -1184,17 +1227,16 @@ class _MapScreenState extends State<MapScreen> {
           ),
     );
     if (ok != true) return;
+    setState(() {
+      _validationMode = mode;
+      _limitToBbox = limitBbox;
+      _soilTypeFilter =
+          soilCtrl.text.trim().isEmpty ? null : soilCtrl.text.trim();
+      _phMinFilter = double.tryParse(phMin.text);
+      _phMaxFilter = double.tryParse(phMax.text);
+    });
     try {
-      final points = await context.read<SigApi>().fetchSoilPoints(
-        validationMode: mode,
-        soilType: soilCtrl.text.trim().isEmpty ? null : soilCtrl.text.trim(),
-        phMin: double.tryParse(phMin.text),
-        phMax: double.tryParse(phMax.text),
-      );
-      setState(() {
-        _validationMode = mode;
-        _points = points;
-      });
+      await _reloadPoints();
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(
