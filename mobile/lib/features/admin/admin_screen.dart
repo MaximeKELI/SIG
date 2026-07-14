@@ -1,15 +1,18 @@
-import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/auth/auth_service.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/sig_api.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
 
+/// Cockpit admin — vision globale alignée sur le web (`/platform/admin/cockpit/`).
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
 
@@ -18,12 +21,7 @@ class AdminScreen extends StatefulWidget {
 }
 
 class _AdminScreenState extends State<AdminScreen> {
-  Map<String, dynamic>? _dash;
-  Map<String, dynamic>? _analytics;
-  List<dynamic> _pending = [];
-  List<dynamic> _pendingVideos = [];
-  List<dynamic> _activity = [];
-  List<dynamic> _comments = [];
+  Map<String, dynamic>? _cockpit;
   List<dynamic> _journal = [];
   Map<String, dynamic>? _userActivity;
   final _userActivityCtrl = TextEditingController();
@@ -44,6 +42,29 @@ class _AdminScreenState extends State<AdminScreen> {
     super.dispose();
   }
 
+  Map<String, dynamic> get _overview =>
+      Map<String, dynamic>.from(_cockpit?['overview'] as Map? ?? {});
+
+  Map<String, dynamic> get _soilStats =>
+      Map<String, dynamic>.from(_cockpit?['soil_stats'] as Map? ?? {});
+
+  Map<String, dynamic> get _queues =>
+      Map<String, dynamic>.from(_cockpit?['queues'] as Map? ?? {});
+
+  Map<String, dynamic> get _usersBlock =>
+      Map<String, dynamic>.from(_cockpit?['users'] as Map? ?? {});
+
+  Map<String, dynamic> get _analytics =>
+      Map<String, dynamic>.from(_cockpit?['analytics'] as Map? ?? {});
+
+  Map<String, dynamic> get _terrain =>
+      Map<String, dynamic>.from(_cockpit?['terrain'] as Map? ?? {});
+
+  List<dynamic> get _audit => _cockpit?['audit'] as List? ?? const [];
+
+  List<dynamic> get _activity =>
+      _cockpit?['activity_recent'] as List? ?? const [];
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -52,25 +73,17 @@ class _AdminScreenState extends State<AdminScreen> {
     try {
       final api = context.read<SigApi>();
       final results = await Future.wait([
-        api.adminDashboard(),
-        api.adminAnalytics(days: 30),
-        api.pendingValidation(),
-        api.pendingVideos(),
-        api.adminActivity(),
-        api.commentsModeration(),
+        api.adminCockpit(days: 30),
         api.moderationJournal(),
       ]);
+      if (!mounted) return;
       setState(() {
-        _dash = Map<String, dynamic>.from(results[0] as Map);
-        _analytics = Map<String, dynamic>.from(results[1] as Map);
-        _pending = results[2] as List<dynamic>;
-        _pendingVideos = results[3] as List<dynamic>;
-        _activity = results[4] as List<dynamic>;
-        _comments = results[5] as List<dynamic>;
-        _journal = results[6] as List<dynamic>;
+        _cockpit = Map<String, dynamic>.from(results[0] as Map);
+        _journal = results[1] as List<dynamic>;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;
@@ -83,23 +96,44 @@ class _AdminScreenState extends State<AdminScreen> {
     final user = context.watch<AuthService>().user;
     if (user == null || !user.isAdmin) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Administration')),
+        appBar: AppBar(
+          title: const Text('Administration'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.canPop() ? context.pop() : context.go('/'),
+          ),
+        ),
         body: const Center(child: Text('Accès réservé aux administrateurs')),
       );
     }
 
     return DefaultTabController(
-      length: 4,
+      length: 7,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Administration'),
+          title: const Text('Cockpit admin'),
+          leading: IconButton(
+            tooltip: 'Retour',
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.canPop() ? context.pop() : context.go('/'),
+          ),
+          actions: [
+            IconButton(
+              tooltip: 'Actualiser',
+              onPressed: _loading ? null : _load,
+              icon: const Icon(Icons.refresh),
+            ),
+          ],
           bottom: const TabBar(
             isScrollable: true,
             tabs: [
+              Tab(text: 'Vue'),
               Tab(text: 'Validation'),
-              Tab(text: 'Analyses'),
               Tab(text: 'Modération'),
-              Tab(text: 'Opérations'),
+              Tab(text: 'Users'),
+              Tab(text: 'Stats'),
+              Tab(text: 'Terrain'),
+              Tab(text: 'Ops'),
             ],
           ),
         ),
@@ -110,12 +144,116 @@ class _AdminScreenState extends State<AdminScreen> {
                 ? ErrorView(message: _error!, onRetry: _load)
                 : TabBarView(
                   children: [
+                    _overviewTab(),
                     _validationTab(),
-                    _analyticsTab(),
                     _moderationTab(),
+                    _usersTab(),
+                    _statsTab(),
+                    _terrainTab(),
                     _opsTab(),
                   ],
                 ),
+      ),
+    );
+  }
+
+  Widget _kpi(String label, Object? value) {
+    return SizedBox(
+      width: 152,
+      child: Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: Theme.of(context).textTheme.labelMedium),
+              const SizedBox(height: 6),
+              Text(
+                '${value ?? '—'}',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: AppTheme.gold300,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _overviewTab() {
+    final o = _overview;
+    final soil = _soilStats;
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          Text(
+            'Vue d’ensemble (web + mobile)',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _kpi('Utilisateurs', o['users_total']),
+              _kpi('Actifs', o['users_active']),
+              _kpi('Points sol', o['soil_points']),
+              _kpi('En attente sol', o['pending_validation']),
+              _kpi('Vidéos publiées', o['videos_published']),
+              _kpi('Quiz 30 j.', o['quizzes_completed_period']),
+              _kpi('Agents live', o['live_agents']),
+              _kpi('Alertes', o['active_alerts']),
+              _kpi('Événements 30 j.', o['events_total']),
+              _kpi('Aujourd’hui', o['events_today']),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text('Sols validés', style: Theme.of(context).textTheme.titleMedium),
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  title: const Text('Points validés'),
+                  trailing: Text('${soil['total_points'] ?? '—'}'),
+                ),
+                ListTile(
+                  title: const Text('pH moyen'),
+                  trailing: Text('${soil['avg_ph'] ?? '—'}'),
+                ),
+                ListTile(
+                  title: const Text('Humidité moy.'),
+                  trailing: Text('${soil['avg_humidity'] ?? '—'} %'),
+                ),
+                ListTile(
+                  title: const Text('NDVI moy.'),
+                  trailing: Text('${soil['avg_ndvi'] ?? '—'}'),
+                ),
+                ListTile(
+                  title: const Text('Zones dégradées'),
+                  trailing: Text('${soil['degraded_zones_count'] ?? '—'}'),
+                ),
+              ],
+            ),
+          ),
+          if (o['ml_model'] is Map) ...[
+            const SizedBox(height: 12),
+            Text('Modèle IA', style: Theme.of(context).textTheme.titleMedium),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.psychology_outlined),
+                title: Text('${(o['ml_model'] as Map)['algorithm'] ?? '—'}'),
+                subtitle: Text(
+                  'F1 ${(o['ml_model'] as Map)['f1_macro'] ?? '—'} · '
+                  '${'${(o['ml_model'] as Map)['trained_at'] ?? ''}'.substring(0, ('${(o['ml_model'] as Map)['trained_at'] ?? ''}').length.clamp(0, 16))}',
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -129,32 +267,170 @@ class _AdminScreenState extends State<AdminScreen> {
           'Points de sol en attente',
           style: Theme.of(context).textTheme.titleMedium,
         ),
-        _pendingList(_pending, isPoint: true, shrinkWrap: true),
+        _pendingList(
+          _queues['pending_soils'] as List? ?? const [],
+          isPoint: true,
+          shrinkWrap: true,
+        ),
         const SizedBox(height: 20),
         Text(
           'Vidéos en attente',
           style: Theme.of(context).textTheme.titleMedium,
         ),
-        _pendingList(_pendingVideos, isPoint: false, shrinkWrap: true),
+        _pendingList(
+          _queues['pending_videos'] as List? ?? const [],
+          isPoint: false,
+          shrinkWrap: true,
+        ),
       ],
     ),
   );
 
-  Widget _analyticsTab() {
-    final metrics =
-        <MapEntry<String, dynamic>>[...?_dash?.entries, ...?_analytics?.entries]
-            .where(
-              (entry) =>
-                  entry.value is num ||
-                  entry.value is String ||
-                  entry.value is bool,
-            )
-            .toList();
+  Widget _moderationTab() {
+    final comments = _queues['comments'] as List? ?? const [];
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          Text(
+            'Commentaires récents',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          Card(
+            child:
+                comments.isEmpty
+                    ? const ListTile(title: Text('Aucun commentaire.'))
+                    : Column(
+                      children:
+                          comments.take(25).map((item) {
+                            final comment = Map<String, dynamic>.from(
+                              item as Map,
+                            );
+                            final id = comment['id'] as int?;
+                            return ListTile(
+                              title: Text(
+                                '${comment['text'] ?? 'Commentaire'}',
+                              ),
+                              subtitle: Text(
+                                '${comment['author_display'] ?? comment['author_username'] ?? ''}',
+                              ),
+                              trailing:
+                                  id == null
+                                      ? null
+                                      : Wrap(
+                                        children: [
+                                          IconButton(
+                                            tooltip: 'Analyser par IA',
+                                            icon: const Icon(
+                                              Icons.auto_awesome_outlined,
+                                            ),
+                                            onPressed: () => _checkComment(id),
+                                          ),
+                                          IconButton(
+                                            tooltip: 'Masquer',
+                                            icon: const Icon(
+                                              Icons.visibility_off_outlined,
+                                            ),
+                                            onPressed: () => _hideComment(id),
+                                          ),
+                                        ],
+                                      ),
+                            );
+                          }).toList(),
+                    ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Journal de modération',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          Card(
+            child:
+                _journal.isEmpty
+                    ? const ListTile(title: Text('Journal vide.'))
+                    : Column(
+                      children:
+                          _journal.take(20).map((item) {
+                            final entry = Map<String, dynamic>.from(
+                              item as Map,
+                            );
+                            return ListTile(
+                              leading: const Icon(Icons.fact_check_outlined),
+                              title: Text(
+                                '[${entry['kind'] ?? '?'}] ${entry['title'] ?? entry['text'] ?? 'Action'}',
+                              ),
+                              subtitle: Text(
+                                '${entry['author'] ?? ''} · ${entry['created_at'] ?? ''}',
+                              ),
+                            );
+                          }).toList(),
+                    ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _usersTab() {
+    final recent = _usersBlock['recent'] as List? ?? const [];
+    final byRole = _usersBlock['by_role'] as List? ?? const [];
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          Text(
+            'Répartition par rôle',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children:
+                byRole.map((raw) {
+                  final row = Map<String, dynamic>.from(raw as Map);
+                  return Chip(
+                    label: Text('${row['role']} · ${row['count']}'),
+                  );
+                }).toList(),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Derniers inscrits',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          Card(
+            child: Column(
+              children:
+                  recent.take(30).map((raw) {
+                    final u = Map<String, dynamic>.from(raw as Map);
+                    return ListTile(
+                      leading: CircleAvatar(
+                        child: Text(
+                          (u['username']?.toString() ?? '?')[0].toUpperCase(),
+                        ),
+                      ),
+                      title: Text('${u['username']}'),
+                      subtitle: Text(
+                        '${u['role']} · ${u['region'] ?? '—'} · ${'${u['date_joined'] ?? ''}'.substring(0, ('${u['date_joined'] ?? ''}').length.clamp(0, 10))}',
+                      ),
+                      trailing: Text('#${u['id']}'),
+                    );
+                  }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statsTab() {
+    final an = _analytics;
+    final byDay = an['by_day'] as List? ?? const [];
     final chartValues =
-        metrics
-            .where((entry) => entry.value is num)
-            .take(6)
-            .map((entry) => (entry.value as num).toDouble())
+        byDay
+            .map((e) => ((e as Map)['count'] as num?)?.toDouble() ?? 0)
             .toList();
     return RefreshIndicator(
       onRefresh: _load,
@@ -162,81 +438,52 @@ class _AdminScreenState extends State<AdminScreen> {
         padding: const EdgeInsets.all(12),
         children: [
           Text(
-            'Indicateurs — 30 derniers jours',
+            'Statistiques 30 j. (web + mobile)',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children:
-                metrics
-                    .take(8)
-                    .map(
-                      (entry) => SizedBox(
-                        width: 160,
-                        child: Card(
-                          margin: EdgeInsets.zero,
-                          child: Padding(
-                            padding: const EdgeInsets.all(14),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _label(entry.key),
-                                  style:
-                                      Theme.of(context).textTheme.labelMedium,
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  '${entry.value}',
-                                  style:
-                                      Theme.of(context).textTheme.headlineSmall,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
+            children: [
+              _kpi('Événements', an['events_total']),
+              _kpi('Aujourd’hui', an['events_today']),
+              _kpi('Zooms', an['map_zoom_total']),
+              _kpi('Pans', an['map_pan_total']),
+            ],
           ),
           if (chartValues.isNotEmpty) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Text(
-              'Aperçu des indicateurs',
+              'Événements / jour',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             SizedBox(height: 220, child: _metricChart(chartValues)),
           ],
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Text(
             'Activité récente',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           Card(
-            child:
-                _activity.isEmpty
-                    ? const ListTile(title: Text('Aucune activité récente.'))
-                    : Column(
-                      children:
-                          _activity.take(10).map((item) {
-                            final event = Map<String, dynamic>.from(
-                              item as Map,
-                            );
-                            return ListTile(
-                              leading: const Icon(Icons.history_outlined),
-                              title: Text(
-                                '${event['action'] ?? event['type'] ?? event['title'] ?? 'Activité'}',
-                              ),
-                              subtitle: Text(
-                                '${event['created_at'] ?? event['date'] ?? ''}',
-                              ),
-                            );
-                          }).toList(),
-                    ),
+            child: Column(
+              children:
+                  _activity.take(15).map((item) {
+                    final e = Map<String, dynamic>.from(item as Map);
+                    return ListTile(
+                      dense: true,
+                      leading: const Icon(Icons.history),
+                      title: Text(
+                        '${e['event_type'] ?? e['action'] ?? 'event'}',
+                      ),
+                      subtitle: Text(
+                        '${e['username'] ?? ''} · ${e['created_at'] ?? ''}',
+                      ),
+                    );
+                  }).toList(),
+            ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Text(
             'Activité par utilisateur',
             style: Theme.of(context).textTheme.titleMedium,
@@ -264,21 +511,10 @@ class _AdminScreenState extends State<AdminScreen> {
                   ),
                   if (_userActivity != null) ...[
                     const Divider(),
-                    ..._userActivity!.entries
-                        .where(
-                          (e) =>
-                              e.value is num ||
-                              e.value is String ||
-                              e.value is bool,
-                        )
-                        .take(12)
-                        .map(
-                          (e) => ListTile(
-                            dense: true,
-                            title: Text(_label(e.key)),
-                            trailing: Text('${e.value}'),
-                          ),
-                        ),
+                    Text(
+                      '${_userActivity!['events_total'] ?? 0} événements',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
                   ],
                 ],
               ),
@@ -289,133 +525,91 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
-  Future<void> _loadUserActivity() async {
-    final id = int.tryParse(_userActivityCtrl.text.trim());
-    if (id == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ID utilisateur invalide.')),
-      );
-      return;
-    }
-    try {
-      final data = await context.read<SigApi>().adminUserActivity(id);
-      if (mounted) setState(() => _userActivity = data);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-      }
-    }
+  Widget _terrainTab() {
+    final agents = _terrain['live_agents'] as List? ?? const [];
+    final alerts = _terrain['drought_alerts'] as List? ?? const [];
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          Text(
+            'Agents live (5 min)',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          Card(
+            child:
+                agents.isEmpty
+                    ? const ListTile(title: Text('Aucun agent live.'))
+                    : Column(
+                      children:
+                          agents.map((raw) {
+                            final a = Map<String, dynamic>.from(raw as Map);
+                            return ListTile(
+                              leading: const Icon(Icons.person_pin_circle),
+                              title: Text(
+                                '${a['display_name'] ?? a['username']}',
+                              ),
+                              subtitle: Text(
+                                '${a['role']} · ${a['lat']} , ${a['lon']}',
+                              ),
+                            );
+                          }).toList(),
+                    ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Alertes sécheresse',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          Card(
+            child:
+                alerts.isEmpty
+                    ? const ListTile(title: Text('Aucune alerte active.'))
+                    : Column(
+                      children:
+                          alerts.map((raw) {
+                            final a = Map<String, dynamic>.from(raw as Map);
+                            return ListTile(
+                              leading: const Icon(
+                                Icons.warning_amber_outlined,
+                                color: Colors.orange,
+                              ),
+                              title: Text(
+                                '${a['title'] ?? a['level'] ?? 'Alerte'}',
+                              ),
+                              subtitle: Text(
+                                '${a['message'] ?? a['zone_name'] ?? ''}',
+                              ),
+                            );
+                          }).toList(),
+                    ),
+          ),
+        ],
+      ),
+    );
   }
-
-  Widget _metricChart(List<double> values) => BarChart(
-    BarChartData(
-      borderData: FlBorderData(show: false),
-      gridData: const FlGridData(show: false),
-      titlesData: const FlTitlesData(
-        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      ),
-      barGroups: List.generate(
-        values.length,
-        (index) => BarChartGroupData(
-          x: index,
-          barRods: [
-            BarChartRodData(
-              toY: values[index],
-              color: Theme.of(context).colorScheme.primary,
-              width: 18,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-
-  Widget _moderationTab() => RefreshIndicator(
-    onRefresh: _load,
-    child: ListView(
-      padding: const EdgeInsets.all(12),
-      children: [
-        Text(
-          'Commentaires à examiner',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        Card(
-          child:
-              _comments.isEmpty
-                  ? const ListTile(title: Text('Aucun commentaire à modérer.'))
-                  : Column(
-                    children:
-                        _comments.take(20).map((item) {
-                          final comment = Map<String, dynamic>.from(
-                            item as Map,
-                          );
-                          final id = comment['id'] as int?;
-                          return ListTile(
-                            title: Text(
-                              '${comment['text'] ?? comment['body'] ?? 'Commentaire'}',
-                            ),
-                            subtitle: Text(
-                              '${comment['author_username'] ?? comment['author'] ?? ''}',
-                            ),
-                            trailing:
-                                id == null
-                                    ? null
-                                    : Wrap(
-                                      children: [
-                                        IconButton(
-                                          tooltip: 'Analyser par IA',
-                                          icon: const Icon(
-                                            Icons.auto_awesome_outlined,
-                                          ),
-                                          onPressed: () => _checkComment(id),
-                                        ),
-                                        IconButton(
-                                          tooltip: 'Masquer',
-                                          icon: const Icon(
-                                            Icons.visibility_off_outlined,
-                                          ),
-                                          onPressed: () => _hideComment(id),
-                                        ),
-                                      ],
-                                    ),
-                          );
-                        }).toList(),
-                  ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          'Journal de modération',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        Card(
-          child:
-              _journal.isEmpty
-                  ? const ListTile(title: Text('Aucune action enregistrée.'))
-                  : Column(
-                    children:
-                        _journal.take(15).map((item) {
-                          final entry = Map<String, dynamic>.from(item as Map);
-                          return ListTile(
-                            leading: const Icon(Icons.fact_check_outlined),
-                            title: Text(
-                              '${entry['action'] ?? entry['message'] ?? 'Action de modération'}',
-                            ),
-                            subtitle: Text(
-                              '${entry['created_at'] ?? entry['date'] ?? ''}',
-                            ),
-                          );
-                        }).toList(),
-                  ),
-        ),
-      ],
-    ),
-  );
 
   Widget _opsTab() => ListView(
     padding: const EdgeInsets.all(12),
     children: [
+      Text('Journal d’audit', style: Theme.of(context).textTheme.titleMedium),
+      Card(
+        child: Column(
+          children:
+              _audit.take(25).map((raw) {
+                final a = Map<String, dynamic>.from(raw as Map);
+                return ListTile(
+                  dense: true,
+                  title: Text('${a['action']} ${a['resource']}'),
+                  subtitle: Text(
+                    '${a['username'] ?? '?'} · ${a['created_at'] ?? ''}',
+                  ),
+                );
+              }).toList(),
+        ),
+      ),
+      const SizedBox(height: 16),
       Text(
         'Opérations système',
         style: Theme.of(context).textTheme.titleMedium,
@@ -492,13 +686,56 @@ class _AdminScreenState extends State<AdminScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.map_outlined),
-              title: const Text('Rapport zone (CSV)'),
+              title: const Text('Rapport zone'),
               onTap: _exportZoneReport,
             ),
           ],
         ),
       ),
     ],
+  );
+
+  Future<void> _loadUserActivity() async {
+    final id = int.tryParse(_userActivityCtrl.text.trim());
+    if (id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ID utilisateur invalide.')),
+      );
+      return;
+    }
+    try {
+      final data = await context.read<SigApi>().adminUserActivity(id);
+      if (mounted) setState(() => _userActivity = data);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
+  }
+
+  Widget _metricChart(List<double> values) => BarChart(
+    BarChartData(
+      borderData: FlBorderData(show: false),
+      gridData: const FlGridData(show: false),
+      titlesData: const FlTitlesData(
+        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      ),
+      barGroups: List.generate(
+        values.length,
+        (index) => BarChartGroupData(
+          x: index,
+          barRods: [
+            BarChartRodData(
+              toY: values[index],
+              color: Theme.of(context).colorScheme.primary,
+              width: 14,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ],
+        ),
+      ),
+    ),
   );
 
   Future<void> _exportZoneReport() async {
@@ -526,6 +763,7 @@ class _AdminScreenState extends State<AdminScreen> {
           context,
         ).showSnackBar(SnackBar(content: Text('$label lancé.')));
       }
+      await _load();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -561,9 +799,7 @@ class _AdminScreenState extends State<AdminScreen> {
       allowedExtensions: ['csv'],
     );
     final path = result?.files.single.path;
-    if (path == null) {
-      return;
-    }
+    if (path == null) return;
     await _runOperation(
       'Import des utilisateurs',
       () => context.read<SigApi>().importUsersCsv(path),
@@ -585,7 +821,6 @@ class _AdminScreenState extends State<AdminScreen> {
       'Commentaire masqué',
       () => context.read<SigApi>().hideComment(id),
     );
-    await _load();
   }
 
   Future<void> _checkComment(int id) async {
@@ -595,12 +830,11 @@ class _AdminScreenState extends State<AdminScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Analyse IA : ${result['decision'] ?? result['status'] ?? 'terminée'}',
+              'Analyse IA : ${result['suggested_hide'] == true ? 'à masquer' : 'ok'} · flags ${result['flags'] ?? []}',
             ),
           ),
         );
       }
-      await _load();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -672,6 +906,4 @@ class _AdminScreenState extends State<AdminScreen> {
       },
     );
   }
-
-  String _label(String key) => key.replaceAll('_', ' ');
 }
