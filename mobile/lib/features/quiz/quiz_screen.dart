@@ -1,10 +1,13 @@
 import 'dart:async';
-import 'dart:io' show File, Platform;
+import 'dart:io' show File, Platform, Process;
+import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../services/sig_api.dart';
@@ -255,16 +258,18 @@ class _QuizScreenState extends State<QuizScreen> {
   Future<void> _openCertificate() async {
     if (_sessionId == null) return;
     try {
-      final bytes = await context.read<SigApi>().downloadQuizCertificate(
-        _sessionId!,
-      );
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/certificat-quiz-$_sessionId.pdf');
-      await file.writeAsBytes(bytes, flush: true);
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'application/pdf')],
-        text: 'Certificat SIG Sols Togo',
-      );
+      final api = context.read<SigApi>();
+      final bytes = await api.downloadQuizCertificate(_sessionId!);
+      if (!mounted) return;
+      if (bytes.length < 100 ||
+          !(bytes.length >= 4 &&
+              bytes[0] == 0x25 &&
+              bytes[1] == 0x50 &&
+              bytes[2] == 0x44 &&
+              bytes[3] == 0x46)) {
+        throw Exception('Réponse serveur invalide (PDF attendu).');
+      }
+      await _deliverCertificatePdf(Uint8List.fromList(bytes));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -272,6 +277,86 @@ class _QuizScreenState extends State<QuizScreen> {
         );
       }
     }
+  }
+
+  /// Sur Linux, share_plus ne gère pas les fichiers — on enregistre + ouvre.
+  Future<void> _deliverCertificatePdf(Uint8List bytes) async {
+    final fileName = 'certificat-SIG-Sols-$_sessionId.pdf';
+
+    if (Platform.isAndroid || Platform.isIOS) {
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/$fileName');
+      await file.writeAsBytes(bytes, flush: true);
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'application/pdf', name: fileName)],
+        text: 'Certificat d’excellence — SIG Sols Togo',
+        subject: 'Certificat SIG Sols Togo',
+      );
+      return;
+    }
+
+    // Desktop (Linux / Windows / macOS) : dialogue d’enregistrement, puis ouverture.
+    String? savedPath = await FilePicker.platform.saveFile(
+      dialogTitle: 'Enregistrer le certificat PDF',
+      fileName: fileName,
+      type: FileType.custom,
+      allowedExtensions: const ['pdf'],
+      bytes: bytes,
+    );
+
+    if (savedPath == null || savedPath.isEmpty) {
+      // Annulé : fallback Documents
+      final docs = await getApplicationDocumentsDirectory();
+      savedPath = '${docs.path}/$fileName';
+      await File(savedPath).writeAsBytes(bytes, flush: true);
+    } else {
+      if (!savedPath.toLowerCase().endsWith('.pdf')) {
+        savedPath = '$savedPath.pdf';
+      }
+      // Certains backends écrivent déjà via `bytes` ; on force une écriture sûre.
+      await File(savedPath).writeAsBytes(bytes, flush: true);
+    }
+
+    final opened = await _openPdfExternally(savedPath);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          opened
+              ? 'Certificat ouvert · enregistré : $savedPath'
+              : 'Certificat enregistré : $savedPath',
+        ),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'Ouvrir',
+          onPressed: () => _openPdfExternally(savedPath!),
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _openPdfExternally(String path) async {
+    try {
+      final uri = Uri.file(path);
+      if (await canLaunchUrl(uri)) {
+        return launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {}
+    try {
+      if (Platform.isLinux) {
+        final r = await Process.run('xdg-open', [path]);
+        return r.exitCode == 0;
+      }
+      if (Platform.isMacOS) {
+        final r = await Process.run('open', [path]);
+        return r.exitCode == 0;
+      }
+      if (Platform.isWindows) {
+        final r = await Process.run('cmd', ['/c', 'start', '', path]);
+        return r.exitCode == 0;
+      }
+    } catch (_) {}
+    return false;
   }
 
   Map<String, dynamic> _asMap(dynamic value) =>
@@ -285,28 +370,22 @@ class _QuizScreenState extends State<QuizScreen> {
     if (_finished && _finishResult != null) {
       final score =
           _finishResult!['final_score'] ?? _finishResult!['score'] ?? _score;
+      final canCertify = _sessionId != null && (score as num) >= 10;
       return ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
         children: [
-          Text(
-            'Quiz terminé !',
-            style: Theme.of(context).textTheme.displaySmall,
+          DusolHeroHeader(
+            title: 'Bravo !',
+            subtitle: 'Quiz terminé · score $score points',
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Score final : $score',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: AppTheme.gold400,
-                ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Badges obtenus',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          const DusolSectionTitle('Badges obtenus'),
           ...((_finishResult!['badges_earned'] as List? ?? const []).map(
             (badge) => Chip(
-              avatar: const Icon(Icons.workspace_premium, size: 18),
+              avatar: const Icon(
+                Icons.workspace_premium,
+                size: 18,
+                color: AppTheme.gold500,
+              ),
               label: Text(
                 _asMap(badge)['name']?.toString() ??
                     _asMap(badge)['badge']?.toString() ??
@@ -317,12 +396,59 @@ class _QuizScreenState extends State<QuizScreen> {
           if ((_finishResult!['badges_earned'] as List? ?? const []).isEmpty)
             const Text('Aucun nouveau badge cette fois-ci.'),
           const SizedBox(height: 16),
-          if (_sessionId != null && (score as num) >= 10)
-            FilledButton.icon(
-              onPressed: _openCertificate,
-              icon: const Icon(Icons.workspace_premium),
-              label: const Text('Certificat PDF'),
+          if (canCertify)
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.card,
+                gradient: AppTheme.heroGradient,
+                border: Border.all(
+                  color: AppTheme.gold500.withValues(alpha: 0.45),
+                ),
+                boxShadow: AppTheme.softShadow,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Certificat d’excellence',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: AppTheme.gold300,
+                        ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    Platform.isLinux || Platform.isWindows || Platform.isMacOS
+                        ? 'Enregistrement PDF puis ouverture dans votre lecteur.'
+                        : 'Téléchargez et partagez votre diplôme officiel.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white70,
+                        ),
+                  ),
+                  const SizedBox(height: 14),
+                  FilledButton.icon(
+                    onPressed: _openCertificate,
+                    icon: const Icon(Icons.workspace_premium),
+                    label: Text(
+                      Platform.isAndroid || Platform.isIOS
+                          ? 'Obtenir le certificat'
+                          : 'Télécharger & ouvrir le PDF',
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.info_outline),
+                title: const Text('Certificat non disponible'),
+                subtitle: Text(
+                  'Score minimum requis : 10 pts (actuel : $score).',
+                ),
+              ),
             ),
+          const SizedBox(height: 12),
           OutlinedButton(onPressed: _reset, child: const Text('Nouveau quiz')),
         ],
       );

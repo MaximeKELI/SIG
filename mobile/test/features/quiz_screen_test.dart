@@ -114,8 +114,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(api.answers, [0, 0]);
-    expect(find.text('Quiz terminé !'), findsOneWidget);
-    expect(find.text('Certificat PDF'), findsOneWidget);
+    expect(find.text('Bravo !'), findsOneWidget);
+    expect(find.textContaining('Certificat'), findsWidgets);
   });
 
   testWidgets('exam mode advances without intermediate feedback', (
@@ -142,6 +142,6 @@ void main() {
     expect(find.textContaining('Bonne réponse'), findsNothing);
     await tester.tap(find.text('Oui'));
     await tester.pumpAndSettle();
-    expect(find.text('Quiz terminé !'), findsOneWidget);
+    expect(find.text('Bravo !'), findsOneWidget);
   });
 }

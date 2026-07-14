@@ -173,4 +173,4 @@ def test_build_certificate_bytes_premium_layout(agent_user, db):
     )
     pdf = build_quiz_certificate_bytes(session, agent_user)
     assert pdf[:4] == b'%PDF'
-    assert len(pdf) > 2500
+    assert len(pdf) > 8000  # diplôme cérémonial plus dense
