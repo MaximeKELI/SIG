@@ -1,4 +1,4 @@
-const CACHE = 'sig-sols-v13';
+const CACHE = 'sig-sols-v14';
 
 // Ne pré-cache plus le JS/CSS (évite les écrans noirs après déploiement local)
 const ASSETS = [

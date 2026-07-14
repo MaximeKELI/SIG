@@ -486,10 +486,10 @@ body:not(.sidebar-is-open) .sidebar-backdrop {
   #view-map .sidebar,
   #btn-sidebar-toggle,
   .view.active,
-  .brand h1 {
+  .brand-title-spin {
     animation: none !important;
   }
-  .brand h1 {
+  .brand-title-spin {
     transform: none !important;
   }
 }
@@ -514,39 +514,63 @@ body:not(.sidebar-is-open) .sidebar-backdrop {
   pointer-events: none;
 }
 
+/* Titre : rotation horizontale continue (axe Y), vitesse légèrement lente */
 .brand {
-  perspective: 720px;
+  perspective: 900px;
 }
 
-.brand h1 {
+.brand .brand-title {
   display: inline-block;
-  transform-origin: center;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
+  margin: 0;
+  perspective: 900px;
   color: #fff8e7;
   background: none;
   -webkit-text-fill-color: #fff8e7;
-  animation: brandFlipY 7s var(--ease-luxe) infinite;
+  text-shadow: 0 0 28px rgba(201, 169, 98, 0.35);
+}
+
+.brand-title-spin {
+  display: inline-block;
+  position: relative;
+  transform-origin: center center;
+  transform-style: preserve-3d;
+  animation: brandSpinY 14s linear infinite;
   will-change: transform;
 }
 
-@keyframes brandFlipY {
-  /* Flip horizontal (axe vertical) — lisible la majeure partie du temps */
-  0%, 72% {
-    transform: rotateY(0deg);
-  }
-  78% {
-    transform: rotateY(90deg);
-  }
-  84% {
-    transform: rotateY(180deg);
-  }
-  90% {
-    transform: rotateY(270deg);
-  }
-  96%, 100% {
-    transform: rotateY(360deg);
-  }
+.brand-face {
+  display: block;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  color: #fff8e7;
+  -webkit-text-fill-color: #fff8e7;
+  white-space: nowrap;
+}
+
+.brand-face--back {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: rotateY(180deg);
+}
+
+@keyframes brandSpinY {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+
+/* Logos : flottement luxe doux */
+.brand-logo {
+  animation: luxeFloat 5.5s ease-in-out infinite;
+}
+.brand-logo--sig {
+  animation-delay: -2.4s;
+  animation-duration: 6.2s;
+}
+
+@keyframes luxeFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
 }
 
 .nav-btn {
@@ -564,6 +588,7 @@ body:not(.sidebar-is-open) .sidebar-backdrop {
   background: linear-gradient(135deg, rgba(201, 169, 98, 0.92), rgba(168, 134, 63, 0.88)) !important;
   color: var(--emerald-950) !important;
   box-shadow: 0 8px 22px rgba(201, 169, 98, 0.28);
+  /* animation luxeNavGlow définie plus bas */
 }
 
 /* Critique : ne jamais animer opacity sur .view (écran noir après l’anim) */
@@ -630,14 +655,86 @@ body:not(.sidebar-is-open) .sidebar-backdrop {
     box-shadow 0.4s var(--ease-luxe),
     border-color 0.3s;
 }
+
+/* Flottements luxueux (pas d’opacity — évite l’écran noir) */
+.view.active .kpi-card,
+.view.active .dash-card,
+.view.active .sheet-card,
+.view.active .video-card,
+.view.active .community-feed-card {
+  animation: luxeCardFloat 7s ease-in-out infinite;
+}
+.view.active .kpi-card:nth-child(2n),
+.view.active .sheet-card:nth-child(3n),
+.view.active .video-card:nth-child(2n) {
+  animation-delay: -1.8s;
+  animation-duration: 8.2s;
+}
+.view.active .kpi-card:nth-child(3n),
+.view.active .sheet-card:nth-child(2n) {
+  animation-delay: -3.6s;
+  animation-duration: 9s;
+}
+.view.active .quiz-panel {
+  animation: luxeCardFloat 8.5s ease-in-out infinite;
+}
+
+@keyframes luxeCardFloat {
+  0%, 100% {
+    transform: translateY(0);
+    box-shadow: 0 14px 40px rgba(6, 26, 16, 0.08);
+  }
+  50% {
+    transform: translateY(-6px);
+    box-shadow: 0 22px 48px rgba(6, 26, 16, 0.12), 0 0 0 1px rgba(201, 169, 98, 0.1);
+  }
+}
+
 .kpi-card:hover,
 .dash-card:hover,
 .sheet-card:hover,
 .video-card:hover,
 .community-feed-card:hover {
+  animation: none;
   transform: translateY(-4px);
   border-color: rgba(201, 169, 98, 0.35);
   box-shadow: 0 22px 50px rgba(6, 26, 16, 0.14), 0 0 0 1px rgba(201, 169, 98, 0.12);
+}
+
+/* Header / FAB / pastilles — présence flottante */
+.app-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 120% at 12% 0%, rgba(201, 169, 98, 0.16), transparent 55%),
+    radial-gradient(35% 100% at 88% 100%, rgba(52, 168, 112, 0.12), transparent 50%);
+  animation: luxeAura 10s ease-in-out infinite alternate;
+}
+
+@keyframes luxeAura {
+  from { opacity: 0.55; transform: scale(1); }
+  to { opacity: 1; transform: scale(1.02); }
+}
+
+.sidebar-fab,
+.chat-fab {
+  animation: luxeFabFloat 4.8s ease-in-out infinite;
+}
+
+@keyframes luxeFabFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.nav-btn.active {
+  animation: luxeNavGlow 3.6s ease-in-out infinite;
+}
+
+@keyframes luxeNavGlow {
+  0%, 100% { box-shadow: 0 8px 22px rgba(201, 169, 98, 0.28); }
+  50% { box-shadow: 0 10px 28px rgba(201, 169, 98, 0.45), 0 0 18px rgba(201, 169, 98, 0.22); }
 }
 
 [data-theme="dark"] .kpi-card,
@@ -665,6 +762,8 @@ body:not(.sidebar-is-open) .sidebar-backdrop {
   color: var(--gold-300) !important;
   backdrop-filter: blur(10px);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+  animation: luxeFabFloat 5.4s ease-in-out infinite;
+  animation-delay: -1.2s;
 }
 
 .chat-fab {
@@ -775,7 +874,23 @@ body:not(.sidebar-is-open) .sidebar-backdrop {
   #view-map .sidebar > .sidebar-panel,
   #view-map .sidebar-panel-body,
   .view.active,
-  .brand h1 {
+  .brand-title-spin,
+  .brand-logo,
+  .view.active .kpi-card,
+  .view.active .dash-card,
+  .view.active .sheet-card,
+  .view.active .video-card,
+  .view.active .community-feed-card,
+  .view.active .quiz-panel,
+  .sidebar-fab,
+  .chat-fab,
+  .nav-btn.active,
+  .app-header::before,
+  .weather-map-badge,
+  .sentinel-map-badge {
     animation: none !important;
+  }
+  .brand-title-spin {
+    transform: none !important;
   }
 }
