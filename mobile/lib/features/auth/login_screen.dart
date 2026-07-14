@@ -101,6 +101,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () => context.push('/forgot-password'),
                     child: Text(i18n.t('auth.forgot')),
                   ),
+                  TextButton(
+                    onPressed: () => context.go('/'),
+                    child: const Text('Continuer sans compte'),
+                  ),
                 ],
               ),
             ),

@@ -43,7 +43,7 @@ class _VideosScreenState extends State<VideosScreen> {
         category: _category.isEmpty ? null : _category,
       );
       List<dynamic> stories = [];
-      if (widget.kind == 'video') {
+      if (widget.kind == 'short') {
         stories = await api.fetchStories().catchError((_) => <dynamic>[]);
       }
       setState(() {
@@ -63,28 +63,85 @@ class _VideosScreenState extends State<VideosScreen> {
     final result = await FilePicker.platform.pickFiles(type: FileType.video);
     if (!mounted || result == null || result.files.single.path == null) return;
     final titleCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    final tagsCtrl = TextEditingController();
+    var category = 'sols';
     try {
       final ok = await showDialog<bool>(
         context: context,
         builder:
-            (_) => AlertDialog(
-              title: Text(
-                'Publier ${widget.kind == 'short' ? 'un short' : 'une vidéo'}',
-              ),
-              content: TextField(
-                controller: titleCtrl,
-                decoration: const InputDecoration(labelText: 'Titre'),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Annuler'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Envoyer'),
-                ),
-              ],
+            (_) => StatefulBuilder(
+              builder:
+                  (ctx, setLocal) => AlertDialog(
+                    title: Text(
+                      'Publier ${widget.kind == 'short' ? 'un short' : 'une vidéo'}',
+                    ),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
+                            controller: titleCtrl,
+                            decoration: const InputDecoration(labelText: 'Titre'),
+                          ),
+                          TextField(
+                            controller: descCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Description',
+                            ),
+                            maxLines: 2,
+                          ),
+                          DropdownButtonFormField<String>(
+                            value: category,
+                            decoration: const InputDecoration(
+                              labelText: 'Catégorie',
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'sols',
+                                child: Text('Sols & agriculture'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'nasa',
+                                child: Text('NASA & satellite'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'sig',
+                                child: Text('SIG & cartographie'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'formation',
+                                child: Text('Formation'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'autre',
+                                child: Text('Autre'),
+                              ),
+                            ],
+                            onChanged:
+                                (v) => setLocal(() => category = v ?? 'sols'),
+                          ),
+                          TextField(
+                            controller: tagsCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Hashtags',
+                              hintText: '#sols #ndvi',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Annuler'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Envoyer'),
+                      ),
+                    ],
+                  ),
             ),
       );
       if (!mounted || ok != true) return;
@@ -95,6 +152,9 @@ class _VideosScreenState extends State<VideosScreen> {
             titleCtrl.text.trim().isEmpty
                 ? 'Sans titre'
                 : titleCtrl.text.trim(),
+        description: descCtrl.text.trim(),
+        category: category,
+        hashtags: tagsCtrl.text.trim(),
       );
       if (mounted) await _load();
     } catch (e) {
@@ -105,6 +165,8 @@ class _VideosScreenState extends State<VideosScreen> {
       }
     } finally {
       titleCtrl.dispose();
+      descCtrl.dispose();
+      tagsCtrl.dispose();
     }
   }
 
@@ -301,13 +363,166 @@ class _VideosScreenState extends State<VideosScreen> {
     if (_loading) return const LoadingView();
     if (_error != null) return ErrorView(message: _error!, onRetry: _load);
 
-    final hasStories = widget.kind == 'video' && _stories.isNotEmpty;
+    final hasStories = widget.kind == 'short';
+    if (widget.kind == 'short') {
+      return Scaffold(
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _upload,
+          icon: const Icon(Icons.upload),
+          label: const Text('Short'),
+        ),
+        body: RefreshIndicator(
+          onRefresh: _load,
+          child: Column(
+            children: [
+              if (hasStories)
+                SizedBox(
+                  height: 104,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    itemCount: _stories.length + 1,
+                    itemBuilder: (_, si) {
+                      if (si == 0) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: ActionChip(
+                            avatar: const Icon(Icons.add),
+                            label: const Text('Story'),
+                            onPressed: _uploadStory,
+                          ),
+                        );
+                      }
+                      final story = Map<String, dynamic>.from(
+                        _stories[si - 1] as Map,
+                      );
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: InkWell(
+                          onTap: () => _openStory(story),
+                          child: CircleAvatar(
+                            radius: 34,
+                            backgroundColor:
+                                Theme.of(context).colorScheme.primaryContainer,
+                            child: Text(
+                              (story['author'] ?? story['caption'] ?? 'S')
+                                  .toString()
+                                  .characters
+                                  .first
+                                  .toUpperCase(),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              Expanded(
+                child:
+                    _posts.isEmpty
+                        ? ListView(
+                          children: const [
+                            SizedBox(height: 120),
+                            Center(child: Text('Aucun short pour le moment.')),
+                          ],
+                        )
+                        : PageView.builder(
+                          scrollDirection: Axis.vertical,
+                          itemCount: _posts.length,
+                          itemBuilder: (_, i) {
+                            final post = _postAt(i);
+                            return InkWell(
+                              onTap: () => _openPost(post),
+                              child: Container(
+                                color: Colors.black,
+                                padding: const EdgeInsets.all(20),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.play_circle_fill,
+                                      size: 72,
+                                      color: Colors.white70,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      post['title']?.toString() ?? 'Short',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      post['author_display']?.toString() ??
+                                          post['author']?.toString() ??
+                                          '',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        IconButton(
+                                          onPressed: () => _toggleLike(post),
+                                          icon: Icon(
+                                            post['liked_by_me'] == true
+                                                ? Icons.favorite
+                                                : Icons.favorite_border,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Text(
+                                          '${post['like_count'] ?? 0}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          onPressed:
+                                              () => _openPost(
+                                                post,
+                                                openComments: true,
+                                              ),
+                                          icon: const Icon(
+                                            Icons.comment_outlined,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _upload,
+        icon: const Icon(Icons.upload),
+        label: const Text('Vidéo'),
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView.builder(
           padding: const EdgeInsets.all(12),
-          itemCount: _posts.length + 1 + (hasStories ? 1 : 0),
+          itemCount: _posts.length + 1,
           itemBuilder: (_, i) {
             if (i == 0) {
               return Padding(
@@ -320,8 +535,9 @@ class _VideosScreenState extends State<VideosScreen> {
                         in const <String, String>{
                           '': 'Tous',
                           'sols': 'Sols',
-                          'agriculture': 'Agriculture',
-                          'education': 'Éducation',
+                          'nasa': 'NASA',
+                          'sig': 'SIG',
+                          'formation': 'Formation',
                           'autre': 'Autre',
                         }.entries)
                       ChoiceChip(
@@ -337,163 +553,41 @@ class _VideosScreenState extends State<VideosScreen> {
                 ),
               );
             }
-            if (hasStories && i == 1) {
-              return SizedBox(
-                height: 104,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _stories.length + 1,
-                  itemBuilder: (_, si) {
-                    if (si == 0) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(36),
-                          onTap: _uploadStory,
-                          child: Column(
-                            children: [
-                              const CircleAvatar(
-                                radius: 30,
-                                child: Icon(Icons.add),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Ma story',
-                                style: Theme.of(context).textTheme.labelSmall,
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-                    final s =
-                        _stories[si - 1] is Map
-                            ? Map<String, dynamic>.from(_stories[si - 1] as Map)
-                            : <String, dynamic>{};
-                    final thumbnail = Env.resolveMediaUrl(
-                      s['thumbnail_url']?.toString() ??
-                          s['image_url']?.toString() ??
-                          s['media_url']?.toString() ??
-                          s['file']?.toString(),
-                    );
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(36),
-                        onTap: () => _openStory(s),
-                        child: Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 30,
-                              backgroundImage:
-                                  thumbnail.isEmpty
-                                      ? null
-                                      : CachedNetworkImageProvider(thumbnail),
-                              child:
-                                  thumbnail.isEmpty
-                                      ? const Icon(Icons.auto_stories)
-                                      : null,
-                            ),
-                            const SizedBox(height: 4),
-                            SizedBox(
-                              width: 64,
-                              child: Text(
-                                s['author_display']?.toString() ??
-                                    s['author']?.toString() ??
-                                    'Story',
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.labelSmall,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              );
-            }
-            final idx = i - 1 - (hasStories ? 1 : 0);
-            final p = _postAt(idx);
-            final thumb = Env.resolveMediaUrl(p['thumbnail_url']?.toString());
+            final post = _postAt(i - 1);
             final favorite =
-                p['is_favorite'] == true || p['favorited_by_me'] == true;
+                post['is_favorite'] == true || post['favorited_by_me'] == true;
             return Card(
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () => _openPost(p),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: ListTile(
+                leading: const Icon(Icons.videocam),
+                title: Text(post['title']?.toString() ?? 'Vidéo'),
+                subtitle: Text(
+                  post['author_display']?.toString() ??
+                      post['category']?.toString() ??
+                      '',
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (thumb.isNotEmpty)
-                      CachedNetworkImage(
-                        imageUrl: thumb,
-                        height: widget.kind == 'short' ? 220 : 160,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorWidget:
-                            (_, __, ___) => Container(
-                              height: widget.kind == 'short' ? 220 : 160,
-                              color: Colors.black26,
-                              child: const Icon(Icons.videocam, size: 48),
-                            ),
-                      )
-                    else
-                      Container(
-                        height: widget.kind == 'short' ? 220 : 160,
-                        color:
-                            Theme.of(
-                              context,
-                            ).colorScheme.surfaceContainerHighest,
-                        child: const Center(
-                          child: Icon(Icons.play_circle_outline, size: 56),
-                        ),
+                    IconButton(
+                      icon: Icon(
+                        post['liked_by_me'] == true
+                            ? Icons.favorite
+                            : Icons.favorite_border,
                       ),
-                    ListTile(
-                      title: Text(p['title']?.toString() ?? 'Sans titre'),
-                      subtitle: Text(
-                        '${p['author_display'] ?? p['author_username'] ?? 'SIG Sols Togo'} · ${p['like_count'] ?? 0} j’aime',
+                      onPressed: () => _toggleLike(post),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        favorite ? Icons.bookmark : Icons.bookmark_border,
                       ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            tooltip: 'J’aime',
-                            icon: Icon(
-                              p['liked_by_me'] == true
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                            ),
-                            onPressed: () => _toggleLike(p),
-                          ),
-                          IconButton(
-                            tooltip: 'Favori',
-                            icon: Icon(
-                              favorite ? Icons.bookmark : Icons.bookmark_border,
-                            ),
-                            onPressed: () => _toggleFavorite(p),
-                          ),
-                          IconButton(
-                            tooltip: 'Commentaires',
-                            icon: const Icon(Icons.comment_outlined),
-                            onPressed: () => _openPost(p, openComments: true),
-                          ),
-                        ],
-                      ),
+                      onPressed: () => _toggleFavorite(post),
                     ),
                   ],
                 ),
+                onTap: () => _openPost(post),
               ),
             );
           },
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _upload,
-        icon: const Icon(Icons.upload),
-        label: Text(
-          widget.kind == 'short' ? 'Publier un short' : 'Publier une vidéo',
         ),
       ),
     );

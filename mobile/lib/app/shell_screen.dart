@@ -106,6 +106,7 @@ class _ShellScreenState extends State<ShellScreen> {
     final loc = GoRouterState.of(context).uri.toString();
     final index = _indexFromLocation(loc);
     final user = context.watch<AuthService>().user;
+    final loggedIn = context.watch<AuthService>().isAuthenticated;
     final i18n = context.watch<LocaleService>();
 
     return Scaffold(
@@ -117,38 +118,50 @@ class _ShellScreenState extends State<ShellScreen> {
                 color: Theme.of(context).colorScheme.primaryContainer,
               ),
               child: Text(
-                '${i18n.t('app.title')}\n${user?.displayName ?? ''}',
+                '${i18n.t('app.title')}\n${user?.displayName ?? (loggedIn ? '' : 'Visiteur')}',
                 style: const TextStyle(fontSize: 18),
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.search),
-              title: Text(i18n.t('drawer.search')),
-              onTap: () {
-                Navigator.pop(context);
-                context.push('/search');
-              },
-            ),
-            ListTile(
-              leading: Badge(
-                label: Text('$_unread'),
-                isLabelVisible: _unread > 0,
-                child: const Icon(Icons.notifications),
+            if (!loggedIn)
+              ListTile(
+                leading: const Icon(Icons.login),
+                title: const Text('Connexion'),
+                onTap: () {
+                  Navigator.pop(context);
+                  context.go('/login');
+                },
               ),
-              title: Text(i18n.t('drawer.notifications')),
-              onTap: () {
-                Navigator.pop(context);
-                context.push('/notifications').then((_) => _loadUnread());
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.dashboard_customize),
-              title: Text(i18n.t('drawer.myspace')),
-              onTap: () {
-                Navigator.pop(context);
-                context.push('/my-dashboard');
-              },
-            ),
+            if (loggedIn)
+              ListTile(
+                leading: const Icon(Icons.search),
+                title: Text(i18n.t('drawer.search')),
+                onTap: () {
+                  Navigator.pop(context);
+                  context.push('/search');
+                },
+              ),
+            if (loggedIn)
+              ListTile(
+                leading: Badge(
+                  label: Text('$_unread'),
+                  isLabelVisible: _unread > 0,
+                  child: const Icon(Icons.notifications),
+                ),
+                title: Text(i18n.t('drawer.notifications')),
+                onTap: () {
+                  Navigator.pop(context);
+                  context.push('/notifications').then((_) => _loadUnread());
+                },
+              ),
+            if (loggedIn)
+              ListTile(
+                leading: const Icon(Icons.dashboard_customize),
+                title: Text(i18n.t('drawer.myspace')),
+                onTap: () {
+                  Navigator.pop(context);
+                  context.push('/my-dashboard');
+                },
+              ),
             if (user?.isAdmin == true)
               ListTile(
                 leading: const Icon(Icons.admin_panel_settings),
@@ -192,20 +205,28 @@ class _ShellScreenState extends State<ShellScreen> {
       appBar: AppBar(
         title: Text(i18n.t('app.title')),
         actions: [
-          IconButton(
-            icon: Badge(
-              label: Text('$_unread'),
-              isLabelVisible: _unread > 0,
-              child: const Icon(Icons.notifications_outlined),
+          if (!loggedIn)
+            TextButton(
+              onPressed: () => context.go('/login'),
+              child: const Text('Connexion'),
             ),
-            onPressed:
-                () => context.push('/notifications').then((_) => _loadUnread()),
-          ),
-          IconButton(
-            icon: const Icon(Icons.map_outlined),
-            tooltip: i18n.t('parcel.tooltip'),
-            onPressed: () => context.push('/parcel'),
-          ),
+          if (loggedIn)
+            IconButton(
+              icon: Badge(
+                label: Text('$_unread'),
+                isLabelVisible: _unread > 0,
+                child: const Icon(Icons.notifications_outlined),
+              ),
+              onPressed:
+                  () =>
+                      context.push('/notifications').then((_) => _loadUnread()),
+            ),
+          if (loggedIn)
+            IconButton(
+              icon: const Icon(Icons.map_outlined),
+              tooltip: i18n.t('parcel.tooltip'),
+              onPressed: () => context.push('/parcel'),
+            ),
         ],
       ),
       body: Column(

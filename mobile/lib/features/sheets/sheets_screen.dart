@@ -109,7 +109,15 @@ class _SheetsScreenState extends State<SheetsScreen> {
             ),
             onTap: () async {
               final url = Env.resolveMediaUrl(s['pdf_url']?.toString());
-              if (url.isNotEmpty) await launchUrl(Uri.parse(url));
+              if (url.isEmpty) return;
+              final uri = Uri.parse(url);
+              final ok = await launchUrl(
+                uri,
+                mode: LaunchMode.inAppWebView,
+              );
+              if (!ok && mounted) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
             },
           ),
         );

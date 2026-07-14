@@ -43,6 +43,8 @@ class _QuizApi extends SigApi {
     bool examMode = false,
   }) async => {
     'session_id': 7,
+    'timer_seconds': examMode ? 120 : 20,
+    'exam_mode': examMode,
     'questions': [
       {
         'id': 1,

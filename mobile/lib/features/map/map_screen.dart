@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
@@ -57,6 +58,7 @@ class _MapScreenState extends State<MapScreen> {
   String? _soilTypeFilter;
   double? _phMinFilter;
   double? _phMaxFilter;
+  Timer? _bboxReloadDebounce;
   bool _showParcels = true;
   String _parcelFilter = 'all';
   BasemapType _basemap = BasemapType.osm;
@@ -70,6 +72,25 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _bboxReloadDebounce?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleBboxReload() {
+    if (!_limitToBbox) return;
+    _bboxReloadDebounce?.cancel();
+    _bboxReloadDebounce = Timer(const Duration(milliseconds: 450), () {
+      if (!mounted) return;
+      unawaited(
+        _reloadPoints().catchError((_) {
+          return;
+        }),
+      );
+    });
   }
 
   Future<void> _loadParcels() async {
@@ -320,6 +341,9 @@ class _MapScreenState extends State<MapScreen> {
           options: MapOptions(
             initialCenter: _myPosition ?? _togoCenter,
             initialZoom: 9,
+            onPositionChanged: (camera, hasGesture) {
+              if (hasGesture) _scheduleBboxReload();
+            },
             onTap: (tapPos, point) {
               if (_addPointMode) {
                 _openAddPointForm(point);
