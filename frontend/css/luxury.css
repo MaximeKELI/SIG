@@ -471,7 +471,8 @@ body:not(.sidebar-is-open) .sidebar-backdrop {
     overflow: hidden;
   }
   #view-map .sidebar-panel-body {
-    max-height: min(32vh, 14rem);
+    max-height: none;
+    overflow: visible;
   }
   #btn-sidebar-toggle,
   .sidebar-fab {
@@ -483,8 +484,13 @@ body:not(.sidebar-is-open) .sidebar-backdrop {
 
 @media (prefers-reduced-motion: reduce) {
   #view-map .sidebar,
-  #btn-sidebar-toggle {
-    transition: none !important;
+  #btn-sidebar-toggle,
+  .view.active,
+  .brand h1 {
+    animation: none !important;
+  }
+  .brand h1 {
+    transform: none !important;
   }
 }
 

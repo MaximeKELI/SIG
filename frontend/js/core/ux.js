@@ -79,6 +79,14 @@ export function initSidebarUx() {
   // Tiroir fermé par défaut — la carte garde 100 % de l’espace
   setSidebarOpen(false);
 
+  // Toutes les sections latérales restent visibles (pas d’accordéon)
+  sidebar.querySelectorAll('details.sidebar-panel').forEach((panel) => {
+    panel.open = true;
+    panel.addEventListener('toggle', () => {
+      if (!panel.open) panel.open = true;
+    });
+  });
+
   btn?.addEventListener('click', () => {
     setSidebarOpen(!sidebar.classList.contains('sidebar-open'));
   });
