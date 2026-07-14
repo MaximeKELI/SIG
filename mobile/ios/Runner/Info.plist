@@ -47,6 +47,12 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Localisation pour afficher votre position sur la carte SIG Sols.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Accès à la photothèque pour publier des vidéos et shorts SIG Sols.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Accès à la caméra pour filmer des reportages sols et shorts.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Accès au micro pour enregistrer le son des vidéos.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

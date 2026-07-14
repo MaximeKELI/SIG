@@ -67,4 +67,35 @@ void main() {
     expect(url, contains('/platform/reports/zone/CANTON-M01/'));
     expect(url, contains('format=csv'));
   });
+
+  test('uploadVideo envoie tags (pas hashtags) en multipart', () async {
+    adapter = CapturingAdapter(response: {
+      'id': 7,
+      'status': 'pending',
+      'title': 'Demo sols',
+    });
+    client.dio.httpClientAdapter = adapter;
+    api = SigApi(client);
+
+    await api.uploadVideo(
+      kind: 'short',
+      title: 'Demo sols',
+      tags: 'sols,nasa',
+      fileBytes: [0, 0, 0, 1],
+      fileName: 'clip',
+    );
+
+    final req = adapter.last!;
+    expect(req.method, 'POST');
+    expect(req.path, contains('/videos/posts/'));
+    final raw = req.rawBody ?? '';
+    expect(raw.contains('name="tags"'), isTrue);
+    expect(raw.contains('name="hashtags"'), isFalse);
+    expect(raw.contains('sols,nasa'), isTrue);
+    expect(raw.contains('clip.mp4'), isTrue);
+    expect(
+      (req.contentType ?? '').toLowerCase(),
+      isNot(contains('application/json')),
+    );
+  });
 }

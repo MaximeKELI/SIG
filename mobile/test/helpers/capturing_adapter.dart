@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
-/// HttpClientAdapter de test qui capture path/méthode/body JSON.
+/// HttpClientAdapter de test qui capture path/méthode/body JSON ou multipart brut.
 class CapturingAdapter implements HttpClientAdapter {
   CapturingAdapter({this.response = const {}});
 
@@ -21,13 +21,19 @@ class CapturingAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     Object? body;
+    String? rawBody;
     if (requestStream != null) {
       final chunks = <int>[];
       await for (final chunk in requestStream) {
         chunks.addAll(chunk);
       }
       if (chunks.isNotEmpty) {
-        body = jsonDecode(utf8.decode(chunks));
+        rawBody = utf8.decode(chunks, allowMalformed: true);
+        try {
+          body = jsonDecode(rawBody);
+        } catch (_) {
+          body = rawBody;
+        }
       }
     }
     requests.add(
@@ -36,6 +42,9 @@ class CapturingAdapter implements HttpClientAdapter {
         path: options.path,
         query: Map<String, dynamic>.from(options.queryParameters),
         body: body,
+        rawBody: rawBody,
+        contentType: options.contentType ??
+            options.headers[Headers.contentTypeHeader]?.toString(),
       ),
     );
     return ResponseBody.fromString(
@@ -54,10 +63,14 @@ class CapturedRequest {
     required this.path,
     required this.query,
     required this.body,
+    this.rawBody,
+    this.contentType,
   });
 
   final String method;
   final String path;
   final Map<String, dynamic> query;
   final Object? body;
+  final String? rawBody;
+  final String? contentType;
 }

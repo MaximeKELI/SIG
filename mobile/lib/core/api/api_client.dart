@@ -14,7 +14,8 @@ class ApiClient {
           baseUrl: Env.apiBaseUrl,
           connectTimeout: const Duration(seconds: 30),
           receiveTimeout: const Duration(seconds: 60),
-          headers: {'Content-Type': 'application/json'},
+          // Pas de Content-Type global : multipart (uploads) et JSON
+          // (Map) doivent pouvoir poser le leur proprement.
         )) {
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
@@ -139,10 +140,14 @@ class ApiClient {
 
   Future<Map<String, dynamic>> upload(String path, FormData formData) async {
     try {
+      // Dio pose automatiquement multipart/form-data; boundary=… pour FormData.
       final res = await _dio.post(
         path,
         data: formData,
-        options: Options(contentType: 'multipart/form-data'),
+        options: Options(
+          sendTimeout: const Duration(minutes: 3),
+          receiveTimeout: const Duration(minutes: 3),
+        ),
       );
       return Map<String, dynamic>.from(res.data as Map);
     } on DioException catch (e) {

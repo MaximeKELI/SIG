@@ -310,27 +310,47 @@ class SigApi {
       });
 
   Future<Map<String, dynamic>> uploadVideo({
-    required String filePath,
-    required String kind,
     required String title,
+    required String kind,
     String description = '',
     String category = 'sols',
-    String hashtags = '',
+    String tags = '',
     int? durationSeconds,
+    String? filePath,
+    List<int>? fileBytes,
+    String? fileName,
     String? thumbnailPath,
   }) async {
+    assert(
+      (filePath != null && filePath.isNotEmpty) || fileBytes != null,
+      'filePath ou fileBytes requis',
+    );
+    final name = _ensureVideoExt(fileName ?? filePath?.split('/').last ?? 'video.mp4');
+    final MultipartFile file;
+    if (fileBytes != null) {
+      file = MultipartFile.fromBytes(fileBytes, filename: name);
+    } else {
+      file = await MultipartFile.fromFile(filePath!, filename: name);
+    }
     final form = FormData.fromMap({
       'kind': kind,
       'title': title,
       'description': description,
       'category': category,
-      if (hashtags.isNotEmpty) 'hashtags': hashtags,
+      if (tags.trim().isNotEmpty) 'tags': tags.trim(),
       if (durationSeconds != null) 'duration_seconds': durationSeconds,
-      'file': await MultipartFile.fromFile(filePath),
+      'file': file,
       if (thumbnailPath != null && thumbnailPath.isNotEmpty)
         'thumbnail': await MultipartFile.fromFile(thumbnailPath),
     });
     return _client.upload('/videos/posts/', form);
+  }
+
+  String _ensureVideoExt(String name) {
+    final lower = name.toLowerCase();
+    const ok = ['.mp4', '.webm', '.mov', '.mkv', '.m4v'];
+    if (ok.any(lower.endsWith)) return name;
+    return '$name.mp4';
   }
 
   Future<List<dynamic>> fetchStories() async {
@@ -340,12 +360,25 @@ class SigApi {
   }
 
   Future<Map<String, dynamic>> uploadStory({
-    required String filePath,
     String caption = '',
+    String? filePath,
+    List<int>? fileBytes,
+    String? fileName,
   }) async {
+    assert(
+      (filePath != null && filePath.isNotEmpty) || fileBytes != null,
+      'filePath ou fileBytes requis',
+    );
+    final name = fileName ?? filePath?.split('/').last ?? 'story.jpg';
+    final MultipartFile media;
+    if (fileBytes != null) {
+      media = MultipartFile.fromBytes(fileBytes, filename: name);
+    } else {
+      media = await MultipartFile.fromFile(filePath!, filename: name);
+    }
     final form = FormData.fromMap({
       'caption': caption,
-      'media': await MultipartFile.fromFile(filePath),
+      'media': media,
     });
     return _client.upload('/videos/stories/', form);
   }

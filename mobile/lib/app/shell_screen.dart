@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/activity/activity_tracker.dart';
 import '../core/auth/auth_service.dart';
 import '../core/i18n/locale_service.dart';
+import '../core/theme/app_theme.dart';
 import '../core/theme/theme_service.dart';
 import '../features/assistant/assistant_screen.dart';
 import '../features/community/community_screen.dart';
@@ -114,12 +115,39 @@ class _ShellScreenState extends State<ShellScreen> {
         child: ListView(
           children: [
             DrawerHeader(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.emerald900,
+                    AppTheme.emerald950,
+                    Color(0xFF1A2F24),
+                  ],
+                ),
               ),
-              child: Text(
-                '${i18n.t('app.title')}\n${user?.displayName ?? (loggedIn ? '' : 'Visiteur')}',
-                style: const TextStyle(fontSize: 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    i18n.t('app.title'),
+                    style: const TextStyle(
+                      fontFamily: AppTheme.fontDisplay,
+                      color: AppTheme.gold300,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    user?.displayName ?? (loggedIn ? '' : 'Visiteur'),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
             ),
             if (!loggedIn)
