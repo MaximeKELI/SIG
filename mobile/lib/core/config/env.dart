@@ -5,10 +5,20 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 class Env {
   static const String _override = String.fromEnvironment('API_BASE_URL');
 
+  /// Hôte LAN du PC de dév (téléphone réel en Wi‑Fi).
+  /// Surcharge : `--dart-define=API_LAN_HOST=192.168.x.x`
+  static const String _lanHost =
+      String.fromEnvironment('API_LAN_HOST', defaultValue: '192.168.0.104');
+
   static String get apiBaseUrl {
     if (_override.isNotEmpty) return _override;
     if (kIsWeb) return 'http://localhost:8081/api/v1';
-    if (Platform.isAndroid) return 'http://10.0.2.2:8081/api/v1';
+    if (Platform.isAndroid) {
+      // Émulateur : 10.0.2.2. Appareil réel : IP LAN du PC.
+      const useEmulator = bool.fromEnvironment('ANDROID_EMULATOR');
+      if (useEmulator) return 'http://10.0.2.2:8081/api/v1';
+      return 'http://$_lanHost:8081/api/v1';
+    }
     return 'http://localhost:8081/api/v1';
   }
 
