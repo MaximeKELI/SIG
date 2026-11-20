@@ -1,0 +1,18 @@
+# Copier vers deploy.config (gitignoré) puis éditer.
+# ./scripts/prepare-production.sh lit ce fichier.
+
+# Domaine public HTTPS (sans https://)
+DOMAIN=sig-sols.tg
+
+# Alias optionnel (laisser vide si aucun)
+DOMAIN_WWW=www.sig-sols.tg
+
+# Contact Let's Encrypt / support
+ADMIN_EMAIL=sig-sols@disia.tg
+
+# Mode certificats : letsencrypt | selfsigned
+# selfsigned = smoke-test local uniquement (Play Store exige un vrai CA)
+TLS_MODE=letsencrypt
+
+# Conserver le .env de développement ? (0 = remplacer .env par la prod)
+REPLACE_DOTENV=0

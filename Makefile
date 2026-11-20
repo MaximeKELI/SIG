@@ -1,10 +1,26 @@
-.PHONY: up down build migrate seed test test-assistant test-gemini-live lint shell docs
+.PHONY: up down build migrate seed test test-assistant test-gemini-live lint shell docs \
+	prepare-prod deploy-prod play-assets install-flutter play-aab
 
 up:
 	docker compose up -d --build
 
 down:
 	docker compose down
+
+prepare-prod:
+	./scripts/prepare-production.sh
+
+deploy-prod:
+	./scripts/deploy-prod.sh
+
+play-assets:
+	python3 scripts/generate-play-assets.py
+
+install-flutter:
+	./scripts/install-flutter.sh
+
+play-aab:
+	./mobile/scripts/build_play_aab.sh
 
 build:
 	docker compose build

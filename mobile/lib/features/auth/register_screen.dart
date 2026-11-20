@@ -26,7 +26,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _city = TextEditingController();
   String _role = 'public';
   String _region = 'Maritime';
-  bool _consent = false;
+  bool _acceptPrivacy = false;
+  bool _consentAnalytics = false;
   bool _loading = false;
 
   @override
@@ -46,10 +47,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (!_consent) {
+    if (!_acceptPrivacy) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Le consentement au suivi statistique est requis.'),
+          content: Text('Acceptez la politique de confidentialité pour continuer.'),
         ),
       );
       return;
@@ -69,7 +70,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'organization': _org.text.trim(),
         'pseudonym': _pseudo.text.trim(),
         'city': _city.text.trim(),
-        'consent_analytics': _consent,
+        'consent_analytics': _consentAnalytics,
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -192,10 +193,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
-              value: _consent,
-              onChanged: (v) => setState(() => _consent = v ?? false),
+              value: _acceptPrivacy,
+              onChanged: (v) => setState(() => _acceptPrivacy = v ?? false),
               title: const Text(
-                'J’accepte le suivi statistique et la politique de confidentialité (requis)',
+                'J’accepte la politique de confidentialité (requis)',
               ),
               subtitle: Env.resolvedPrivacyPolicyUrl.isEmpty
                   ? null
@@ -203,6 +204,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       Env.resolvedPrivacyPolicyUrl,
                       style: const TextStyle(fontSize: 11),
                     ),
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _consentAnalytics,
+              onChanged: (v) => setState(() => _consentAnalytics = v ?? false),
+              title: const Text(
+                'J’accepte le suivi statistique anonymisé (optionnel)',
+              ),
               controlAffinity: ListTileControlAffinity.leading,
             ),
             const SizedBox(height: 20),

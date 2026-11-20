@@ -28,8 +28,21 @@ backend/staticfiles/
 # Environment
 .env
 .env.local
+.env.production
+.env.development.bak
+deploy.config
 backups/
 *.dump
+
+# TLS généré (garder .gitkeep)
+nginx/certs/*.pem
+nginx/nginx-tls.conf
+
+# Flutter SDK local + Play release defines
+.tools/
+mobile/play.release.env
+mobile/build/
+partage/play/*.aab
 
 # IDE
 .idea/

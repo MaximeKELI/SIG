@@ -1,10 +1,22 @@
 # Déploiement production
 
+## Voie rapide
+
+```bash
+cp deploy.config.example deploy.config   # éditer DOMAIN
+./scripts/prepare-production.sh          # .env.production + TLS + play.release.env
+./scripts/deploy-prod.sh                 # compose prod (ports 80/443)
+./scripts/install-flutter.sh             # une fois
+cd mobile && ./scripts/build_play_aab.sh # AAB → partage/play/
+```
+
+Détails Play Store : [`PLAY_STORE.md`](PLAY_STORE.md) · Checklist : [`PRODUCTION_CHECKLIST.md`](PRODUCTION_CHECKLIST.md)
+
 ## Prérequis
 
 - Docker & Docker Compose
-- Domaine avec HTTPS (Let's Encrypt recommandé)
-- Variables dans `.env` (jamais committer les secrets) :
+- Domaine avec HTTPS (Let's Encrypt recommandé pour Play Store)
+- `deploy.config` (DOMAIN) puis fichiers générés (jamais committer les secrets) :
   - `SECRET_KEY` (long, aléatoire)
   - `DEBUG=0`
   - `ALLOWED_HOSTS=votredomaine.tg`
@@ -13,14 +25,12 @@
 
 ## Checklist go-live
 
-1. Copier `.env.example` → `.env` et renseigner les secrets (hors dépôt git)
-2. `docker compose up -d --build`
-3. `docker compose exec web python manage.py migrate`
-4. `docker compose exec web python manage.py collectstatic --noinput`
-5. Activer TLS : voir `nginx/nginx-tls.example.conf` + certificats Let's Encrypt
-6. Vérifier `GET https://domaine/health/` → 200
-7. Planifier sauvegardes : `scripts/backup-daily.sh` (cron, voir `SAUVEGARDE.md`)
-8. Mobile : `--dart-define=API_BASE_URL=https://domaine/api/v1`
+1. `./scripts/prepare-production.sh` (ou copier `.env.production.example` → `.env`)
+2. Certificats dans `nginx/certs/` (`setup-tls-certs.sh --letsencrypt` en prod publique)
+3. `./scripts/deploy-prod.sh`
+4. Vérifier `GET https://domaine/health/` → 200 et `/privacy.html`
+5. Planifier sauvegardes : `scripts/backup-daily.sh` (cron, voir `SAUVEGARDE.md`)
+6. Mobile : `mobile/scripts/build_play_aab.sh`
 
 ## HTTPS (nginx)
 

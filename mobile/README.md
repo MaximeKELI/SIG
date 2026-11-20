@@ -34,6 +34,17 @@ flutter run --dart-define=API_BASE_URL=http://192.168.x.x:8081/api/v1
 
 Backend requis : `docker compose up -d` → `http://localhost:8081`
 
+## Play Store (AAB)
+
+```bash
+# Depuis la racine du repo
+../scripts/prepare-production.sh   # crée play.release.env (HTTPS)
+../scripts/install-flutter.sh      # si besoin
+./scripts/build_play_aab.sh        # → ../partage/play/*-play.aab
+```
+
+Assets listing : `store/` (feature graphic, icône). Guide : [`docs/PLAY_STORE.md`](../docs/PLAY_STORE.md).
+
 ## Tests
 
 ```bash

@@ -178,9 +178,9 @@ async function handleLogin() {
 
 async function handleRegister() {
   const msg = $('auth-message');
-  if (!$('reg-consent')?.checked) {
+  if (!$('reg-privacy')?.checked) {
     if (msg) {
-      msg.textContent = 'Vous devez accepter le suivi statistique pour créer un compte.';
+      msg.textContent = 'Vous devez accepter la politique de confidentialité pour créer un compte.';
       msg.className = 'auth-message error';
     }
     return;

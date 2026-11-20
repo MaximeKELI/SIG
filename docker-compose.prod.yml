@@ -1,10 +1,12 @@
-# Overlay production — usage :
-#   cp .env.production.example .env   # puis éditer
+# Overlay production — usage recommandé :
+#   ./scripts/prepare-production.sh
+#   ./scripts/deploy-prod.sh
+#
+# Ou manuellement :
+#   cp .env.production .env
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 #
-# Prérequis TLS : placer fullchain.pem / privkey.pem dans ./nginx/certs/
-# et adapter server_name dans nginx/nginx-tls.example.conf.
-#
+# Prérequis : nginx/nginx-tls.conf + nginx/certs/{fullchain,privkey}.pem
 # `!override` remplace les listes (évite de garder le bind-mount ./backend).
 
 services:
@@ -45,7 +47,7 @@ services:
       - "80:80"
       - "443:443"
     volumes: !override
-      - ./nginx/nginx-tls.example.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx-tls.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/certs:/etc/nginx/certs:ro
       - ./frontend:/usr/share/nginx/html/frontend:ro
       - media_data:/usr/share/nginx/media:ro
