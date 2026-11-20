@@ -119,7 +119,10 @@ export function createApiClient({ baseUrl, storage, fetchFn = fetch }) {
   async function logout() {
     try {
       if (accessToken) {
-        await api('/auth/logout/', { method: 'POST' });
+        await api('/auth/logout/', {
+          method: 'POST',
+          body: JSON.stringify(refreshToken ? { refresh: refreshToken } : {}),
+        });
       }
     } catch {
       /* déconnexion locale même si le serveur échoue */

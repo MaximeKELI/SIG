@@ -10,20 +10,18 @@
   <meta property="og:title" content="SIG Sols Togo" />
   <meta property="og:description" content="Système d'information géographique des sols — Togo" />
   <meta property="og:type" content="website" />
-  <link rel="icon" href="images/logo-dusol.png" type="image/png" />
-  <link rel="apple-touch-icon" href="images/logo-dusol.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
-  <link rel="stylesheet" href="css/style.css?v=15" />
-  <link rel="stylesheet" href="css/enhancements.css?v=15" />
-  <link rel="stylesheet" href="css/animations.css?v=15" />
-  <link rel="stylesheet" href="css/features-extended.css?v=15" />
-  <link rel="stylesheet" href="css/ux-shell.css?v=15" />
-  <link rel="stylesheet" href="css/luxury.css?v=15" />
+  <link rel="icon" href="images/icons/icon-192.png" type="image/png" />
+  <link rel="apple-touch-icon" href="images/icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="vendor/leaflet.css" />
+  <link rel="stylesheet" href="vendor/MarkerCluster.css" />
+  <link rel="stylesheet" href="vendor/MarkerCluster.Default.css" />
+  <link rel="stylesheet" href="vendor/leaflet-draw.css" />
+  <link rel="stylesheet" href="css/style.css?v=16" />
+  <link rel="stylesheet" href="css/enhancements.css?v=16" />
+  <link rel="stylesheet" href="css/animations.css?v=16" />
+  <link rel="stylesheet" href="css/features-extended.css?v=16" />
+  <link rel="stylesheet" href="css/ux-shell.css?v=16" />
+  <link rel="stylesheet" href="css/luxury.css?v=16" />
 </head>
 <body>
   <a href="#main-content" class="skip-link">Aller au contenu</a>
@@ -48,7 +46,7 @@
           </span>
         </h1>
         <p class="subtitle">DUSOL · DISIA · Région Maritime</p>
-        <p class="developer-signature">Dév. Maxime Dzidula KELI · +33 754830039</p>
+        <p class="developer-signature">Dév. Maxime Dzidula KELI · DUSOL / DISIA</p>
       </div>
     </div>
     <nav class="main-nav" aria-label="Navigation principale">
@@ -130,7 +128,7 @@
             <input type="text" id="reg-org" placeholder="Organisation (optionnel)" />
             <input type="text" id="reg-pseudo" placeholder="Pseudonyme quiz (optionnel)" />
           </div>
-          <label class="reg-consent"><input type="checkbox" id="reg-consent" /> J’accepte le suivi statistique de mon activité sur la plateforme (zoom carte, navigation, quiz…) à des fins d’analyse admin et data science. *</label>
+          <label class="reg-consent"><input type="checkbox" id="reg-consent" /> J’accepte le suivi statistique de mon activité et la <a href="/privacy.html" target="_blank" rel="noopener">politique de confidentialité</a> (zoom carte, navigation, quiz…). *</label>
           <textarea id="reg-motivation" rows="2" placeholder="Motivation / usage prévu (optionnel)"></textarea>
           <button type="button" id="btn-register" class="btn-auth-primary">Créer un compte</button>
         </div>
@@ -156,7 +154,7 @@
     </div>
     <h2 data-i18n="welcome.title">Bienvenue sur SIG Sols Togo</h2>
     <p data-i18n="welcome.sub">Cartographie des sols, NASA, IA et quiz — DUSOL / DISIA, Région Maritime.</p>
-    <p class="developer-signature developer-signature--welcome">Développement : Maxime Dzidula KELI · +33 754830039</p>
+    <p class="developer-signature developer-signature--welcome">Développement : Maxime Dzidula KELI · DUSOL / DISIA</p>
   </section>
   <!-- MAP VIEW -->
   <section id="view-map" class="view active">
@@ -699,8 +697,8 @@
         <input type="file" id="btn-import-users" accept=".csv,text/csv" />
         <h3>Exports</h3>
         <p class="panel-lead">
-          <a href="/api/v1/platform/admin/export/users.csv" class="btn-auth-outline btn-sm" id="adm-export-users">Utilisateurs</a>
-          <a href="/api/v1/platform/admin/export/activity.csv?days=30" class="btn-auth-outline btn-sm" id="adm-export-activity">Activité (30 j.)</a>
+          <button type="button" class="btn-auth-outline btn-sm" id="adm-export-users">Utilisateurs</button>
+          <button type="button" class="btn-auth-outline btn-sm" id="adm-export-activity">Activité (30 j.)</button>
         </p>
       </div>
 
@@ -818,7 +816,7 @@
         <h3>Crédits</h3>
         <p>Données NASA : domaine public — crédit NASA Earth Science (RG05).</p>
         <p>DISIA – Ministère de l'Agriculture, Togo · DUSOL · MIT License.</p>
-        <p><strong>Développeur :</strong> Maxime Dzidula KELI · <strong>Téléphone :</strong> +33 754830039</p>
+        <p><strong>Développeur :</strong> Maxime Dzidula KELI · <strong>Contact :</strong> sig-sols@disia.tg</p>
       </article>
     </div>
   </section>
@@ -827,7 +825,7 @@
   <footer class="app-footer">
     <p>Données NASA : domaine public — crédit NASA Earth Science · Licence MIT</p>
     <p>DISIA – Ministère de l'Agriculture, Togo · DUSOL</p>
-    <p class="developer-credit"><strong>Développement :</strong> Maxime Dzidula KELI · <strong>Téléphone :</strong> +33 754830039</p>
+    <p class="developer-credit"><strong>Développement :</strong> Maxime Dzidula KELI · <strong>Contact :</strong> sig-sols@disia.tg</p>
   </footer>
 
     <div id="sheet-pdf-modal" class="app-modal hidden" role="dialog" aria-labelledby="sheet-pdf-modal-title" aria-modal="true">
@@ -846,11 +844,11 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="vendor/leaflet.js"></script>
+  <script src="vendor/leaflet.markercluster.js"></script>
+  <script src="vendor/leaflet-heat.js"></script>
+  <script src="vendor/leaflet.draw.js"></script>
+  <script src="vendor/chart.umd.min.js"></script>
   <div id="auth-profile-modal" class="auth-modal hidden" role="dialog" aria-labelledby="profile-title">
     <div class="auth-modal-backdrop" id="btn-profile-close"></div>
     <div class="auth-modal-panel">

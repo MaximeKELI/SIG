@@ -15,6 +15,7 @@ class AppUser {
     this.bio,
     this.profilePhotoUrl,
     this.profileStats,
+    this.consentAnalytics = false,
   });
 
   final int id;
@@ -32,6 +33,7 @@ class AppUser {
   final String? bio;
   final String? profilePhotoUrl;
   final Map<String, dynamic>? profileStats;
+  final bool consentAnalytics;
 
   String get displayName {
     final full = '${firstName ?? ''} ${lastName ?? ''}'.trim();
@@ -58,6 +60,7 @@ class AppUser {
       bio: json['bio'] as String?,
       profilePhotoUrl: json['profile_photo_url'] as String?,
       profileStats: json['profile_stats'] as Map<String, dynamic>?,
+      consentAnalytics: json['consent_analytics'] as bool? ?? false,
     );
   }
 }

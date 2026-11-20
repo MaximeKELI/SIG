@@ -21,32 +21,51 @@ for _env_path in (
     if _env_path.is_file():
         load_dotenv(_env_path, override=True)
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-only-change-in-production')
+_SECRET_DEFAULT = 'dev-only-change-in-production'
+SECRET_KEY = os.environ.get('SECRET_KEY', _SECRET_DEFAULT)
 DEBUG = os.environ.get('DEBUG', '1') == '1'
 
-_DEFAULT_CSRF_ORIGINS = (
+if not DEBUG:
+    if not SECRET_KEY or SECRET_KEY == _SECRET_DEFAULT or len(SECRET_KEY) < 32:
+        raise RuntimeError(
+            'Production (DEBUG=0) : définir SECRET_KEY fort '
+            '(ex. openssl rand -hex 32), min. 32 caractères.'
+        )
+
+_DEFAULT_CSRF_ORIGINS_DEBUG = (
     'http://localhost:8081',
     'http://127.0.0.1:8081',
     'http://localhost',
     'http://127.0.0.1',
 )
 _env_csrf = os.environ.get('CSRF_TRUSTED_ORIGINS', '').strip()
-CSRF_TRUSTED_ORIGINS = list(_DEFAULT_CSRF_ORIGINS)
-if _env_csrf:
-    CSRF_TRUSTED_ORIGINS.extend(o.strip() for o in _env_csrf.split(',') if o.strip())
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS = list(_DEFAULT_CSRF_ORIGINS_DEBUG)
+    if _env_csrf:
+        CSRF_TRUSTED_ORIGINS.extend(
+            o.strip() for o in _env_csrf.split(',') if o.strip()
+        )
+else:
+    if not _env_csrf:
+        raise RuntimeError(
+            'Production (DEBUG=0) : CSRF_TRUSTED_ORIGINS obligatoire '
+            '(ex. https://sig.example.tg).'
+        )
+    CSRF_TRUSTED_ORIGINS = [
+        o.strip() for o in _env_csrf.split(',') if o.strip()
+    ]
 CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(CSRF_TRUSTED_ORIGINS))
 
 if DEBUG:
     ALLOWED_HOSTS = ['*']
 else:
-    ALLOWED_HOSTS = [
-        h.strip()
-        for h in os.environ.get(
-            'ALLOWED_HOSTS',
-            'localhost,127.0.0.1,web,django,nginx',
-        ).split(',')
-        if h.strip()
-    ]
+    _hosts = os.environ.get('ALLOWED_HOSTS', '').strip()
+    if not _hosts:
+        raise RuntimeError(
+            'Production (DEBUG=0) : ALLOWED_HOSTS obligatoire '
+            '(ex. sig.example.tg,www.sig.example.tg).'
+        )
+    ALLOWED_HOSTS = [h.strip() for h in _hosts.split(',') if h.strip()]
 
 INSTALLED_APPS = [
     'channels',
@@ -60,6 +79,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_gis',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'django_filters',
     'accounts',
@@ -278,16 +298,21 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=JWT_ACCESS_MINUTES),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 }
 
-CORS_ALLOWED_ORIGINS = [
-    o.strip()
-    for o in os.environ.get(
-        'CORS_ALLOWED_ORIGINS',
-        'http://localhost,http://127.0.0.1,http://localhost:8081',
-    ).split(',')
-    if o.strip()
-]
+_cors_default = (
+    'http://localhost,http://127.0.0.1,http://localhost:8081'
+    if DEBUG
+    else ''
+)
+_cors_env = os.environ.get('CORS_ALLOWED_ORIGINS', _cors_default).strip()
+if not DEBUG and not _cors_env:
+    raise RuntimeError(
+        'Production (DEBUG=0) : CORS_ALLOWED_ORIGINS obligatoire '
+        '(ex. https://sig.example.tg).'
+    )
+CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_env.split(',') if o.strip()]
 CORS_ALLOW_CREDENTIALS = True
 
 # Celery
@@ -372,13 +397,25 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-# Security (production overrides via env)
+# Security (production) — derrière nginx / reverse-proxy TLS
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', '1') == '1'
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = 'same-origin'
+    SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '31536000'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = (
+        os.environ.get('SECURE_HSTS_INCLUDE_SUBDOMAINS', '1') == '1'
+    )
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_HTTPONLY = False  # JS front may need CSRF cookie if used
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SAMESITE = 'Lax'
 
 LOGGING = {
     'version': 1,

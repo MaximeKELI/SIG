@@ -171,7 +171,10 @@ class ApiClient {
   Future<void> logout() async {
     try {
       if (await isAuthenticated()) {
-        await post('/auth/logout/');
+        final refresh = await _getRefreshToken();
+        await post('/auth/logout/', data: {
+          if (refresh != null && refresh.isNotEmpty) 'refresh': refresh,
+        });
       }
     } catch (_) {}
     await clearSession();

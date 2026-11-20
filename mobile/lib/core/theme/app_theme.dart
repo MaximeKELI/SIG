@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Tokens d’espacement DUSOL (échelle 4).
 class AppSpacing {
@@ -55,7 +54,7 @@ class AppTheme {
   static const Color surface = Color(0xFF1A3D2E);
   static const Color card = Color(0xFF243D32);
 
-  /// Noms pour TextStyle(fontFamily:) — résolus via GoogleFonts.
+  /// Polices bundlées (assets/fonts) — pas de fetch runtime.
   static const String fontDisplay = 'Cormorant Garamond';
   static const String fontUi = 'Outfit';
 
@@ -85,8 +84,7 @@ class AppTheme {
     Color? color,
     double height = 1.15,
   }) =>
-      GoogleFonts.cormorantGaramond(
-        fontSize: size,
+      TextStyle(fontFamily: fontDisplay, fontSize: size,
         fontWeight: weight,
         color: color,
         height: height,
@@ -100,8 +98,7 @@ class AppTheme {
     double height = 1.35,
     double letterSpacing = 0,
   }) =>
-      GoogleFonts.outfit(
-        fontSize: size,
+      TextStyle(fontFamily: fontUi, fontSize: size,
         fontWeight: weight,
         color: color,
         height: height,
@@ -116,72 +113,62 @@ class AppTheme {
     final displayColor =
         brightness == Brightness.dark ? gold300 : emerald900;
 
-    final base = GoogleFonts.outfitTextTheme(
-      brightness == Brightness.dark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
-    );
+    final base = (brightness == Brightness.dark
+            ? ThemeData.dark().textTheme
+            : ThemeData.light().textTheme)
+        .apply(fontFamily: fontUi);
 
     return base.copyWith(
-      displayLarge: GoogleFonts.cormorantGaramond(
-        fontSize: 40,
+      displayLarge: TextStyle(fontFamily: fontDisplay, fontSize: 40,
         fontWeight: FontWeight.w700,
         color: displayColor,
         height: 1.1,
       ),
-      displayMedium: GoogleFonts.cormorantGaramond(
-        fontSize: 32,
+      displayMedium: TextStyle(fontFamily: fontDisplay, fontSize: 32,
         fontWeight: FontWeight.w700,
         color: displayColor,
         height: 1.15,
       ),
-      displaySmall: GoogleFonts.cormorantGaramond(
-        fontSize: 26,
+      displaySmall: TextStyle(fontFamily: fontDisplay, fontSize: 26,
         fontWeight: FontWeight.w600,
         color: displayColor,
         height: 1.2,
       ),
-      headlineLarge: GoogleFonts.cormorantGaramond(
-        fontSize: 24,
+      headlineLarge: TextStyle(fontFamily: fontDisplay, fontSize: 24,
         fontWeight: FontWeight.w700,
         color: displayColor,
       ),
-      headlineMedium: GoogleFonts.cormorantGaramond(
-        fontSize: 22,
+      headlineMedium: TextStyle(fontFamily: fontDisplay, fontSize: 22,
         fontWeight: FontWeight.w600,
         color: displayColor,
       ),
-      headlineSmall: GoogleFonts.cormorantGaramond(
-        fontSize: 20,
+      headlineSmall: TextStyle(fontFamily: fontDisplay, fontSize: 20,
         fontWeight: FontWeight.w600,
         color: on,
       ),
-      titleLarge: GoogleFonts.outfit(
-        fontSize: 18,
+      titleLarge: TextStyle(fontFamily: fontUi, fontSize: 18,
         fontWeight: FontWeight.w600,
         color: on,
         letterSpacing: 0.15,
       ),
-      titleMedium: GoogleFonts.outfit(
-        fontSize: 16,
+      titleMedium: TextStyle(fontFamily: fontUi, fontSize: 16,
         fontWeight: FontWeight.w600,
         color: on,
       ),
-      titleSmall: GoogleFonts.outfit(
-        fontSize: 14,
+      titleSmall: TextStyle(fontFamily: fontUi, fontSize: 14,
         fontWeight: FontWeight.w600,
         color: on,
       ),
-      bodyLarge: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w400, color: on),
-      bodyMedium: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w400, color: on),
-      bodySmall: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w400, color: muted),
-      labelLarge: GoogleFonts.outfit(
-        fontSize: 14,
+      bodyLarge: TextStyle(fontFamily: fontUi, fontSize: 16, fontWeight: FontWeight.w400, color: on),
+      bodyMedium: TextStyle(fontFamily: fontUi, fontSize: 14, fontWeight: FontWeight.w400, color: on),
+      bodySmall: TextStyle(fontFamily: fontUi, fontSize: 12, fontWeight: FontWeight.w400, color: muted),
+      labelLarge: TextStyle(fontFamily: fontUi, fontSize: 14,
         fontWeight: FontWeight.w600,
         color: on,
         letterSpacing: 0.3,
       ),
-      labelMedium: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: muted),
-      labelSmall: GoogleFonts.outfit(
-        fontSize: 11,
+      labelMedium: TextStyle(fontFamily: fontUi, fontSize: 12, fontWeight: FontWeight.w600, color: muted),
+      labelSmall: TextStyle(fontFamily: fontUi, fontSize: 11,
         fontWeight: FontWeight.w500,
         color: muted,
         letterSpacing: 0.4,
@@ -298,8 +285,7 @@ class AppTheme {
         indicatorColor: gold500.withValues(alpha: 0.22),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final active = states.contains(WidgetState.selected);
-          return GoogleFonts.outfit(
-            fontSize: 11,
+          return TextStyle(fontFamily: fontUi, fontSize: 11,
             fontWeight: active ? FontWeight.w700 : FontWeight.w500,
             color: active ? gold300 : const Color(0x99FFFFFF),
           );
@@ -450,8 +436,7 @@ class AppTheme {
         indicatorColor: gold500.withValues(alpha: 0.35),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final active = states.contains(WidgetState.selected);
-          return GoogleFonts.outfit(
-            fontSize: 11,
+          return TextStyle(fontFamily: fontUi, fontSize: 11,
             fontWeight: active ? FontWeight.w700 : FontWeight.w500,
             color: active ? emerald900 : const Color(0x990F1419),
           );

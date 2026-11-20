@@ -31,7 +31,13 @@ export function setActivityView(viewName) {
   currentView = viewName || 'map';
 }
 
+function hasAnalyticsConsent() {
+  const u = window.SigSolsAPI?.getUser?.();
+  return u?.consent_analytics === true;
+}
+
 export function trackActivity(eventType, detail = {}, category = 'other') {
+  if (!hasAnalyticsConsent()) return;
   queue.push({
     event_type: String(eventType).slice(0, 80),
     category: String(category).slice(0, 20),
@@ -51,6 +57,10 @@ function scheduleFlush() {
 }
 
 export async function flushActivity() {
+  if (!hasAnalyticsConsent()) {
+    queue = [];
+    return;
+  }
   if (!queue.length) return;
   const batch = queue.splice(0, MAX_QUEUE);
   const body = {

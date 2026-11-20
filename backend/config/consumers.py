@@ -11,7 +11,11 @@ class LiveUpdatesConsumer(AsyncJsonWebsocketConsumer):
             return
         self.group = 'sig_sols_live'
         await self.channel_layer.group_add(self.group, self.channel_name)
-        await self.accept()
+        sub = self.scope.get('subprotocol')
+        if sub:
+            await self.accept(subprotocol=sub)
+        else:
+            await self.accept()
         await self.send_json({
             'type': 'connected',
             'user': user.username,

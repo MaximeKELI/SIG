@@ -204,7 +204,7 @@ async function handleRegister() {
       pseudonym: $('reg-pseudo')?.value?.trim() || '',
       role: $('reg-role')?.value || 'public',
       organization: $('reg-org')?.value?.trim() || '',
-      consent_analytics: true,
+      consent_analytics: !!$('reg-consent')?.checked,
     });
     trackAuth('register', { username: $('reg-user')?.value?.trim() });
     if (msg) {

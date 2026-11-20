@@ -85,7 +85,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${Env.developer} · ${Env.developerPhone}',
+                      Env.developerPhone.isEmpty
+                          ? Env.developer
+                          : '${Env.developer} · ${Env.developerPhone}',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: AppTheme.gold400,
                           ),

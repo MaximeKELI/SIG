@@ -1,9 +1,11 @@
-const CACHE = 'sig-sols-v15';
+const CACHE = 'sig-sols-v16';
 
 // Ne pré-cache plus le JS/CSS (évite les écrans noirs après déploiement local)
 const ASSETS = [
-  '/frontend/index.html',
-  '/frontend/manifest.json',
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/privacy.html',
 ];
 
 self.addEventListener('install', (e) => {

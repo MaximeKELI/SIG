@@ -16,13 +16,23 @@ services:
 
   redis:
     image: redis:7-alpine
-    command: >
-      redis-server
-      --maxmemory 512mb
-      --maxmemory-policy allkeys-lru
-      --appendonly yes
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    command:
+      - /bin/sh
+      - -c
+      - |
+        if [ -n "$$REDIS_PASSWORD" ]; then
+          exec redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --appendonly yes --requirepass "$$REDIS_PASSWORD"
+        else
+          exec redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --appendonly yes
+        fi
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test:
+        [
+          "CMD-SHELL",
+          "if [ -n \"$$REDIS_PASSWORD\" ]; then redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG; else redis-cli ping | grep -q PONG; fi",
+        ]
       interval: 5s
       retries: 5
 
@@ -47,19 +57,25 @@ services:
       - .env
     environment:
       POSTGRES_HOST: db
-      REDIS_URL: redis://redis:6379/0
-      REDIS_CACHE_URL: redis://redis:6379/1
-      REDIS_CHANNELS_URL: redis://redis:6379/2
-      CELERY_BROKER_URL: redis://redis:6379/0
+      # URLs Redis viennent du .env (avec mot de passe si REDIS_PASSWORD défini)
       DB_CONN_MAX_AGE: "60"
       GUNICORN_WORKERS: ${GUNICORN_WORKERS:-4}
-      CSRF_TRUSTED_ORIGINS: http://localhost:8081,http://127.0.0.1:8081,http://localhost,http://127.0.0.1
+      # Laisser .env définir CSRF (ne pas écraser avec localhost en prod)
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost:8081,http://127.0.0.1:8081,http://localhost,http://127.0.0.1}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-1}
       NASA_EARTHDATA_USERNAME: ${NASA_EARTHDATA_USERNAME:-}
       NASA_EARTHDATA_PASSWORD: ${NASA_EARTHDATA_PASSWORD:-}
       NASA_EARTHDATA_TOKEN: ${NASA_EARTHDATA_TOKEN:-}
       # Sentinel Hub : valeurs lues depuis .env via env_file (ne pas surcharger ici)
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash-lite}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
     depends_on:
       db:
         condition: service_healthy
@@ -70,6 +86,7 @@ services:
     image: dusol_projet-web
     entrypoint: []
     command: celery -A config worker -l info --concurrency=${CELERY_CONCURRENCY:-8}
+    restart: unless-stopped
     volumes:
       - ./backend:/app
       - ./data/nasa_cache:/app/data/nasa_cache
@@ -77,26 +94,25 @@ services:
       - .env
     environment:
       POSTGRES_HOST: db
-      CELERY_BROKER_URL: redis://redis:6379/0
     depends_on:
       db:
         condition: service_started
       redis:
         condition: service_started
       web:
-        condition: service_started
+        condition: service_healthy
 
   celery-beat:
     image: dusol_projet-web
     entrypoint: []
     command: celery -A config beat -l info
+    restart: unless-stopped
     volumes:
       - ./backend:/app
     env_file:
       - .env
     environment:
       POSTGRES_HOST: db
-      CELERY_BROKER_URL: redis://redis:6379/0
       NASA_EARTHDATA_USERNAME: ${NASA_EARTHDATA_USERNAME:-}
       NASA_EARTHDATA_PASSWORD: ${NASA_EARTHDATA_PASSWORD:-}
       NASA_EARTHDATA_TOKEN: ${NASA_EARTHDATA_TOKEN:-}
@@ -106,6 +122,7 @@ services:
 
   nginx:
     image: nginx:alpine
+    restart: unless-stopped
     ports:
       - "8081:80"
     volumes:
@@ -115,7 +132,7 @@ services:
       - ./backend/staticfiles:/usr/share/nginx/static:ro
     depends_on:
       web:
-        condition: service_started
+        condition: service_healthy
 
   # Secours si le proxy 8081 est bloqué (docker-proxy root / conteneurs orphelins)
   nginx-fix:

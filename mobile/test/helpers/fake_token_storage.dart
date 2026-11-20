@@ -2,7 +2,9 @@ import 'package:sig_sols_mobile/core/storage/token_storage.dart';
 
 /// Stockage mémoire pour les tests unitaires.
 class FakeTokenStorage extends TokenStorage {
-  FakeTokenStorage() : _data = {};
+  FakeTokenStorage()
+      : _data = {},
+        super(enableSecure: false);
 
   final Map<String, String> _data;
 
@@ -23,6 +25,7 @@ class FakeTokenStorage extends TokenStorage {
   Future<void> deleteAll() async {
     _data.remove('sig_sols_token');
     _data.remove('sig_sols_refresh');
+    _data.remove('sig_sols_user');
     _data.remove('sig_sols_user_json');
   }
 }

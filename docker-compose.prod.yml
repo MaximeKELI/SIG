@@ -1,0 +1,60 @@
+# Overlay production — usage :
+#   cp .env.production.example .env   # puis éditer
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Prérequis TLS : placer fullchain.pem / privkey.pem dans ./nginx/certs/
+# et adapter server_name dans nginx/nginx-tls.example.conf.
+#
+# `!override` remplace les listes (évite de garder le bind-mount ./backend).
+
+services:
+  web:
+    volumes: !override
+      - ./.env:/opt/dusol.env:ro
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+      - ./data/nasa_cache:/app/data/nasa_cache
+    environment:
+      SEED_DEMO_DATA: "0"
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:?set CSRF_TRUSTED_ORIGINS in .env}
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+
+  celery:
+    volumes: !override
+      - media_data:/app/media
+      - ./data/nasa_cache:/app/data/nasa_cache
+      - ./.env:/opt/dusol.env:ro
+
+  celery-beat:
+    volumes: !override
+      - ./.env:/opt/dusol.env:ro
+
+  redis:
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+
+  nginx:
+    ports: !override
+      - "80:80"
+      - "443:443"
+    volumes: !override
+      - ./nginx/nginx-tls.example.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./frontend:/usr/share/nginx/html/frontend:ro
+      - media_data:/usr/share/nginx/media:ro
+      - static_data:/usr/share/nginx/static:ro
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+
+volumes:
+  static_data:

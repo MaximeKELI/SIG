@@ -128,7 +128,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     SigSolsFeatures.syncOfflineQueue();
   }
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/frontend/sw.js').catch(() => {});
+    // Scope racine pour couvrir / et /privacy.html
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
   }
   window.SigSolsTools?.initTools?.();
   window.SigSolsAdminPanel?.initAdminPanel?.();

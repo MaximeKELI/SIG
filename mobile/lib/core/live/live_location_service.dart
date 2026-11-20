@@ -44,8 +44,12 @@ class LiveLocationService extends ChangeNotifier {
     if (_ws != null) return;
 
     try {
-      final uri = Uri.parse(Env.wsBaseUrl).replace(queryParameters: {'token': token});
-      _ws = IOWebSocketChannel.connect(uri);
+      // JWT via Sec-WebSocket-Protocol (évite le token dans les logs d'URL).
+      final uri = Uri.parse(Env.wsBaseUrl);
+      _ws = IOWebSocketChannel.connect(
+        uri,
+        protocols: ['jwt', token],
+      );
       _wsConnected = true;
       _wsFailures = 0;
       _status = 'WebSocket connecté';

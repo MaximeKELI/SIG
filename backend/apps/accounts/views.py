@@ -104,11 +104,21 @@ class ChangePasswordView(APIView):
 
 
 class LogoutView(APIView):
-    """Client should discard JWT; optional blacklist hook."""
+    """Invalide le refresh token (blacklist) ; le client doit aussi jeter l'access."""
 
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        from rest_framework_simplejwt.exceptions import TokenError
+        from rest_framework_simplejwt.tokens import RefreshToken
+
+        refresh = request.data.get('refresh')
+        if refresh:
+            try:
+                token = RefreshToken(refresh)
+                token.blacklist()
+            except TokenError:
+                pass
         return Response({'detail': 'Déconnexion réussie.'}, status=status.HTTP_200_OK)
 
 

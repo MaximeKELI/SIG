@@ -39,7 +39,7 @@ class _SigSolsAppState extends State<SigSolsApp> {
     _offlineSync = OfflineSyncService(api: _sigApi, auth: _authService);
     _themeService = ThemeService();
     _localeService = LocaleService();
-    _activity = ActivityTracker(_sigApi);
+    _activity = ActivityTracker(_sigApi, auth: _authService);
     _liveLocation = LiveLocationService(api: _sigApi, client: _apiClient);
     Future.wait([_authService.init(), _themeService.init(), _localeService.init()]).then((_) async {
       await _offlineSync.init();

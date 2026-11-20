@@ -1,5 +1,6 @@
-"""Contrôle de santé détaillé (DB, Redis, Celery broker)."""
+"""Contrôle de santé (probes) + détail réservé au staff / DEBUG."""
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 from django.db import connection
 from django.http import JsonResponse
 
@@ -12,6 +13,22 @@ def health_check(request):
     }
     if not detail:
         return JsonResponse(payload)
+
+    user = getattr(request, 'user', None)
+    allow_detail = settings.DEBUG or (
+        user is not None
+        and not isinstance(user, AnonymousUser)
+        and getattr(user, 'is_staff', False)
+    )
+    if not allow_detail:
+        return JsonResponse(
+            {
+                'status': 'ok',
+                'project': 'SIG-SOLS-TOGO-2026-01',
+                'detail': 'authentification staff requise',
+            },
+            status=200,
+        )
 
     checks = {}
     db_cfg = settings.DATABASES['default']
@@ -32,7 +49,9 @@ def health_check(request):
             'name': db_cfg.get('NAME', ''),
             'host': db_cfg.get('HOST') or 'local',
             'clients': 'web,mobile',
-            'note': 'Site web et app mobile partagent cette base via l\'API Django.',
+            'note': (
+                "Site web et app mobile partagent cette base via l'API Django."
+            ),
         }
     except Exception as exc:
         checks['database'] = str(exc)

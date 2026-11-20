@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/auth/auth_service.dart';
+import '../../core/config/env.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -68,7 +69,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'organization': _org.text.trim(),
         'pseudonym': _pseudo.text.trim(),
         'city': _city.text.trim(),
-        'consent_analytics': true,
+        'consent_analytics': _consent,
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -194,8 +195,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               value: _consent,
               onChanged: (v) => setState(() => _consent = v ?? false),
               title: const Text(
-                'J’accepte le suivi statistique de mon activité (requis)',
+                'J’accepte le suivi statistique et la politique de confidentialité (requis)',
               ),
+              subtitle: Env.resolvedPrivacyPolicyUrl.isEmpty
+                  ? null
+                  : Text(
+                      Env.resolvedPrivacyPolicyUrl,
+                      style: const TextStyle(fontSize: 11),
+                    ),
               controlAffinity: ListTileControlAffinity.leading,
             ),
             const SizedBox(height: 20),

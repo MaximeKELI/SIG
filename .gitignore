@@ -50,3 +50,7 @@ Thumbs.db
 
 # Node (if added later)
 node_modules/
+
+# APK partageables (binaires locaux)
+partage/
+.tmp/

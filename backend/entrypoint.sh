@@ -18,8 +18,13 @@ fi
 echo "==> Fichiers statiques..."
 python manage.py collectstatic --noinput
 
-echo "==> Données démo (si base vide)..."
-python manage.py seed_demo_data 2>/dev/null || true
+# Prod : SEED_DEMO_DATA=0 (défaut). Dev : SEED_DEMO_DATA=1
+if [ "${SEED_DEMO_DATA:-0}" = "1" ]; then
+  echo "==> Données démo (si base vide)..."
+  python manage.py seed_demo_data 2>/dev/null || true
+else
+  echo "==> Seed démo ignoré (SEED_DEMO_DATA!=1)"
+fi
 
 if [ "$#" -gt 0 ]; then
   echo "==> Commande personnalisée: $*"

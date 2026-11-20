@@ -297,10 +297,8 @@ export function connectWebSocket() {
   if (!token) return;
   if (ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) return;
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  // JWT en query (comme le mobile) — la session cookie n’est pas utilisée par le SPA
-  ws = new WebSocket(
-    `${proto}://${location.host}/ws/live/?token=${encodeURIComponent(token)}`,
-  );
+  // JWT via Sec-WebSocket-Protocol (pas dans l'URL / logs proxy)
+  ws = new WebSocket(`${proto}://${location.host}/ws/live/`, ['jwt', token]);
   ws.onmessage = (ev) => {
     try {
       const msg = JSON.parse(ev.data);

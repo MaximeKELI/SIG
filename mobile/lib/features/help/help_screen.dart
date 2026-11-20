@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -75,31 +76,34 @@ class HelpScreen extends StatelessWidget {
               'Tirez vers le bas pour rafraîchir listes et carte.',
             ],
           ),
-          Card(
-            child: Column(
-              children: [
-                const ListTile(
-                  title: Text('API & documentation'),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.health_and_safety),
-                  title: const Text('Santé système'),
-                  subtitle: const Text('PostGIS, Redis, APIs'),
-                  onTap: () => launchUrl(Uri.parse(Env.healthUrl)),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.api),
-                  title: const Text('Schéma API'),
-                  onTap: () => launchUrl(Uri.parse('${Env.origin}/api/schema/')),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.admin_panel_settings),
-                  title: const Text('Administration Django'),
-                  onTap: () => launchUrl(Uri.parse('${Env.origin}/admin/')),
-                ),
-              ],
+          if (kDebugMode)
+            Card(
+              child: Column(
+                children: [
+                  const ListTile(
+                    title: Text('API & documentation (debug)'),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.health_and_safety),
+                    title: const Text('Santé système'),
+                    subtitle: const Text('PostGIS, Redis, APIs'),
+                    onTap: () => launchUrl(Uri.parse(Env.healthUrl)),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.api),
+                    title: const Text('Schéma API'),
+                    onTap: () =>
+                        launchUrl(Uri.parse('${Env.origin}/api/schema/')),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.admin_panel_settings),
+                    title: const Text('Administration Django'),
+                    onTap: () =>
+                        launchUrl(Uri.parse('${Env.origin}/admin/')),
+                  ),
+                ],
+              ),
             ),
-          ),
           const SizedBox(height: 8),
           Card(
             child: Padding(
@@ -121,8 +125,22 @@ class HelpScreen extends StatelessWidget {
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.person),
                     title: Text(Env.developer),
-                    subtitle: Text(Env.developerPhone),
+                    subtitle: Text(
+                      Env.developerPhone.isNotEmpty
+                          ? Env.developerPhone
+                          : Env.supportEmail,
+                    ),
                   ),
+                  if (Env.resolvedPrivacyPolicyUrl.isNotEmpty)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.privacy_tip_outlined),
+                      title: const Text('Politique de confidentialité'),
+                      subtitle: Text(Env.resolvedPrivacyPolicyUrl),
+                      onTap: () => launchUrl(
+                        Uri.parse(Env.resolvedPrivacyPolicyUrl),
+                      ),
+                    ),
                 ],
               ),
             ),

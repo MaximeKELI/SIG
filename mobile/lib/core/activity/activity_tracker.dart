@@ -4,15 +4,21 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 import '../../services/sig_api.dart';
+import '../auth/auth_service.dart';
 
 /// Suivi d'activité — même endpoint que frontend/js/core/activityTracker.js
+/// N'envoie rien sans consentement analytics utilisateur.
 class ActivityTracker {
-  ActivityTracker(this._api);
+  ActivityTracker(this._api, {AuthService? auth}) : _auth = auth;
 
   final SigApi _api;
-  final _sessionId = '${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
+  final AuthService? _auth;
+  final _sessionId =
+      '${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
   final _buffer = <Map<String, dynamic>>[];
   Timer? _flushTimer;
+
+  bool get _allowed => _auth?.user?.consentAnalytics == true;
 
   void init() {
     _flushTimer?.cancel();
@@ -24,7 +30,12 @@ class ActivityTracker {
     flush();
   }
 
-  void track(String eventType, {Map<String, dynamic> detail = const {}, String category = 'other'}) {
+  void track(
+    String eventType, {
+    Map<String, dynamic> detail = const {},
+    String category = 'other',
+  }) {
+    if (!_allowed) return;
     _buffer.add({
       'event_type': eventType,
       'category': category,
@@ -34,10 +45,14 @@ class ActivityTracker {
     if (_buffer.length >= 10) flush();
   }
 
-  void trackNav(String view) => track('nav', detail: {'view': view}, category: 'navigation');
+  void trackNav(String view) =>
+      track('nav', detail: {'view': view}, category: 'navigation');
 
   Future<void> flush() async {
-    if (_buffer.isEmpty) return;
+    if (!_allowed || _buffer.isEmpty) {
+      if (!_allowed) _buffer.clear();
+      return;
+    }
     final batch = List<Map<String, dynamic>>.from(_buffer);
     _buffer.clear();
     try {

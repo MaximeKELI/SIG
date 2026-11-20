@@ -58,6 +58,7 @@ class AuthService extends ChangeNotifier {
         'bio': user.bio,
         'profile_photo_url': user.profilePhotoUrl,
         'profile_stats': user.profileStats,
+        'consent_analytics': user.consentAnalytics,
       }),
     );
   }

@@ -1,18 +1,31 @@
 {
   "name": "SIG Sols Togo",
   "short_name": "SIG Sols",
-  "description": "Système d'information géographique des sols — DISIA Togo",
-  "start_url": "/frontend/index.html",
+  "description": "Cartographie des sols, NASA, IA fertilité — DISIA / DUSOL",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0d2818",
   "theme_color": "#0d2818",
   "lang": "fr",
   "icons": [
-    { "src": "/frontend/images/logo-dusol.png", "purpose": "any", "sizes": "192x192", "type": "image/png" },
-    { "src": "/frontend/images/logo-sig-sol.png", "purpose": "any", "sizes": "512x512", "type": "image/png" }
-  ],
-  "shortcuts": [
-    { "name": "Carte", "url": "/frontend/index.html", "description": "Carte des sols" },
-    { "name": "Quiz", "url": "/frontend/index.html#quiz", "description": "Quiz pédagogique" }
+    {
+      "src": "/images/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
