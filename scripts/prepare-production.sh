@@ -27,6 +27,8 @@ if [[ -n "$DOMAIN_WWW" ]]; then
   HOSTS="$DOMAIN,$DOMAIN_WWW"
   ORIGINS="https://$DOMAIN,https://$DOMAIN_WWW"
 fi
+# Healthcheck Docker (Host: 127.0.0.1:8000)
+HOSTS="$HOSTS,127.0.0.1,localhost"
 
 SECRET_KEY="$(openssl rand -hex 32)"
 POSTGRES_PASSWORD="$(openssl rand -hex 16)"
@@ -102,7 +104,7 @@ OPENWEATHER_API_KEY=${OWM}
 GEMINI_API_KEY=${GEM}
 GEMINI_MODEL=${GEM_M}
 
-SITE_NAME=SIG Sols Togo
+SITE_NAME="SIG Sols Togo"
 DEFAULT_REGION=maritime
 EOF
 chmod 600 "$ENV_OUT"

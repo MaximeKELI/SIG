@@ -62,6 +62,10 @@ fi
 
 export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
 export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$HOME/.gradle}"
+# Évite /tmp (tmpfs) saturé pendant R8 / transforms Gradle
+export TMPDIR="${TMPDIR:-$REPO/.tmp}"
+mkdir -p "$TMPDIR" "$GRADLE_USER_HOME"
 export PATH="$ANDROID_HOME/platform-tools:$PATH"
 
 echo "Flutter : $FLUTTER"
@@ -70,6 +74,10 @@ echo "Flutter : $FLUTTER"
 
 OUT_DIR="$REPO/partage/play"
 mkdir -p "$OUT_DIR" "$ROOT/build/debug-info"
+
+# Évite FileAlreadyExistsException sur intermediary-bundle.aab
+rm -rf "$ROOT/build/app/intermediates/intermediary_bundle" \
+       "$ROOT/build/app/outputs/bundle" 2>/dev/null || true
 
 echo "Build AAB release → $API_BASE_URL"
 "$FLUTTER" build appbundle --release \

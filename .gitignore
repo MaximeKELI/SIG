@@ -40,6 +40,7 @@ nginx/nginx-tls.conf
 
 # Flutter SDK local + Play release defines
 .tools/
+.tmp/
 mobile/play.release.env
 mobile/build/
 partage/play/*.aab

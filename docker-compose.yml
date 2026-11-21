@@ -71,7 +71,7 @@ services:
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash-lite}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/')\""]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; r=urllib.request.Request('http://127.0.0.1:8000/health/', headers={'Host':'127.0.0.1','X-Forwarded-Proto':'https'}); urllib.request.urlopen(r)\""]
       interval: 15s
       timeout: 5s
       retries: 5
