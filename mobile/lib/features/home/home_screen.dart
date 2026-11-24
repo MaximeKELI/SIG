@@ -230,7 +230,7 @@ class _GalleryBand extends StatelessWidget {
                 style: theme.textTheme.labelSmall?.copyWith(
                   letterSpacing: 1.6,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.gold600,
+                  color: AppTheme.gold500,
                 ),
               ),
               const SizedBox(height: 4),
