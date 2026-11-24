@@ -607,10 +607,14 @@ body.theme-dark .chip.active {
 }
 
 /* ─── Vues contenu ─── */
-.view:not(#view-map) {
+.view:not(#view-map):not(#view-home) {
   padding: 1.25rem clamp(1rem, 3vw, 2rem) 2.5rem;
   /* Pas d'animation ici : :not(#id) bat .view.active et faisait
      disparaître la vue à la fin de fadeUp (opacity → 0). */
+}
+
+#view-home {
+  padding: 0 !important;
 }
 
 .kpi-card,
@@ -650,16 +654,44 @@ body.theme-dark .chip.active {
 
 /* ─── Responsive ─── */
 @media (max-width: 900px) {
-  .main-nav { max-width: 100%; order: 3; width: 100%; }
-  .app-header { align-items: flex-start; }
+  .main-nav {
+    max-width: 100%;
+    min-width: 0;
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+  }
+  .main-nav::-webkit-scrollbar { display: none; }
+  .nav-btn { flex-shrink: 0; white-space: nowrap; }
+  .app-header {
+    align-items: flex-start;
+    gap: 0.65rem;
+    overflow-x: clip;
+  }
   .header-search-wrap { display: none; }
   #btn-sidebar-toggle { top: auto; bottom: 5.5rem; left: 1rem; }
   #offline-queue-pill { bottom: 5.25rem; }
 }
 
 @media (max-width: 600px) {
+  .app-header {
+    padding: 0.55rem 0.85rem 0.65rem;
+    gap: 0.55rem;
+  }
+  .brand-logo { width: 40px; height: 40px; }
+  .brand h1 { font-size: 1.25rem; }
   .brand-text .subtitle { display: none; }
+  .btn-auth-cta {
+    width: auto;
+    margin-left: auto;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.82rem;
+  }
   .auth-user-label { max-width: 5.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nav-btn { padding: 0.42rem 0.75rem; font-size: 0.78rem; }
   .sidebar {
     position: fixed !important;
     inset: 0 auto 0 0;

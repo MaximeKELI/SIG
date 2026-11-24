@@ -157,9 +157,23 @@ function initHomeCarousel() {
   start();
 }
 
+function syncAppHeaderHeight() {
+  const header = document.querySelector('.app-header');
+  if (!header) return;
+  const h = Math.ceil(header.getBoundingClientRect().height);
+  document.documentElement.style.setProperty('--app-header-h', `${h}px`);
+}
+
 function initHomeMotion() {
   const home = document.getElementById('view-home');
   if (!home) return;
+
+  syncAppHeaderHeight();
+  window.addEventListener('resize', syncAppHeaderHeight, { passive: true });
+  if (window.ResizeObserver) {
+    const header = document.querySelector('.app-header');
+    if (header) new ResizeObserver(syncAppHeaderHeight).observe(header);
+  }
 
   const stage = home.querySelector('[data-home-parallax]');
   const media = stage?.querySelector('.home-stage__media');

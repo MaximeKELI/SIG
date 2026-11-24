@@ -1,5 +1,5 @@
 import { toast } from './toast.js';
-import { t } from './i18n.js?v=22';
+import { t } from './i18n.js?v=23';
 
 let loadingCount = 0;
 

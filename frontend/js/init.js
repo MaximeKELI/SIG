@@ -2,16 +2,16 @@
  * Bootstrap UX : thème, i18n, toasts, raccourcis, onboarding, connexion.
  */
 import { initToast } from './core/toast.js';
-import { initI18n, toggleLang, applyI18n } from './core/i18n.js?v=22';
-import { initTheme, toggleTheme } from './core/theme.js?v=22';
-import { initShortcuts } from './core/shortcuts.js?v=22';
-import { initOnboarding } from './core/onboarding.js?v=22';
+import { initI18n, toggleLang, applyI18n } from './core/i18n.js?v=23';
+import { initTheme, toggleTheme } from './core/theme.js?v=23';
+import { initShortcuts } from './core/shortcuts.js?v=23';
+import { initOnboarding } from './core/onboarding.js?v=23';
 import {
   initConnectionBanner,
   initModals,
-} from './core/ui.js?v=22';
-import { initUxShell, updateOfflineQueuePill } from './core/ux.js?v=22';
-import { initGallery } from './gallery.js?v=22';
+} from './core/ui.js?v=23';
+import { initUxShell, updateOfflineQueuePill } from './core/ux.js?v=23';
+import { initGallery } from './gallery.js?v=23';
 
 export function initAppShell() {
   initToast();

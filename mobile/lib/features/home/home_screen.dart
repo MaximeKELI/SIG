@@ -66,7 +66,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final i18n = context.watch<LocaleService>();
     final top = MediaQuery.paddingOf(context).top;
     final bottom = MediaQuery.paddingOf(context).bottom;
-    final heroH = MediaQuery.sizeOf(context).height * 0.88;
+    final screenH = MediaQuery.sizeOf(context).height;
+    final screenW = MediaQuery.sizeOf(context).width;
+    final compact = screenW < 420;
+    final heroH = screenH * (compact ? 0.92 : 0.88);
     final progress = (_offset / heroH).clamp(0.0, 1.0);
     final parallax = _offset * 0.38;
     final photos = _heroPhotos;
@@ -249,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
                                   height: 0.98,
-                                  fontSize: 42,
+                                  fontSize: compact ? 34.0 : 42.0,
                                 ),
                               )
                                   .animate()
@@ -296,48 +299,59 @@ class _HomeScreenState extends State<HomeScreen> {
                                   .fadeIn(delay: 800.ms, duration: 700.ms)
                                   .slideY(begin: 0.4, end: 0, duration: 800.ms),
                               const SizedBox(height: 22),
-                              Row(
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  _CarouselNav(
-                                    icon: Icons.chevron_left,
-                                    onTap: _prevHero,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  for (var i = 0; i < photos.length; i++)
-                                    GestureDetector(
-                                      onTap: () => _goHero(i),
-                                      child: AnimatedContainer(
-                                        duration: const Duration(milliseconds: 320),
-                                        margin: const EdgeInsets.only(right: 6),
-                                        width: i == _heroIndex ? 22 : 7,
-                                        height: 7,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(99),
-                                          color: i == _heroIndex
-                                              ? AppTheme.gold400
-                                              : Colors.white.withValues(alpha: 0.35),
+                                  Row(
+                                    children: [
+                                      _CarouselNav(
+                                        icon: Icons.chevron_left,
+                                        onTap: _prevHero,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: SingleChildScrollView(
+                                          scrollDirection: Axis.horizontal,
+                                          child: Row(
+                                            children: [
+                                              for (var i = 0; i < photos.length; i++)
+                                                GestureDetector(
+                                                  onTap: () => _goHero(i),
+                                                  child: AnimatedContainer(
+                                                    duration: const Duration(milliseconds: 320),
+                                                    margin: const EdgeInsets.only(right: 6),
+                                                    width: i == _heroIndex ? 20 : 7,
+                                                    height: 7,
+                                                    decoration: BoxDecoration(
+                                                      borderRadius: BorderRadius.circular(99),
+                                                      color: i == _heroIndex
+                                                          ? AppTheme.gold400
+                                                          : Colors.white.withValues(alpha: 0.35),
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  const SizedBox(width: 4),
-                                  _CarouselNav(
-                                    icon: Icons.chevron_right,
-                                    onTap: _nextHero,
+                                      const SizedBox(width: 8),
+                                      _CarouselNav(
+                                        icon: Icons.chevron_right,
+                                        onTap: _nextHero,
+                                      ),
+                                    ],
                                   ),
-                                  const Spacer(),
-                                  Flexible(
-                                    child: AnimatedSwitcher(
-                                      duration: const Duration(milliseconds: 380),
-                                      child: Text(
-                                        caption.toUpperCase(),
-                                        key: ValueKey(caption),
-                                        textAlign: TextAlign.right,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.labelSmall?.copyWith(
-                                          color: Colors.white.withValues(alpha: 0.72),
-                                          letterSpacing: 1.2,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                  const SizedBox(height: 8),
+                                  AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 380),
+                                    child: Text(
+                                      caption.toUpperCase(),
+                                      key: ValueKey(caption),
+                                      style: theme.textTheme.labelSmall?.copyWith(
+                                        color: Colors.white.withValues(alpha: 0.72),
+                                        letterSpacing: 1.1,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 11,
                                       ),
                                     ),
                                   ),
@@ -480,6 +494,8 @@ class _GalleryMosaic extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final w = MediaQuery.sizeOf(context).width;
+    final gap = 4.0;
+    final narrow = w < 380;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -504,6 +520,7 @@ class _GalleryMosaic extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                   color: AppTheme.emerald900,
                   height: 1.05,
+                  fontSize: narrow ? 26 : null,
                 ),
               ),
               const SizedBox(height: 6),
@@ -520,40 +537,46 @@ class _GalleryMosaic extends StatelessWidget {
             .fadeIn(duration: 700.ms)
             .blur(begin: const Offset(6, 6), end: Offset.zero, duration: 800.ms)
             .slideY(begin: 0.18, end: 0, duration: 800.ms, curve: Curves.easeOutCubic),
-        // Mosaïque plein bord (2 colonnes, grandes tuiles)
         Padding(
           padding: const EdgeInsets.fromLTRB(0, 0, 0, 20),
           child: Wrap(
-            spacing: 4,
-            runSpacing: 4,
+            spacing: gap,
+            runSpacing: gap,
             children: [
               for (var i = 0; i < photos.length; i++)
-                _MosaicTile(
-                  photo: photos[i],
-                  photos: photos,
-                  index: i,
-                  width: i % 3 == 0 ? w : (w - 4) / 2,
-                  height: i % 3 == 0 ? 220.0 : 168.0,
-                )
-                    .animate()
-                    .fadeIn(
-                      delay: (70 * i).ms,
-                      duration: 700.ms,
-                      curve: Curves.easeOutCubic,
+                Builder(
+                  builder: (context) {
+                    final full = narrow || i % 3 == 0;
+                    final tileW = full ? w : (w - gap) / 2;
+                    final tileH = full ? (narrow ? 200.0 : 220.0) : 168.0;
+                    return _MosaicTile(
+                      photo: photos[i],
+                      photos: photos,
+                      index: i,
+                      width: tileW,
+                      height: tileH,
                     )
-                    .blur(
-                      begin: const Offset(10, 10),
-                      end: Offset.zero,
-                      delay: (70 * i).ms,
-                      duration: 850.ms,
-                    )
-                    .slideY(
-                      begin: 0.22,
-                      end: 0,
-                      delay: (70 * i).ms,
-                      duration: 850.ms,
-                      curve: Curves.easeOutCubic,
-                    ),
+                        .animate()
+                        .fadeIn(
+                          delay: (70 * i).ms,
+                          duration: 700.ms,
+                          curve: Curves.easeOutCubic,
+                        )
+                        .blur(
+                          begin: const Offset(10, 10),
+                          end: Offset.zero,
+                          delay: (70 * i).ms,
+                          duration: 850.ms,
+                        )
+                        .slideY(
+                          begin: 0.22,
+                          end: 0,
+                          delay: (70 * i).ms,
+                          duration: 850.ms,
+                          curve: Curves.easeOutCubic,
+                        );
+                  },
+                ),
             ],
           ),
         ),
