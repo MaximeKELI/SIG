@@ -49,7 +49,8 @@
       </div>
     </div>
     <nav class="main-nav" aria-label="Navigation principale">
-      <button type="button" class="nav-btn active" data-view="map" data-i18n="nav.map">Carte</button>
+      <button type="button" class="nav-btn active" data-view="home" data-i18n="nav.home">Accueil</button>
+      <button type="button" class="nav-btn" data-view="map" data-i18n="nav.map">Carte</button>
       <button type="button" class="nav-btn" data-view="dashboard" data-i18n="nav.dashboard">Tableau de bord</button>
       <button type="button" class="nav-btn" data-view="quiz" data-i18n="nav.quiz">Quiz</button>
       <button type="button" class="nav-btn" data-view="sheets" data-i18n="nav.sheets">Fiches</button>
@@ -155,8 +156,122 @@
     <h2 data-i18n="welcome.title">Bienvenue sur SIG Sols Togo</h2>
     <p data-i18n="welcome.sub">Cartographie des sols, NASA, IA et quiz — DUSOL / DISIA, Région Maritime.</p>
   </section>
+
+  <!-- HOME / ACCUEIL -->
+  <section id="view-home" class="view active">
+    <header class="home-hero">
+      <div class="home-hero__logos" aria-hidden="true">
+        <img src="images/logo-dusol.png" alt="" width="72" height="72" />
+        <img src="images/logo-sig-sol.png" alt="" width="72" height="72" />
+      </div>
+      <p class="home-hero__eyebrow">DUSOL · DISIA · Région Maritime</p>
+      <h2 class="home-hero__title" data-i18n="welcome.title">Bienvenue sur SIG Sols Togo</h2>
+      <p class="home-hero__sub" data-i18n="welcome.sub">Cartographie des sols, NASA, IA et quiz — DUSOL / DISIA, Région Maritime.</p>
+      <div class="home-hero__actions">
+        <button type="button" class="btn-auth-primary" data-go-view="map">Explorer la carte</button>
+        <button type="button" class="btn-auth-outline" data-go-view="quiz">Lancer un quiz</button>
+      </div>
+    </header>
+    <div class="home-pillars" aria-label="Points forts">
+      <article class="home-pillar">
+        <h3>Carte &amp; sols</h3>
+        <p>Points validés, pH, NDVI NASA / Sentinel et analyse de parcelles.</p>
+      </article>
+      <article class="home-pillar">
+        <h3>Formation</h3>
+        <p>Quiz pédagogiques, fiches et parcours pour mieux lire les sols togolais.</p>
+      </article>
+      <article class="home-pillar">
+        <h3>Communauté</h3>
+        <p>Vidéos, shorts et échanges entre agents, formateurs et citoyens.</p>
+      </article>
+    </div>
+
+    <section class="sig-gallery" aria-label="Galerie DUSOL">
+      <header class="sig-gallery__head">
+        <p class="sig-gallery__eyebrow">Mémoire visuelle</p>
+        <h3 class="sig-gallery__title">Graine d’espoir</h3>
+        <p class="sig-gallery__sub">Formations terrain — planches, pépinières et semences.</p>
+      </header>
+      <div class="sig-gallery__grid" data-gallery="graine">
+        <a class="sig-gallery__item sig-gallery__item--wide" href="images/gallery/01-graine-espoir-formation-agro.jpg" data-caption="Graine d’espoir · Formation agro">
+          <img src="images/gallery/01-graine-espoir-formation-agro.jpg" alt="Formation agro" loading="lazy" width="800" height="533" />
+          <span>Formation agro</span>
+        </a>
+        <a class="sig-gallery__item" href="images/gallery/03-graine-espoir-planche-carotte.jpg" data-caption="Graine d’espoir · Planche carotte">
+          <img src="images/gallery/03-graine-espoir-planche-carotte.jpg" alt="Planche carotte" loading="lazy" width="800" height="578" />
+          <span>Planche carotte</span>
+        </a>
+        <a class="sig-gallery__item" href="images/gallery/05-graine-espoir-pepiniere-betterave.jpg" data-caption="Graine d’espoir · Pépinière betterave">
+          <img src="images/gallery/05-graine-espoir-pepiniere-betterave.jpg" alt="Pépinière betterave" loading="lazy" width="800" height="556" />
+          <span>Pépinière</span>
+        </a>
+        <a class="sig-gallery__item sig-gallery__item--tall" href="images/gallery/07-graine-espoir-neem.jpg" data-caption="Graine d’espoir · Neem">
+          <img src="images/gallery/07-graine-espoir-neem.jpg" alt="Neem" loading="lazy" width="800" height="533" />
+          <span>Neem</span>
+        </a>
+        <a class="sig-gallery__item" href="images/gallery/02-graine-espoir-formation-agro.jpg" data-caption="Graine d’espoir · Sur le terrain">
+          <img src="images/gallery/02-graine-espoir-formation-agro.jpg" alt="Sur le terrain" loading="lazy" width="800" height="533" />
+          <span>Sur le terrain</span>
+        </a>
+        <a class="sig-gallery__item sig-gallery__item--wide" href="images/gallery/04-graine-espoir-planche-carotte.jpg" data-caption="Graine d’espoir · Planche carotte">
+          <img src="images/gallery/04-graine-espoir-planche-carotte.jpg" alt="Planche carotte" loading="lazy" width="800" height="554" />
+          <span>Planche carotte</span>
+        </a>
+        <a class="sig-gallery__item" href="images/gallery/06-graine-espoir-pepiniere-betterave.jpg" data-caption="Graine d’espoir · Pépinière">
+          <img src="images/gallery/06-graine-espoir-pepiniere-betterave.jpg" alt="Pépinière" loading="lazy" width="800" height="533" />
+          <span>Pépinière</span>
+        </a>
+        <a class="sig-gallery__item" href="images/gallery/08-graine-espoir-neem.jpg" data-caption="Graine d’espoir · Neem">
+          <img src="images/gallery/08-graine-espoir-neem.jpg" alt="Neem" loading="lazy" width="800" height="533" />
+          <span>Neem</span>
+        </a>
+      </div>
+
+      <header class="sig-gallery__head">
+        <p class="sig-gallery__eyebrow">Soirée</p>
+        <h3 class="sig-gallery__title">Cinéma DuSol</h3>
+        <p class="sig-gallery__sub">Ouverture, projection, table ronde et networking.</p>
+      </header>
+      <div class="sig-gallery__grid" data-gallery="cinema">
+        <a class="sig-gallery__item sig-gallery__item--wide" href="images/gallery/11-soiree-cinema-projection.jpg" data-caption="Soirée cinéma · Projection">
+          <img src="images/gallery/11-soiree-cinema-projection.jpg" alt="Projection" loading="lazy" width="800" height="533" />
+          <span>Projection</span>
+        </a>
+        <a class="sig-gallery__item" href="images/gallery/09-soiree-cinema-ouverture.jpg" data-caption="Soirée cinéma · Ouverture">
+          <img src="images/gallery/09-soiree-cinema-ouverture.jpg" alt="Ouverture" loading="lazy" width="800" height="684" />
+          <span>Ouverture</span>
+        </a>
+        <a class="sig-gallery__item sig-gallery__item--tall" href="images/gallery/14-soiree-cinema-table-ronde.jpg" data-caption="Soirée cinéma · Table ronde">
+          <img src="images/gallery/14-soiree-cinema-table-ronde.jpg" alt="Table ronde" loading="lazy" width="800" height="784" />
+          <span>Table ronde</span>
+        </a>
+        <a class="sig-gallery__item" href="images/gallery/13-soiree-cinema-table-ronde.jpg" data-caption="Soirée cinéma · Échanges">
+          <img src="images/gallery/13-soiree-cinema-table-ronde.jpg" alt="Échanges" loading="lazy" width="800" height="533" />
+          <span>Échanges</span>
+        </a>
+        <a class="sig-gallery__item sig-gallery__item--wide" href="images/gallery/15-soiree-cinema-networking.jpg" data-caption="Soirée cinéma · Networking">
+          <img src="images/gallery/15-soiree-cinema-networking.jpg" alt="Networking" loading="lazy" width="800" height="547" />
+          <span>Networking</span>
+        </a>
+        <a class="sig-gallery__item" href="images/gallery/10-soiree-cinema-ouverture.jpg" data-caption="Soirée cinéma · Ouverture">
+          <img src="images/gallery/10-soiree-cinema-ouverture.jpg" alt="Ouverture" loading="lazy" width="800" height="768" />
+          <span>Ouverture</span>
+        </a>
+        <a class="sig-gallery__item" href="images/gallery/12-soiree-cinema-projection.jpg" data-caption="Soirée cinéma · Projection">
+          <img src="images/gallery/12-soiree-cinema-projection.jpg" alt="Projection" loading="lazy" width="800" height="533" />
+          <span>Projection</span>
+        </a>
+        <a class="sig-gallery__item" href="images/gallery/16-soiree-cinema-networking.jpg" data-caption="Soirée cinéma · Collation">
+          <img src="images/gallery/16-soiree-cinema-networking.jpg" alt="Collation" loading="lazy" width="800" height="571" />
+          <span>Collation</span>
+        </a>
+      </div>
+    </section>
+  </section>
+
   <!-- MAP VIEW -->
-  <section id="view-map" class="view active">
+  <section id="view-map" class="view">
     <button type="button" id="btn-sidebar-toggle" class="sidebar-fab" aria-expanded="false" aria-controls="sidebar">
       <span class="sidebar-fab-icon" aria-hidden="true">◎</span>
       <span class="sidebar-fab-label">Filtres</span>
