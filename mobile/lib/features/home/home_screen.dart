@@ -6,7 +6,7 @@ import '../../core/i18n/locale_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../help/gallery_catalog.dart';
 
-/// Accueil — présentation + galerie DUSOL (avant la carte).
+/// Accueil — hero photo plein écran + galerie immersive.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -14,155 +14,195 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final i18n = context.watch<LocaleService>();
+    final top = MediaQuery.paddingOf(context).top;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-      children: [
-        Container(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            gradient: AppTheme.heroGradient,
-            boxShadow: AppTheme.softShadow,
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: MediaQuery.sizeOf(context).height * 0.78,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  GalleryCatalog.graine.first.asset,
+                  fit: BoxFit.cover,
+                  alignment: const Alignment(0, -0.25),
+                  errorBuilder: (_, __, ___) => Container(
+                    color: AppTheme.emerald950,
+                  ),
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        AppTheme.emerald950.withValues(alpha: 0.88),
+                        AppTheme.emerald950.withValues(alpha: 0.45),
+                        Colors.transparent,
+                      ],
+                      stops: const [0, 0.45, 0.9],
+                    ),
+                  ),
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        AppTheme.emerald950.withValues(alpha: 0.8),
+                        Colors.transparent,
+                      ],
+                      stops: const [0, 0.45],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 20,
+                  right: 20,
+                  bottom: 36,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: top + 8),
+                      Row(
+                        children: [
+                          _BrandBadge(
+                            asset: 'assets/images/logo-dusol.png',
+                            round: true,
+                          ),
+                          const SizedBox(width: 10),
+                          _BrandBadge(
+                            asset: 'assets/images/logo-sig-sol.png',
+                            round: false,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'DUSOL · DISIA · Région Maritime',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: AppTheme.gold300,
+                          letterSpacing: 1.6,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'SIG Sols Togo',
+                        style: theme.textTheme.displaySmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          height: 0.98,
+                          fontSize: 42,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Les sols de la Maritime, cartographiés et partagés — du terrain à la carte.',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      FilledButton(
+                        onPressed: () => context.go('/map'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppTheme.gold500,
+                          foregroundColor: AppTheme.emerald950,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 22,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        child: Text(i18n.t('nav.map')),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'assets/images/logo-dusol.png',
-                    height: 52,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      Icons.eco,
-                      color: Colors.white,
-                      size: 48,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Image.asset(
-                    'assets/images/logo-sig-sol.png',
-                    height: 52,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      Icons.map,
-                      color: Colors.white,
-                      size: 48,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                'DUSOL · DISIA · Région Maritime',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: AppTheme.gold300,
-                  letterSpacing: 1.2,
-                  fontWeight: FontWeight.w700,
+        ),
+        SliverToBoxAdapter(
+          child: ColoredBox(
+            color: theme.scaffoldBackgroundColor,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 28),
+                _GalleryBand(
+                  eyebrow: 'Mémoire visuelle',
+                  title: 'Graine d’espoir',
+                  subtitle: 'Formations terrain — planches, pépinières et semences.',
+                  photos: GalleryCatalog.graine,
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                i18n.t('welcome.title'),
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
+                const SizedBox(height: 8),
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: AppTheme.gold500.withValues(alpha: 0.22),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Cartographie des sols, NASA, IA et quiz pédagogique.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.88),
+                const SizedBox(height: 20),
+                _GalleryBand(
+                  eyebrow: 'Soirée',
+                  title: 'Cinéma DuSol',
+                  subtitle: 'Ouverture, projection, table ronde et networking.',
+                  photos: GalleryCatalog.cinema,
                 ),
-              ),
-              const SizedBox(height: 18),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                alignment: WrapAlignment.center,
-                children: [
-                  FilledButton(
-                    onPressed: () => context.go('/map'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppTheme.gold500,
-                      foregroundColor: AppTheme.emerald950,
-                    ),
-                    child: Text(i18n.t('nav.map')),
-                  ),
-                  OutlinedButton(
-                    onPressed: () => context.go('/quiz'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white70),
-                    ),
-                    child: Text(i18n.t('nav.quiz')),
-                  ),
-                ],
-              ),
-            ],
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 18),
-        _Pillar(
-          title: 'Carte & sols',
-          body: 'Points validés, pH, NDVI NASA / Sentinel et analyse de parcelles.',
-        ),
-        _Pillar(
-          title: 'Formation',
-          body: 'Quiz pédagogiques, fiches et parcours pour mieux lire les sols.',
-        ),
-        _Pillar(
-          title: 'Communauté',
-          body: 'Vidéos, shorts et échanges entre agents, formateurs et citoyens.',
-        ),
-        const SizedBox(height: 20),
-        _GalleryRail(
-          eyebrow: 'Mémoire visuelle',
-          title: 'Graine d’espoir',
-          subtitle: 'Formations terrain — planches, pépinières et semences.',
-          photos: GalleryCatalog.graine,
-        ),
-        const SizedBox(height: 22),
-        _GalleryRail(
-          eyebrow: 'Soirée',
-          title: 'Cinéma DuSol',
-          subtitle: 'Ouverture, projection, table ronde et networking.',
-          photos: GalleryCatalog.cinema,
         ),
       ],
     );
   }
 }
 
-class _Pillar extends StatelessWidget {
-  const _Pillar({required this.title, required this.body});
+class _BrandBadge extends StatelessWidget {
+  const _BrandBadge({required this.asset, required this.round});
 
-  final String title;
-  final String body;
+  final String asset;
+  final bool round;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(body),
-          ],
+    return Container(
+      width: 48,
+      height: 48,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(round ? 999 : 12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.28),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Image.asset(
+        asset,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => Icon(
+          round ? Icons.eco : Icons.map,
+          color: AppTheme.emerald800,
         ),
       ),
     );
   }
 }
 
-class _GalleryRail extends StatelessWidget {
-  const _GalleryRail({
+class _GalleryBand extends StatelessWidget {
+  const _GalleryBand({
     required this.eyebrow,
     required this.title,
     required this.subtitle,
@@ -180,27 +220,48 @@ class _GalleryRail extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          eyebrow.toUpperCase(),
-          style: theme.textTheme.labelSmall?.copyWith(
-            letterSpacing: 1.4,
-            fontWeight: FontWeight.w700,
-            color: theme.colorScheme.primary,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                eyebrow.toUpperCase(),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  letterSpacing: 1.6,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.gold600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.emerald900,
+                  height: 1.05,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(title, style: theme.textTheme.titleLarge),
-        const SizedBox(height: 4),
-        Text(subtitle, style: theme.textTheme.bodyMedium),
-        const SizedBox(height: 12),
         SizedBox(
-          height: 156,
+          height: 280,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: photos.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
             itemBuilder: (context, i) {
               final p = photos[i];
+              final wide = i % 3 == 0;
               return GestureDetector(
                 onTap: () {
                   Navigator.of(context).push(
@@ -213,17 +274,17 @@ class _GalleryRail extends StatelessWidget {
                   );
                 },
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(2),
                   child: Stack(
                     children: [
                       Image.asset(
                         p.asset,
-                        width: 220,
-                        height: 156,
+                        width: wide ? 340 : 220,
+                        height: 280,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
-                          width: 220,
-                          height: 156,
+                          width: wide ? 340 : 220,
+                          height: 280,
                           color: theme.colorScheme.surfaceContainerHighest,
                           child: const Icon(Icons.image_not_supported_outlined),
                         ),
@@ -233,7 +294,7 @@ class _GalleryRail extends StatelessWidget {
                         right: 0,
                         bottom: 0,
                         child: Container(
-                          padding: const EdgeInsets.fromLTRB(10, 24, 10, 8),
+                          padding: const EdgeInsets.fromLTRB(12, 36, 12, 12),
                           decoration: const BoxDecoration(
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
@@ -249,6 +310,7 @@ class _GalleryRail extends StatelessWidget {
                               color: Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
+                              letterSpacing: 0.4,
                             ),
                           ),
                         ),
