@@ -105,3 +105,5 @@ export function initI18n() {
   document.documentElement.lang = lang;
   applyI18n();
 }
+
+/* cache-bust v19 */

@@ -602,9 +602,14 @@ body:not(.sidebar-is-open) .sidebar-backdrop {
   animation: luxeViewIn 0.45s var(--ease-luxe) both !important;
 }
 
-.view.active:not(#view-map) {
+.view.active:not(#view-map):not(#view-home) {
   background: var(--cream);
   color: var(--slate-900);
+}
+
+#view-home.active {
+  background: var(--emerald-950);
+  color: #fff;
 }
 
 /* Contenu des vues : jamais d’opacity 0 (bug fill-mode + display:none) */

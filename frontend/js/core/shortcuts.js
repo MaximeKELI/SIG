@@ -1,5 +1,5 @@
 import { toast } from './toast.js';
-import { t } from './i18n.js';
+import { t } from './i18n.js?v=20';
 
 export function initShortcuts() {
   document.addEventListener('keydown', (e) => {
