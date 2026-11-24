@@ -25,8 +25,19 @@ function ensureLightbox() {
 }
 
 export function initGallery() {
-  const items = [...document.querySelectorAll('.sig-gallery__item')];
+  const items = [...document.querySelectorAll('.home-band__shot, .sig-gallery__item')];
   if (!items.length) return;
+
+  document.querySelectorAll('[data-scroll-to]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-scroll-to');
+      const target = id ? document.getElementById(id) : null;
+      const scroller = document.getElementById('view-home');
+      if (!target || !scroller) return;
+      const top = target.offsetTop;
+      scroller.scrollTo({ top, behavior: 'smooth' });
+    });
+  });
 
   const box = ensureLightbox();
   const img = box.querySelector('img');

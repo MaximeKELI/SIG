@@ -521,6 +521,7 @@ main {
 
 #view-map { flex-direction: row; }
 
+#view-home.active,
 #view-dashboard.active,
 #view-quiz.active,
 #view-sheets.active,

@@ -158,116 +158,119 @@
   </section>
 
   <!-- HOME / ACCUEIL -->
-  <section id="view-home" class="view active">
-    <header class="home-hero">
-      <div class="home-hero__logos" aria-hidden="true">
-        <img src="images/logo-dusol.png" alt="" width="72" height="72" />
-        <img src="images/logo-sig-sol.png" alt="" width="72" height="72" />
+  <section id="view-home" class="view active home-view">
+    <div class="home-stage">
+      <div class="home-stage__media" aria-hidden="true">
+        <img
+          class="home-stage__photo"
+          src="images/gallery/01-graine-espoir-formation-agro.jpg"
+          alt=""
+          width="1600"
+          height="1066"
+          decoding="async"
+        />
       </div>
-      <p class="home-hero__eyebrow">DUSOL · DISIA · Région Maritime</p>
-      <h2 class="home-hero__title" data-i18n="welcome.title">Bienvenue sur SIG Sols Togo</h2>
-      <p class="home-hero__sub" data-i18n="welcome.sub">Cartographie des sols, NASA, IA et quiz — DUSOL / DISIA, Région Maritime.</p>
-      <div class="home-hero__actions">
-        <button type="button" class="btn-auth-primary" data-go-view="map">Explorer la carte</button>
-        <button type="button" class="btn-auth-outline" data-go-view="quiz">Lancer un quiz</button>
+      <div class="home-stage__veil" aria-hidden="true"></div>
+      <div class="home-stage__copy">
+        <div class="home-stage__brands">
+          <img src="images/logo-dusol.png" alt="DUSOL" width="56" height="56" />
+          <img src="images/logo-sig-sol.png" alt="SIG-SOL" width="56" height="56" />
+        </div>
+        <p class="home-stage__kicker">DUSOL · DISIA · Région Maritime</p>
+        <h2 class="home-stage__brand">SIG Sols Togo</h2>
+        <p class="home-stage__lead">Les sols de la Maritime, cartographiés et partagés — du terrain à la carte.</p>
+        <button type="button" class="home-stage__cta" data-go-view="map">Explorer la carte</button>
       </div>
-    </header>
-    <div class="home-pillars" aria-label="Points forts">
-      <article class="home-pillar">
-        <h3>Carte &amp; sols</h3>
-        <p>Points validés, pH, NDVI NASA / Sentinel et analyse de parcelles.</p>
-      </article>
-      <article class="home-pillar">
-        <h3>Formation</h3>
-        <p>Quiz pédagogiques, fiches et parcours pour mieux lire les sols togolais.</p>
-      </article>
-      <article class="home-pillar">
-        <h3>Communauté</h3>
-        <p>Vidéos, shorts et échanges entre agents, formateurs et citoyens.</p>
-      </article>
+      <button type="button" class="home-stage__scroll" data-scroll-to="home-photos" aria-label="Voir les photos">
+        Photos
+      </button>
     </div>
 
-    <section class="sig-gallery" aria-label="Galerie DUSOL">
-      <header class="sig-gallery__head">
-        <p class="sig-gallery__eyebrow">Mémoire visuelle</p>
-        <h3 class="sig-gallery__title">Graine d’espoir</h3>
-        <p class="sig-gallery__sub">Formations terrain — planches, pépinières et semences.</p>
-      </header>
-      <div class="sig-gallery__grid" data-gallery="graine">
-        <a class="sig-gallery__item sig-gallery__item--wide" href="images/gallery/01-graine-espoir-formation-agro.jpg" data-caption="Graine d’espoir · Formation agro">
-          <img src="images/gallery/01-graine-espoir-formation-agro.jpg" alt="Formation agro" loading="lazy" width="800" height="533" />
-          <span>Formation agro</span>
-        </a>
-        <a class="sig-gallery__item" href="images/gallery/03-graine-espoir-planche-carotte.jpg" data-caption="Graine d’espoir · Planche carotte">
-          <img src="images/gallery/03-graine-espoir-planche-carotte.jpg" alt="Planche carotte" loading="lazy" width="800" height="578" />
-          <span>Planche carotte</span>
-        </a>
-        <a class="sig-gallery__item" href="images/gallery/05-graine-espoir-pepiniere-betterave.jpg" data-caption="Graine d’espoir · Pépinière betterave">
-          <img src="images/gallery/05-graine-espoir-pepiniere-betterave.jpg" alt="Pépinière betterave" loading="lazy" width="800" height="556" />
-          <span>Pépinière</span>
-        </a>
-        <a class="sig-gallery__item sig-gallery__item--tall" href="images/gallery/07-graine-espoir-neem.jpg" data-caption="Graine d’espoir · Neem">
-          <img src="images/gallery/07-graine-espoir-neem.jpg" alt="Neem" loading="lazy" width="800" height="533" />
-          <span>Neem</span>
-        </a>
-        <a class="sig-gallery__item" href="images/gallery/02-graine-espoir-formation-agro.jpg" data-caption="Graine d’espoir · Sur le terrain">
-          <img src="images/gallery/02-graine-espoir-formation-agro.jpg" alt="Sur le terrain" loading="lazy" width="800" height="533" />
-          <span>Sur le terrain</span>
-        </a>
-        <a class="sig-gallery__item sig-gallery__item--wide" href="images/gallery/04-graine-espoir-planche-carotte.jpg" data-caption="Graine d’espoir · Planche carotte">
-          <img src="images/gallery/04-graine-espoir-planche-carotte.jpg" alt="Planche carotte" loading="lazy" width="800" height="554" />
-          <span>Planche carotte</span>
-        </a>
-        <a class="sig-gallery__item" href="images/gallery/06-graine-espoir-pepiniere-betterave.jpg" data-caption="Graine d’espoir · Pépinière">
-          <img src="images/gallery/06-graine-espoir-pepiniere-betterave.jpg" alt="Pépinière" loading="lazy" width="800" height="533" />
-          <span>Pépinière</span>
-        </a>
-        <a class="sig-gallery__item" href="images/gallery/08-graine-espoir-neem.jpg" data-caption="Graine d’espoir · Neem">
-          <img src="images/gallery/08-graine-espoir-neem.jpg" alt="Neem" loading="lazy" width="800" height="533" />
-          <span>Neem</span>
-        </a>
-      </div>
+    <div id="home-photos" class="home-photos">
+      <section class="home-band" aria-labelledby="home-band-graine">
+        <header class="home-band__head">
+          <p class="home-band__eyebrow">Mémoire visuelle</p>
+          <h3 id="home-band-graine" class="home-band__title">Graine d’espoir</h3>
+          <p class="home-band__sub">Formations terrain — planches, pépinières et semences.</p>
+        </header>
+        <div class="home-band__rail" data-gallery="graine">
+          <a class="home-band__shot home-band__shot--xl" href="images/gallery/01-graine-espoir-formation-agro.jpg" data-caption="Graine d’espoir · Formation agro">
+            <img src="images/gallery/01-graine-espoir-formation-agro.jpg" alt="Formation agro" loading="lazy" />
+            <span>Formation agro</span>
+          </a>
+          <a class="home-band__shot" href="images/gallery/03-graine-espoir-planche-carotte.jpg" data-caption="Graine d’espoir · Planche carotte">
+            <img src="images/gallery/03-graine-espoir-planche-carotte.jpg" alt="Planche carotte" loading="lazy" />
+            <span>Planche carotte</span>
+          </a>
+          <a class="home-band__shot home-band__shot--tall" href="images/gallery/05-graine-espoir-pepiniere-betterave.jpg" data-caption="Graine d’espoir · Pépinière betterave">
+            <img src="images/gallery/05-graine-espoir-pepiniere-betterave.jpg" alt="Pépinière betterave" loading="lazy" />
+            <span>Pépinière</span>
+          </a>
+          <a class="home-band__shot" href="images/gallery/07-graine-espoir-neem.jpg" data-caption="Graine d’espoir · Neem">
+            <img src="images/gallery/07-graine-espoir-neem.jpg" alt="Neem" loading="lazy" />
+            <span>Neem</span>
+          </a>
+          <a class="home-band__shot home-band__shot--xl" href="images/gallery/02-graine-espoir-formation-agro.jpg" data-caption="Graine d’espoir · Sur le terrain">
+            <img src="images/gallery/02-graine-espoir-formation-agro.jpg" alt="Sur le terrain" loading="lazy" />
+            <span>Sur le terrain</span>
+          </a>
+          <a class="home-band__shot" href="images/gallery/04-graine-espoir-planche-carotte.jpg" data-caption="Graine d’espoir · Planche carotte">
+            <img src="images/gallery/04-graine-espoir-planche-carotte.jpg" alt="Planche carotte" loading="lazy" />
+            <span>Planche carotte</span>
+          </a>
+          <a class="home-band__shot" href="images/gallery/06-graine-espoir-pepiniere-betterave.jpg" data-caption="Graine d’espoir · Pépinière">
+            <img src="images/gallery/06-graine-espoir-pepiniere-betterave.jpg" alt="Pépinière" loading="lazy" />
+            <span>Pépinière</span>
+          </a>
+          <a class="home-band__shot" href="images/gallery/08-graine-espoir-neem.jpg" data-caption="Graine d’espoir · Neem">
+            <img src="images/gallery/08-graine-espoir-neem.jpg" alt="Neem" loading="lazy" />
+            <span>Neem</span>
+          </a>
+        </div>
+      </section>
 
-      <header class="sig-gallery__head">
-        <p class="sig-gallery__eyebrow">Soirée</p>
-        <h3 class="sig-gallery__title">Cinéma DuSol</h3>
-        <p class="sig-gallery__sub">Ouverture, projection, table ronde et networking.</p>
-      </header>
-      <div class="sig-gallery__grid" data-gallery="cinema">
-        <a class="sig-gallery__item sig-gallery__item--wide" href="images/gallery/11-soiree-cinema-projection.jpg" data-caption="Soirée cinéma · Projection">
-          <img src="images/gallery/11-soiree-cinema-projection.jpg" alt="Projection" loading="lazy" width="800" height="533" />
-          <span>Projection</span>
-        </a>
-        <a class="sig-gallery__item" href="images/gallery/09-soiree-cinema-ouverture.jpg" data-caption="Soirée cinéma · Ouverture">
-          <img src="images/gallery/09-soiree-cinema-ouverture.jpg" alt="Ouverture" loading="lazy" width="800" height="684" />
-          <span>Ouverture</span>
-        </a>
-        <a class="sig-gallery__item sig-gallery__item--tall" href="images/gallery/14-soiree-cinema-table-ronde.jpg" data-caption="Soirée cinéma · Table ronde">
-          <img src="images/gallery/14-soiree-cinema-table-ronde.jpg" alt="Table ronde" loading="lazy" width="800" height="784" />
-          <span>Table ronde</span>
-        </a>
-        <a class="sig-gallery__item" href="images/gallery/13-soiree-cinema-table-ronde.jpg" data-caption="Soirée cinéma · Échanges">
-          <img src="images/gallery/13-soiree-cinema-table-ronde.jpg" alt="Échanges" loading="lazy" width="800" height="533" />
-          <span>Échanges</span>
-        </a>
-        <a class="sig-gallery__item sig-gallery__item--wide" href="images/gallery/15-soiree-cinema-networking.jpg" data-caption="Soirée cinéma · Networking">
-          <img src="images/gallery/15-soiree-cinema-networking.jpg" alt="Networking" loading="lazy" width="800" height="547" />
-          <span>Networking</span>
-        </a>
-        <a class="sig-gallery__item" href="images/gallery/10-soiree-cinema-ouverture.jpg" data-caption="Soirée cinéma · Ouverture">
-          <img src="images/gallery/10-soiree-cinema-ouverture.jpg" alt="Ouverture" loading="lazy" width="800" height="768" />
-          <span>Ouverture</span>
-        </a>
-        <a class="sig-gallery__item" href="images/gallery/12-soiree-cinema-projection.jpg" data-caption="Soirée cinéma · Projection">
-          <img src="images/gallery/12-soiree-cinema-projection.jpg" alt="Projection" loading="lazy" width="800" height="533" />
-          <span>Projection</span>
-        </a>
-        <a class="sig-gallery__item" href="images/gallery/16-soiree-cinema-networking.jpg" data-caption="Soirée cinéma · Collation">
-          <img src="images/gallery/16-soiree-cinema-networking.jpg" alt="Collation" loading="lazy" width="800" height="571" />
-          <span>Collation</span>
-        </a>
-      </div>
-    </section>
+      <section class="home-band home-band--cinema" aria-labelledby="home-band-cinema">
+        <header class="home-band__head">
+          <p class="home-band__eyebrow">Soirée</p>
+          <h3 id="home-band-cinema" class="home-band__title">Cinéma DuSol</h3>
+          <p class="home-band__sub">Ouverture, projection, table ronde et networking.</p>
+        </header>
+        <div class="home-band__rail" data-gallery="cinema">
+          <a class="home-band__shot home-band__shot--xl" href="images/gallery/11-soiree-cinema-projection.jpg" data-caption="Soirée cinéma · Projection">
+            <img src="images/gallery/11-soiree-cinema-projection.jpg" alt="Projection" loading="lazy" />
+            <span>Projection</span>
+          </a>
+          <a class="home-band__shot" href="images/gallery/09-soiree-cinema-ouverture.jpg" data-caption="Soirée cinéma · Ouverture">
+            <img src="images/gallery/09-soiree-cinema-ouverture.jpg" alt="Ouverture" loading="lazy" />
+            <span>Ouverture</span>
+          </a>
+          <a class="home-band__shot home-band__shot--tall" href="images/gallery/14-soiree-cinema-table-ronde.jpg" data-caption="Soirée cinéma · Table ronde">
+            <img src="images/gallery/14-soiree-cinema-table-ronde.jpg" alt="Table ronde" loading="lazy" />
+            <span>Table ronde</span>
+          </a>
+          <a class="home-band__shot" href="images/gallery/13-soiree-cinema-table-ronde.jpg" data-caption="Soirée cinéma · Échanges">
+            <img src="images/gallery/13-soiree-cinema-table-ronde.jpg" alt="Échanges" loading="lazy" />
+            <span>Échanges</span>
+          </a>
+          <a class="home-band__shot home-band__shot--xl" href="images/gallery/15-soiree-cinema-networking.jpg" data-caption="Soirée cinéma · Networking">
+            <img src="images/gallery/15-soiree-cinema-networking.jpg" alt="Networking" loading="lazy" />
+            <span>Networking</span>
+          </a>
+          <a class="home-band__shot" href="images/gallery/10-soiree-cinema-ouverture.jpg" data-caption="Soirée cinéma · Ouverture">
+            <img src="images/gallery/10-soiree-cinema-ouverture.jpg" alt="Ouverture" loading="lazy" />
+            <span>Ouverture</span>
+          </a>
+          <a class="home-band__shot" href="images/gallery/12-soiree-cinema-projection.jpg" data-caption="Soirée cinéma · Projection">
+            <img src="images/gallery/12-soiree-cinema-projection.jpg" alt="Projection" loading="lazy" />
+            <span>Projection</span>
+          </a>
+          <a class="home-band__shot" href="images/gallery/16-soiree-cinema-networking.jpg" data-caption="Soirée cinéma · Collation">
+            <img src="images/gallery/16-soiree-cinema-networking.jpg" alt="Collation" loading="lazy" />
+            <span>Collation</span>
+          </a>
+        </div>
+      </section>
+    </div>
   </section>
 
   <!-- MAP VIEW -->
