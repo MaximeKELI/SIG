@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/config/env.dart';
-import 'gallery_catalog.dart';
 
 /// Équivalent web : #view-help
 class HelpScreen extends StatelessWidget {
@@ -57,20 +56,6 @@ class HelpScreen extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 24),
-          _GalleryRail(
-            eyebrow: 'Mémoire visuelle',
-            title: 'Graine d’espoir',
-            subtitle: 'Formations terrain — planches, pépinières et semences.',
-            photos: GalleryCatalog.graine,
-          ),
-          const SizedBox(height: 20),
-          _GalleryRail(
-            eyebrow: 'Soirée',
-            title: 'Cinéma DuSol',
-            subtitle: 'Ouverture, projection, table ronde et networking.',
-            photos: GalleryCatalog.cinema,
           ),
           const SizedBox(height: 16),
           _HelpCard(
@@ -203,166 +188,6 @@ class _HelpCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _GalleryRail extends StatelessWidget {
-  const _GalleryRail({
-    required this.eyebrow,
-    required this.title,
-    required this.subtitle,
-    required this.photos,
-  });
-
-  final String eyebrow;
-  final String title;
-  final String subtitle;
-  final List<GalleryPhoto> photos;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          eyebrow.toUpperCase(),
-          style: theme.textTheme.labelSmall?.copyWith(
-            letterSpacing: 1.4,
-            fontWeight: FontWeight.w700,
-            color: theme.colorScheme.primary,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(title, style: theme.textTheme.titleLarge),
-        const SizedBox(height: 4),
-        Text(subtitle, style: theme.textTheme.bodyMedium),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 156,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: photos.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, i) {
-              final p = photos[i];
-              return GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => _PhotoViewer(
-                        photos: photos,
-                        initialIndex: i,
-                      ),
-                    ),
-                  );
-                },
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Stack(
-                    children: [
-                      Image.asset(
-                        p.asset,
-                        width: 220,
-                        height: 156,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          width: 220,
-                          height: 156,
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          child: const Icon(Icons.image_not_supported_outlined),
-                        ),
-                      ),
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: Container(
-                          padding: const EdgeInsets.fromLTRB(10, 24, 10, 8),
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [Colors.transparent, Colors.black87],
-                            ),
-                          ),
-                          child: Text(
-                            p.caption,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PhotoViewer extends StatefulWidget {
-  const _PhotoViewer({required this.photos, required this.initialIndex});
-
-  final List<GalleryPhoto> photos;
-  final int initialIndex;
-
-  @override
-  State<_PhotoViewer> createState() => _PhotoViewerState();
-}
-
-class _PhotoViewerState extends State<_PhotoViewer> {
-  late final PageController _controller;
-  late int _index;
-
-  @override
-  void initState() {
-    super.initState();
-    _index = widget.initialIndex;
-    _controller = PageController(initialPage: _index);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final photo = widget.photos[_index];
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: Text(photo.caption, style: const TextStyle(fontSize: 14)),
-      ),
-      body: PageView.builder(
-        controller: _controller,
-        itemCount: widget.photos.length,
-        onPageChanged: (i) => setState(() => _index = i),
-        itemBuilder: (context, i) {
-          return InteractiveViewer(
-            child: Center(
-              child: Image.asset(
-                widget.photos[i].asset,
-                fit: BoxFit.contain,
-              ),
-            ),
-          );
-        },
       ),
     );
   }

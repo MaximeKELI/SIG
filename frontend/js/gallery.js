@@ -1,5 +1,5 @@
 /**
- * Galerie DUSOL — lightbox légère pour #view-help.
+ * Galerie DUSOL — lightbox légère pour #view-home.
  */
 
 function ensureLightbox() {

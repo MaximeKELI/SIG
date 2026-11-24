@@ -50,7 +50,7 @@ function escapeHtml(text) {
 
 function buildContext() {
   const ctx = {
-    view: document.querySelector('.nav-btn.active')?.dataset?.view || 'map',
+    view: document.querySelector('.nav-btn.active')?.dataset?.view || 'home',
   };
   const parcel = window.SigSolsParcel?.getLastParcelData?.();
   if (parcel) {

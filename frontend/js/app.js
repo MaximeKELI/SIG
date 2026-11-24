@@ -1,3 +1,10 @@
+document.querySelectorAll('[data-go-view]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const view = btn.getAttribute('data-go-view');
+    document.querySelector(`.nav-btn[data-view="${view}"]`)?.click();
+  });
+});
+
 document.querySelectorAll('.nav-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));

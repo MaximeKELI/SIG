@@ -83,9 +83,9 @@ class _SearchScreenState extends State<SearchScreen> {
       case 'point':
         final pointId = id is int ? id : int.tryParse('$id');
         if (pointId != null) {
-          context.go('/?point=$pointId');
+          context.go('/map?point=$pointId');
         } else {
-          context.go('/');
+          context.go('/map');
         }
         break;
       default:

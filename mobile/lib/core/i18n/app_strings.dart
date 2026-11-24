@@ -5,6 +5,7 @@ class AppStrings {
   static const _strings = {
     'fr': {
       'app.title': 'SIG Sols Togo',
+      'nav.home': 'Accueil',
       'nav.map': 'Carte',
       'nav.dashboard': 'Dashboard',
       'nav.quiz': 'Quiz',
@@ -52,6 +53,7 @@ class AppStrings {
     },
     'en': {
       'app.title': 'SIG Sols Togo',
+      'nav.home': 'Home',
       'nav.map': 'Map',
       'nav.dashboard': 'Dashboard',
       'nav.quiz': 'Quiz',
@@ -99,6 +101,7 @@ class AppStrings {
     },
     'ee': {
       'app.title': 'SIG Sols Togo',
+      'nav.home': 'Aƒe',
       'nav.map': 'Map',
       'nav.dashboard': 'Tablo',
       'nav.quiz': 'Quiz',
@@ -146,6 +149,7 @@ class AppStrings {
     },
     'kab': {
       'app.title': 'SIG Sols Togo',
+      'nav.home': 'Axxam',
       'nav.map': 'Takarut',
       'nav.dashboard': 'Asenfaru',
       'nav.quiz': 'Quiz',

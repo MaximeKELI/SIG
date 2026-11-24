@@ -11,6 +11,7 @@ import '../core/theme/theme_service.dart';
 import '../features/assistant/assistant_screen.dart';
 import '../features/community/community_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
+import '../features/home/home_screen.dart';
 import '../features/map/map_screen.dart';
 import '../features/onboarding/onboarding_sheet.dart';
 import '../features/profile/profile_screen.dart';
@@ -64,12 +65,14 @@ class _ShellScreenState extends State<ShellScreen> {
     });
   }
 
-  /// 0 Carte · 1 Tableau · 2 Médias · 3 Communauté · 4 Plus
+  /// 0 Accueil · 1 Carte · 2 Tableau · 3 Communauté · 4 Plus
   int _indexFromLocation(String loc) {
-    if (loc.startsWith('/dashboard')) return 1;
-    if (loc.startsWith('/videos') || loc.startsWith('/shorts')) return 2;
+    if (loc.startsWith('/map')) return 1;
+    if (loc.startsWith('/dashboard')) return 2;
     if (loc.startsWith('/community')) return 3;
-    if (loc.startsWith('/quiz') ||
+    if (loc.startsWith('/videos') ||
+        loc.startsWith('/shorts') ||
+        loc.startsWith('/quiz') ||
         loc.startsWith('/sheets') ||
         loc.startsWith('/assistant') ||
         loc.startsWith('/profile')) {
@@ -79,6 +82,7 @@ class _ShellScreenState extends State<ShellScreen> {
   }
 
   String _titleFor(String loc, LocaleService i18n) {
+    if (loc.startsWith('/map')) return i18n.t('nav.map');
     if (loc.startsWith('/dashboard')) return i18n.t('nav.dashboard');
     if (loc.startsWith('/quiz')) return i18n.t('nav.quiz');
     if (loc.startsWith('/sheets')) return i18n.t('nav.sheets');
@@ -87,7 +91,7 @@ class _ShellScreenState extends State<ShellScreen> {
     if (loc.startsWith('/community')) return i18n.t('nav.community');
     if (loc.startsWith('/assistant')) return i18n.t('nav.assistant');
     if (loc.startsWith('/profile')) return i18n.t('nav.profile');
-    return i18n.t('nav.map');
+    return i18n.t('nav.home');
   }
 
   void _goPrimary(int index) {
@@ -95,8 +99,8 @@ class _ShellScreenState extends State<ShellScreen> {
       _openPlusSheet();
       return;
     }
-    const routes = ['/', '/dashboard', '/videos', '/community'];
-    const names = ['map', 'dashboard', 'videos', 'community'];
+    const routes = ['/', '/map', '/dashboard', '/community'];
+    const names = ['home', 'map', 'dashboard', 'community'];
     context.read<ActivityTracker>().trackNav(names[index]);
     context.go(routes[index]);
   }
@@ -151,6 +155,7 @@ class _ShellScreenState extends State<ShellScreen> {
                     ),
                   ),
                 ),
+                tile(Icons.video_library_outlined, i18n.t('nav.videos'), '/videos', 'videos'),
                 tile(Icons.quiz_outlined, i18n.t('nav.quiz'), '/quiz', 'quiz'),
                 tile(Icons.menu_book_outlined, i18n.t('nav.sheets'), '/sheets', 'sheets'),
                 tile(Icons.bolt_outlined, i18n.t('nav.shorts'), '/shorts', 'shorts'),
@@ -405,6 +410,11 @@ class _ShellScreenState extends State<ShellScreen> {
         onDestinationSelected: _goPrimary,
         destinations: [
           NavigationDestination(
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home),
+            label: i18n.t('nav.home'),
+          ),
+          NavigationDestination(
             icon: const Icon(Icons.map_outlined),
             selectedIcon: const Icon(Icons.map),
             label: i18n.t('nav.map'),
@@ -413,11 +423,6 @@ class _ShellScreenState extends State<ShellScreen> {
             icon: const Icon(Icons.dashboard_outlined),
             selectedIcon: const Icon(Icons.dashboard),
             label: i18n.t('nav.dashboard'),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.video_library_outlined),
-            selectedIcon: const Icon(Icons.video_library),
-            label: i18n.t('nav.videos'),
           ),
           NavigationDestination(
             icon: const Icon(Icons.people_outline),
@@ -449,6 +454,8 @@ class ShellIndexScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (route) {
       case '/':
+        return const HomeScreen();
+      case '/map':
         return MapScreen(focusPointId: focusPointId);
       case '/dashboard':
         return const DashboardScreen();
@@ -467,7 +474,7 @@ class ShellIndexScreen extends StatelessWidget {
       case '/profile':
         return const ProfileScreen();
       default:
-        return MapScreen(focusPointId: focusPointId);
+        return const HomeScreen();
     }
   }
 }

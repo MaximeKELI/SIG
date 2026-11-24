@@ -29,6 +29,7 @@ GoRouter createRouter(AuthService auth) {
       // Parité web : navigation publique (carte, dashboard, fiches, médias…)
       final guestOk =
           loc == '/' ||
+          loc.startsWith('/map') ||
           loc.startsWith('/dashboard') ||
           loc.startsWith('/sheets') ||
           loc.startsWith('/videos') ||
@@ -87,10 +88,14 @@ GoRouter createRouter(AuthService auth) {
         routes: [
           GoRoute(
             path: '/',
+            builder: (_, __) => const ShellIndexScreen(route: '/'),
+          ),
+          GoRoute(
+            path: '/map',
             builder: (_, state) {
               final raw = state.uri.queryParameters['point'];
               return ShellIndexScreen(
-                route: '/',
+                route: '/map',
                 focusPointId: raw != null ? int.tryParse(raw) : null,
               );
             },

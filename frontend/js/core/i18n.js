@@ -1,16 +1,19 @@
 /** Internationalisation FR / EN (clés data-i18n sur le DOM). */
 const STRINGS = {
   ee: {
+    'nav.home': 'Aƒe',
     'nav.map': 'Map',
     'nav.dashboard': 'Tablo',
     'welcome.title': 'Woezo le SIG Sols Togo',
   },
   kab: {
+    'nav.home': 'Axxam',
     'nav.map': 'Takarut',
     'nav.dashboard': 'Asenfaru',
     'welcome.title': 'Ansuf ɣer SIG Sols Togo',
   },
   fr: {
+    'nav.home': 'Accueil',
     'nav.map': 'Carte',
     'nav.dashboard': 'Tableau de bord',
     'nav.quiz': 'Quiz',
@@ -31,9 +34,10 @@ const STRINGS = {
     'sidebar.filters': 'Filtres',
     'sidebar.tools': 'Outils carte',
     'loading.map': 'Chargement des points…',
-    'shortcut.help': 'Raccourcis : M carte, D tableau de bord, ? aide',
+    'shortcut.help': 'Raccourcis : H accueil, M carte, D tableau de bord, ? aide',
   },
   en: {
+    'nav.home': 'Home',
     'nav.map': 'Map',
     'nav.dashboard': 'Dashboard',
     'nav.quiz': 'Quiz',
@@ -55,7 +59,7 @@ const STRINGS = {
     'sidebar.filters': 'Filters',
     'sidebar.tools': 'Map tools',
     'loading.map': 'Loading points…',
-    'shortcut.help': 'Shortcuts: M map, D dashboard, ? help',
+    'shortcut.help': 'Shortcuts: H home, M map, D dashboard, ? help',
   },
 };
 
