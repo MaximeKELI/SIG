@@ -1,0 +1,164 @@
+{
+  "gallery": [
+    {
+      "file": "01-graine-espoir-formation-agro.jpg",
+      "caption": "Graine d’espoir · Formation agro",
+      "alt": "Graine d’espoir · Formation agro",
+      "event": "graine-espoir",
+      "folder": "formation-agro",
+      "w": 1600,
+      "h": 1066,
+      "span": "wide"
+    },
+    {
+      "file": "02-graine-espoir-formation-agro.jpg",
+      "caption": "Graine d’espoir · Formation agro",
+      "alt": "Graine d’espoir · Formation agro",
+      "event": "graine-espoir",
+      "folder": "formation-agro",
+      "w": 1600,
+      "h": 1066,
+      "span": "wide"
+    },
+    {
+      "file": "03-graine-espoir-planche-carotte.jpg",
+      "caption": "Graine d’espoir · Planche carotte",
+      "alt": "Graine d’espoir · Planche carotte",
+      "event": "graine-espoir",
+      "folder": "planche-carotte",
+      "w": 1600,
+      "h": 1157,
+      "span": "wide"
+    },
+    {
+      "file": "04-graine-espoir-planche-carotte.jpg",
+      "caption": "Graine d’espoir · Planche carotte",
+      "alt": "Graine d’espoir · Planche carotte",
+      "event": "graine-espoir",
+      "folder": "planche-carotte",
+      "w": 1600,
+      "h": 1108,
+      "span": "wide"
+    },
+    {
+      "file": "05-graine-espoir-pepiniere-betterave.jpg",
+      "caption": "Graine d’espoir · Pépinière betterave",
+      "alt": "Graine d’espoir · Pépinière betterave",
+      "event": "graine-espoir",
+      "folder": "pepiniere-betterave",
+      "w": 1600,
+      "h": 1112,
+      "span": "wide"
+    },
+    {
+      "file": "06-graine-espoir-pepiniere-betterave.jpg",
+      "caption": "Graine d’espoir · Pépinière betterave",
+      "alt": "Graine d’espoir · Pépinière betterave",
+      "event": "graine-espoir",
+      "folder": "pepiniere-betterave",
+      "w": 1600,
+      "h": 1066,
+      "span": "wide"
+    },
+    {
+      "file": "07-graine-espoir-neem.jpg",
+      "caption": "Graine d’espoir · Neem",
+      "alt": "Graine d’espoir · Neem",
+      "event": "graine-espoir",
+      "folder": "neem",
+      "w": 1600,
+      "h": 1066,
+      "span": "wide"
+    },
+    {
+      "file": "08-graine-espoir-neem.jpg",
+      "caption": "Graine d’espoir · Neem",
+      "alt": "Graine d’espoir · Neem",
+      "event": "graine-espoir",
+      "folder": "neem",
+      "w": 1600,
+      "h": 1066,
+      "span": "wide"
+    },
+    {
+      "file": "09-soiree-cinema-ouverture.jpg",
+      "caption": "Soirée cinéma · Ouverture",
+      "alt": "Soirée cinéma · Ouverture",
+      "event": "soiree-cinema",
+      "folder": "ouverture",
+      "w": 1600,
+      "h": 1368,
+      "span": "wide"
+    },
+    {
+      "file": "10-soiree-cinema-ouverture.jpg",
+      "caption": "Soirée cinéma · Ouverture",
+      "alt": "Soirée cinéma · Ouverture",
+      "event": "soiree-cinema",
+      "folder": "ouverture",
+      "w": 1600,
+      "h": 1536,
+      "span": "square"
+    },
+    {
+      "file": "11-soiree-cinema-projection.jpg",
+      "caption": "Soirée cinéma · Projection",
+      "alt": "Soirée cinéma · Projection",
+      "event": "soiree-cinema",
+      "folder": "projection",
+      "w": 1600,
+      "h": 1066,
+      "span": "wide"
+    },
+    {
+      "file": "12-soiree-cinema-projection.jpg",
+      "caption": "Soirée cinéma · Projection",
+      "alt": "Soirée cinéma · Projection",
+      "event": "soiree-cinema",
+      "folder": "projection",
+      "w": 1600,
+      "h": 1066,
+      "span": "wide"
+    },
+    {
+      "file": "13-soiree-cinema-table-ronde.jpg",
+      "caption": "Soirée cinéma · Table ronde",
+      "alt": "Soirée cinéma · Table ronde",
+      "event": "soiree-cinema",
+      "folder": "table-ronde",
+      "w": 1600,
+      "h": 1066,
+      "span": "wide"
+    },
+    {
+      "file": "14-soiree-cinema-table-ronde.jpg",
+      "caption": "Soirée cinéma · Table ronde",
+      "alt": "Soirée cinéma · Table ronde",
+      "event": "soiree-cinema",
+      "folder": "table-ronde",
+      "w": 1600,
+      "h": 1568,
+      "span": "square"
+    },
+    {
+      "file": "15-soiree-cinema-networking.jpg",
+      "caption": "Soirée cinéma · Networking",
+      "alt": "Soirée cinéma · Networking",
+      "event": "soiree-cinema",
+      "folder": "networking",
+      "w": 1600,
+      "h": 1094,
+      "span": "wide"
+    },
+    {
+      "file": "16-soiree-cinema-networking.jpg",
+      "caption": "Soirée cinéma · Networking",
+      "alt": "Soirée cinéma · Networking",
+      "event": "soiree-cinema",
+      "folder": "networking",
+      "w": 1600,
+      "h": 1143,
+      "span": "wide"
+    }
+  ]
+}

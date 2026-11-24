@@ -83,15 +83,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      Env.developerPhone.isEmpty
-                          ? Env.developer
-                          : '${Env.developer} · ${Env.developerPhone}',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppTheme.gold400,
-                          ),
-                    ),
                     const SizedBox(height: AppSpacing.xl),
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.lg),

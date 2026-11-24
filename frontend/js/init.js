@@ -11,6 +11,7 @@ import {
   initModals,
 } from './core/ui.js';
 import { initUxShell, updateOfflineQueuePill } from './core/ux.js';
+import { initGallery } from './gallery.js';
 
 export function initAppShell() {
   initToast();
@@ -20,6 +21,7 @@ export function initAppShell() {
   initConnectionBanner();
   initUxShell();
   initModals();
+  initGallery();
   window.SigSolsUx = { updateOfflineQueuePill };
   document.getElementById('btn-theme')?.addEventListener('click', toggleTheme);
   document.getElementById('btn-lang')?.addEventListener('click', () => {
