@@ -178,7 +178,8 @@ class _ShellScreenState extends State<ShellScreen> {
     final user = context.watch<AuthService>().user;
     final loggedIn = context.watch<AuthService>().isAuthenticated;
     final i18n = context.watch<LocaleService>();
-    final hideAppBar = loc.startsWith('/shorts');
+    // Accueil immersif (hero plein écran) + Shorts : pas d’AppBar.
+    final hideAppBar = loc == '/' || loc.startsWith('/shorts');
 
     return Scaffold(
       drawer: Drawer(
