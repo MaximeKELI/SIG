@@ -56,6 +56,50 @@ class GalleryCatalog {
     ),
   ];
 
+  /// Sélection hero Accueil (carrousel).
+  static const hero = <GalleryPhoto>[
+    GalleryPhoto(
+      asset: '$_base/01-graine-espoir-formation-agro.jpg',
+      caption: 'Formation agro',
+      event: 'hero',
+    ),
+    GalleryPhoto(
+      asset: '$_base/11-soiree-cinema-projection.jpg',
+      caption: 'Projection cinéma',
+      event: 'hero',
+    ),
+    GalleryPhoto(
+      asset: '$_base/03-graine-espoir-planche-carotte.jpg',
+      caption: 'Planche carotte',
+      event: 'hero',
+    ),
+    GalleryPhoto(
+      asset: '$_base/14-soiree-cinema-table-ronde.jpg',
+      caption: 'Table ronde',
+      event: 'hero',
+    ),
+    GalleryPhoto(
+      asset: '$_base/05-graine-espoir-pepiniere-betterave.jpg',
+      caption: 'Pépinière',
+      event: 'hero',
+    ),
+    GalleryPhoto(
+      asset: '$_base/15-soiree-cinema-networking.jpg',
+      caption: 'Networking',
+      event: 'hero',
+    ),
+    GalleryPhoto(
+      asset: '$_base/02-graine-espoir-formation-agro.jpg',
+      caption: 'Sur le terrain',
+      event: 'hero',
+    ),
+    GalleryPhoto(
+      asset: '$_base/09-soiree-cinema-ouverture.jpg',
+      caption: 'Ouverture',
+      event: 'hero',
+    ),
+  ];
+
   static const cinema = <GalleryPhoto>[
     GalleryPhoto(
       asset: '$_base/09-soiree-cinema-ouverture.jpg',

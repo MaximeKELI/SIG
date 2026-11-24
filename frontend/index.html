@@ -16,12 +16,12 @@
   <link rel="stylesheet" href="vendor/MarkerCluster.css" />
   <link rel="stylesheet" href="vendor/MarkerCluster.Default.css" />
   <link rel="stylesheet" href="vendor/leaflet-draw.css" />
-  <link rel="stylesheet" href="css/style.css?v=20" />
-  <link rel="stylesheet" href="css/enhancements.css?v=20" />
-  <link rel="stylesheet" href="css/animations.css?v=20" />
-  <link rel="stylesheet" href="css/features-extended.css?v=20" />
-  <link rel="stylesheet" href="css/ux-shell.css?v=20" />
-  <link rel="stylesheet" href="css/luxury.css?v=20" />
+  <link rel="stylesheet" href="css/style.css?v=21" />
+  <link rel="stylesheet" href="css/enhancements.css?v=21" />
+  <link rel="stylesheet" href="css/animations.css?v=21" />
+  <link rel="stylesheet" href="css/features-extended.css?v=21" />
+  <link rel="stylesheet" href="css/ux-shell.css?v=21" />
+  <link rel="stylesheet" href="css/luxury.css?v=21" />
 </head>
 <body>
   <a href="#main-content" class="skip-link">Aller au contenu</a>
@@ -159,36 +159,60 @@
 
   <!-- HOME / ACCUEIL -->
   <section id="view-home" class="view active home-view">
-    <div class="home-stage">
-      <div class="home-stage__media" aria-hidden="true">
-        <img
-          class="home-stage__photo"
-          src="images/gallery/01-graine-espoir-formation-agro.jpg"
-          alt=""
-          width="1600"
-          height="1066"
-          decoding="async"
-        />
+    <div class="home-stage" data-home-parallax>
+      <div class="home-stage__glow" aria-hidden="true"></div>
+      <div class="home-stage__media" data-home-carousel aria-roledescription="carrousel" aria-label="Photos DUSOL">
+        <div class="home-stage__slide is-active" data-caption="Formation agro">
+          <img class="home-stage__photo" src="images/gallery/01-graine-espoir-formation-agro.jpg" alt="Formation agro" width="1600" height="1066" decoding="async" />
+        </div>
+        <div class="home-stage__slide" data-caption="Projection cinéma">
+          <img class="home-stage__photo" src="images/gallery/11-soiree-cinema-projection.jpg" alt="Projection cinéma" width="1600" height="1066" loading="lazy" decoding="async" />
+        </div>
+        <div class="home-stage__slide" data-caption="Planche carotte">
+          <img class="home-stage__photo" src="images/gallery/03-graine-espoir-planche-carotte.jpg" alt="Planche carotte" width="1600" height="1066" loading="lazy" decoding="async" />
+        </div>
+        <div class="home-stage__slide" data-caption="Table ronde">
+          <img class="home-stage__photo" src="images/gallery/14-soiree-cinema-table-ronde.jpg" alt="Table ronde" width="1600" height="1066" loading="lazy" decoding="async" />
+        </div>
+        <div class="home-stage__slide" data-caption="Pépinière">
+          <img class="home-stage__photo" src="images/gallery/05-graine-espoir-pepiniere-betterave.jpg" alt="Pépinière betterave" width="1600" height="1066" loading="lazy" decoding="async" />
+        </div>
+        <div class="home-stage__slide" data-caption="Networking">
+          <img class="home-stage__photo" src="images/gallery/15-soiree-cinema-networking.jpg" alt="Networking" width="1600" height="1066" loading="lazy" decoding="async" />
+        </div>
+        <div class="home-stage__slide" data-caption="Sur le terrain">
+          <img class="home-stage__photo" src="images/gallery/02-graine-espoir-formation-agro.jpg" alt="Sur le terrain" width="1600" height="1066" loading="lazy" decoding="async" />
+        </div>
+        <div class="home-stage__slide" data-caption="Ouverture">
+          <img class="home-stage__photo" src="images/gallery/09-soiree-cinema-ouverture.jpg" alt="Ouverture soirée" width="1600" height="1066" loading="lazy" decoding="async" />
+        </div>
       </div>
       <div class="home-stage__veil" aria-hidden="true"></div>
+      <div class="home-stage__shimmer" aria-hidden="true"></div>
       <div class="home-stage__copy">
-        <div class="home-stage__brands">
+        <div class="home-stage__brands home-melt" style="--melt-delay: 0.1s">
           <img src="images/logo-dusol.png" alt="DUSOL" width="56" height="56" />
           <img src="images/logo-sig-sol.png" alt="SIG-SOL" width="56" height="56" />
         </div>
-        <p class="home-stage__kicker">DUSOL · DISIA · Région Maritime</p>
-        <h2 class="home-stage__brand">SIG Sols Togo</h2>
-        <p class="home-stage__lead">Les sols de la Maritime, cartographiés et partagés — du terrain à la carte.</p>
-        <button type="button" class="home-stage__cta" data-go-view="map">Explorer la carte</button>
+        <p class="home-stage__kicker home-melt" style="--melt-delay: 0.28s">DUSOL · DISIA · Région Maritime</p>
+        <h2 class="home-stage__brand home-melt" style="--melt-delay: 0.42s">SIG Sols Togo</h2>
+        <p class="home-stage__lead home-melt" style="--melt-delay: 0.62s">Les sols de la Maritime, cartographiés et partagés — du terrain à la carte.</p>
+        <button type="button" class="home-stage__cta home-melt" style="--melt-delay: 0.82s" data-go-view="map">Explorer la carte</button>
       </div>
+      <div class="home-stage__controls" data-carousel-controls>
+        <button type="button" class="home-stage__nav home-stage__nav--prev" data-carousel-prev aria-label="Photo précédente">‹</button>
+        <div class="home-stage__dots" data-carousel-dots role="tablist" aria-label="Diapositives"></div>
+        <button type="button" class="home-stage__nav home-stage__nav--next" data-carousel-next aria-label="Photo suivante">›</button>
+      </div>
+      <p class="home-stage__caption" data-carousel-caption>Formation agro</p>
       <button type="button" class="home-stage__scroll" data-scroll-to="home-photos" aria-label="Voir les photos">
         Photos
       </button>
     </div>
 
     <div id="home-photos" class="home-photos">
-      <section class="home-band" aria-labelledby="home-band-graine">
-        <header class="home-band__head">
+      <section class="home-band" data-reveal aria-labelledby="home-band-graine">
+        <header class="home-band__head" data-reveal-child>
           <p class="home-band__eyebrow">Mémoire visuelle</p>
           <h3 id="home-band-graine" class="home-band__title">Graine d’espoir</h3>
           <p class="home-band__sub">Formations terrain — planches, pépinières et semences.</p>
@@ -229,8 +253,8 @@
         </div>
       </section>
 
-      <section class="home-band home-band--cinema" aria-labelledby="home-band-cinema">
-        <header class="home-band__head">
+      <section class="home-band home-band--cinema" data-reveal aria-labelledby="home-band-cinema">
+        <header class="home-band__head" data-reveal-child>
           <p class="home-band__eyebrow">Soirée</p>
           <h3 id="home-band-cinema" class="home-band__title">Cinéma DuSol</h3>
           <p class="home-band__sub">Ouverture, projection, table ronde et networking.</p>
@@ -1056,7 +1080,7 @@
     </footer>
   </aside>
 
-  <script type="module" src="js/init.js?v=20"></script>
+  <script type="module" src="js/init.js?v=21"></script>
   <script type="module" src="js/api.js?v=15"></script>
   <script type="module" src="js/auth.js?v=15"></script>
   <script type="module" src="js/features.js?v=15"></script>
@@ -1072,6 +1096,6 @@
   <script type="module" src="js/community.js?v=15"></script>
   <script type="module" src="js/animations.js?v=15"></script>
   <script type="module" src="js/featuresHub.js?v=15"></script>
-  <script src="js/app.js?v=20"></script>
+  <script src="js/app.js?v=21"></script>
 </body>
 </html>
